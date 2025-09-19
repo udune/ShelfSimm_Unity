@@ -149,7 +149,3 @@ MIT License - 자유롭게 사용하세요!
 5. Pull Request 열기
 
 ---
-
-🎉 **즐거운 시뮬레이션 되세요!** 
-
-처음 사용하시는 분들은 [Wiki](https://github.com/yourusername/ShelfSimm_Unity/wiki)를 참고해주세요.
