@@ -39,7 +39,7 @@ git clone https://github.com/yourusername/ShelfSimm_Unity.git
 3. **책 선택**: 드롭다운에서 책을 골라주세요
 4. **실행**: `시작` 버튼을 눌러보세요!
 
-## 🎮 사용법
+## 사용법
 
 ### 기본 조작
 - **칸 클릭**: 오른쪽에서 칸 정보 확인
