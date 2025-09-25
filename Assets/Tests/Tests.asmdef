@@ -1,7 +1,8 @@
 {
     "name": "Tests",
     "references": [
-        "Core"
+        "Core",
+        "Data"
     ],
     "optionalUnityReferences": [
         "TestAssemblies"

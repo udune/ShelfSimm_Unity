@@ -28,14 +28,14 @@ namespace Core
             }
             
             string cleaned = rawCode // 1. 앞뒤 공백 제거, 2. 대문자 변환, 3. 공백/하이픈/언더스코어 제거
-                .Trim() 
-                .ToUpper()
-                .Replace(" ", "")
-                .Replace("-", "")
-                .Replace("_", "");
+                .Trim() // 앞뒤 공백 제거
+                .ToUpper() // 대문자 변환
+                .Replace(" ", "") // 공백 제거
+                .Replace("-", "") // 하이픈 제거
+                .Replace("_", ""); // 언더스코어 제거
             
             var match = CodePattern.Match(cleaned); // 3. 패턴 매칭
-            if (!match.Success)
+            if (!match.Success) // 패턴 불일치 시 예외 발생
             {
                 throw new ArgumentException($"잘못된 코드 형식입니다: {rawCode}", nameof(rawCode));
             }
@@ -58,12 +58,12 @@ namespace Core
         {
             try
             {
-                normalizedCode = NormalizeCode(rawCode);
+                normalizedCode = NormalizeCode(rawCode); // 정규화 시도
                 return true;
             }
             catch
             {
-                normalizedCode = null;
+                normalizedCode = null; // 실패 시 null 반환
                 return false;
             }
         }
