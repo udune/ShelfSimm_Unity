@@ -1,6 +1,3 @@
-using System;
-using UnityEngine;
-
 namespace Data
 {
     // 다양한 오류 코드를 나타내는 열거형
