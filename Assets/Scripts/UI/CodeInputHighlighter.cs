@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using Core;
+using Data;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -23,7 +24,8 @@ namespace UI
         
         [Header("References")]
         [SerializeField] private CodeValidator codeValidator; // 코드 검증기 참조 (인스펙터에서 수동 할당 가능)
-
+        [SerializeField] private BookDropdownController bookDropdownController; // 도서 드롭다운 컨트롤러 참조 (인스펙터에서 수동 할당 가능)
+        
         private List<GameObject> currentCodeItems = new List<GameObject>(); // 현재 표시된 코드 아이템들 리스트
 
         private void Start()
@@ -36,6 +38,11 @@ namespace UI
             if (codeInputField != null) // 입력 필드가 있을 때
             {
                 codeInputField.onValueChanged.AddListener(OnInputChanged); // 값 변경 이벤트에 리스너 추가
+            }
+
+            if (bookDropdownController == null) // 수동 할당이 안 되었을 때
+            {
+                bookDropdownController = FindObjectOfType<BookDropdownController>(); // 씬에서 BookDropdownController 컴포넌트 탐색
             }
         }
 
@@ -185,6 +192,26 @@ namespace UI
             {
                 OnInputChanged(codeInputField.text); // 현재 텍스트로 검증 트리거
             }
+        }
+        
+        public BookData GetSelectedBook() // 선택된 도서 반환 메서드
+        {
+            if (bookDropdownController == null) // 도서 드롭다운 컨트롤러가 없을 때
+            {
+                return null; // null 반환
+            }
+
+            return bookDropdownController.GetSelectedBook(); // 선택된 도서 반환
+        }
+
+        public bool HasSelectedBook() // 도서 선택 여부 확인 메서드
+        {
+            if (bookDropdownController == null) // 도서 드롭다운 컨트롤러가 없을 때
+            {
+                return false; // false 반환
+            }
+            
+            return bookDropdownController.HasSelectedBook(); // 도서가 선택되었는지 여부 반환
         }
     }
 }
