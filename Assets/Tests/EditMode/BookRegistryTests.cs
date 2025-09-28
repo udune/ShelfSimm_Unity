@@ -21,8 +21,8 @@ namespace Tests.EditMode
             testObject = new GameObject("TestBookRegistry");
             bookRegistry = testObject.AddComponent<BookRegistry>();
             
-            // Start() 메서드 호출하여 초기화
-            bookRegistry.Start();
+            // Awake() 메서드 호출하여 초기화
+            bookRegistry.Awake();
         }
 
         [TearDown]

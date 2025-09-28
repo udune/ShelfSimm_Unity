@@ -22,7 +22,7 @@ namespace Core
         private Dictionary<string, BookData> bookDatabase; // ID 기반 빠른 검색용
         private List<BookData> availableBooks; // 사용 가능한 도서 목록
 
-        public void Start()
+        public void Awake()
         {
             InitDummyData(); // 더미 데이터 초기화
             BuildDatabase(); // 데이터베이스 구축
