@@ -25,6 +25,10 @@ namespace Core
 
         [Header("참조")] 
         public SimpleAStarPathFinder pathFinder; // A* 경로 탐색기
+        
+        [Header("타이브레이커 설정")]
+        public TiebreakerConfig tiebreakerConfig; // 타이브레이커 설정
+        private TiebreakerService tiebreakerService; // 타이브레이커 서비스
 
         private void Awake() // 초기화
         {
@@ -35,6 +39,16 @@ namespace Core
                 {
                     Debug.LogWarning("[NearestCellSelector] SimpleAStarPathFinder를 찾을 수 없습니다!");
                 }
+            }
+
+            if (tiebreakerConfig != null) // 타이브레이커 설정이 있으면 서비스 초기화
+            {
+                tiebreakerService = new TiebreakerService(tiebreakerConfig); // 서비스 생성
+                DeterminismLogger.LogInitialization(tiebreakerConfig, tiebreakerConfig.randomSeed); // 로그 초기화 정보 출력
+            }
+            else
+            {
+                Debug.LogWarning("[NearestCellSelector] TiebreakerConfig가 설정되지 않았습니다. 타이브레이커 기능이 비활성화됩니다.");
             }
         }
 
@@ -92,7 +106,6 @@ namespace Core
             foreach (var candidate in candidates) // 각 후보에 대해
             {
                 var cellPos = new Vector2Int(candidate.cell.x, candidate.cell.y); // 칸 위치
-                
                 var path = pathFinder.FindPath(robotPos, cellPos); // A*로 실제 경로 찾기
 
                 var updated = candidate; // 후보 복사
@@ -113,16 +126,26 @@ namespace Core
                 reranked.Add(candidate); // 재평가된 후보 추가
             }
 
-            var sorted = reranked // 실제 경로 비용, 거리, 코드순으로 정렬
-                .OrderBy(c => c.actualPathCost) // 실제 경로 비용 오름차순
-                .ThenBy(c => c.distance) // 맨해튼 거리 오름차순
-                .ThenBy(c => c.cell.code) // 코드 오름차순
-                .ToList(); // 리스트로 변환
+            List<CellDistanceInfo> finalList;
+
+            if (tiebreakerService != null)
+            {
+                Debug.Log("[NearestCellSelector] 타이브레이커 적용 중...");
+                finalList = tiebreakerService.ApplyTiebreaker(reranked);
+            }
+            else
+            {
+                finalList = reranked // 실제 경로 비용, 거리, 코드순으로 정렬
+                    .OrderBy(c => c.actualPathCost) // 실제 경로 비용 오름차순
+                    .ThenBy(c => c.distance) // 맨해튼 거리 오름차순
+                    .ThenBy(c => c.cell.code) // 코드 오름차순
+                    .ToList(); // 리스트로 변환
+            }
             
             Debug.Log($"[NearestCellSelector] A* 실제 경로 비용으로 재평가 후 정렬");
-            for (int i = 0; i < sorted.Count; i++) // 결과 출력
+            for (int i = 0; i < finalList.Count; i++) // 결과 출력
             {
-                var info = sorted[i]; // 각 칸 정보
+                var info = finalList[i]; // 각 칸 정보
                 if (info.actualPathCost < int.MaxValue) // 실제 경로가 있으면
                 {
                     Debug.Log($"최종 {i+1}. {info.cell.code} at ({info.cell.x}, {info.cell.y}) - 실제 경로 비용: {info.actualPathCost}칸, 맨해튼 거리: {info.distance}");
@@ -133,7 +156,7 @@ namespace Core
                 }
             }
             
-            return sorted; // 재평가 및 정렬된 후보 반환
+            return finalList; // 재평가 및 정렬된 후보 반환
         }
         
         // 로봇 위치와 칸 목록을 받아 가장 가까운 N개의 칸을 거리순으로 반환
@@ -149,7 +172,6 @@ namespace Core
             }
 
             var candidates = SelectTopNCandidates(robotPos, targetCells); // 맨해튼 거리로 TopN 후보 선택
-            
             var finalList = RerankWithAStar(robotPos, candidates); // A*로 실제 경로 비용 재평가 및 정렬
 
             var validCells = finalList // 실제 경로가 있는 칸만 필터링
