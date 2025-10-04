@@ -9115,6 +9115,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   topN: 3
   pathFinder: {fileID: 770401732}
+  tiebreakerConfig: {fileID: 11400000, guid: 6b33f3cbf8b75a64ea953e61a66969f0, type: 2}
 --- !u!4 &1663793638
 Transform:
   m_ObjectHideFlags: 0
