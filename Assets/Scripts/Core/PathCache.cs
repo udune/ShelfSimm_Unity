@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 namespace Core
@@ -10,21 +11,23 @@ namespace Core
     {
         public Vector2Int start; // 시작 지점
         public Vector2Int goal; // 목표 지점
+        public string layoutHash; // 레이아웃 해시
 
         // 생성자
-        public CacheKey(Vector2Int start, Vector2Int goal)
+        public CacheKey(Vector2Int start, Vector2Int goal, string layoutHash)
         {
             this.start = start; // 시작 지점
             this.goal = goal; // 목표 지점
+            this.layoutHash = layoutHash; // 레이아웃 해시
         }
 
         // 해시 코드 계산
         public override int GetHashCode()
         {
-            int startHash = start.GetHashCode(); // start의 해시 코드 계산
-            int goalHash = goal.GetHashCode(); // goal의 해시 코드 계산
-
-            return startHash + goalHash * 31; // 31은 소수로, 해시 충돌을 줄이기 위해 사용
+            int hash = start.GetHashCode(); // start의 해시 코드 계산
+            hash = hash * 31 + goal.GetHashCode(); // goal의 해시 코드 계산
+            hash = hash * 31 + (layoutHash?.GetHashCode() ?? 0); // layoutHash의 해시 코드 계산
+            return hash; // 최종 해시 코드 반환
         }
 
         // 동등성 비교
@@ -32,7 +35,7 @@ namespace Core
         {
             if (obj is CacheKey other) // obj가 CacheKey 타입인지 확인
             {
-                return start == other.start && goal == other.goal; // start와 goal이 모두 동일한지 비교
+                return start == other.start && goal == other.goal && layoutHash == other.layoutHash; // start와 goal이 모두 동일한지 비교
             }
 
             return false; // obj가 CacheKey 타입이 아니면 false 반환
@@ -81,13 +84,17 @@ namespace Core
         private bool showStatistics = true; // 통계 표시 여부
 
         private Dictionary<CacheKey, CachedPath> cache; // 캐시 저장소
+        private string currentLayoutHash = ""; // 현재 레이아웃 해시
 
         private int hitCount = 0; // 캐시 적중 횟수
         private int missCount = 0; // 캐시 미스 횟수
         private int totalQueries = 0; // 총 조회 횟수
 
         private float lastGCLogTime = 0f; // 마지막 GC 로그 출력 시간
+        private float lastInvalidateLogTime = 0f; // 마지막 무효화 로그 출력 시간
         private const float GCLogInterval = 60f; // 60초마다 GC 로그 출력
+        private const float InvalidateLogInterval = 60f; // 60초마다 무효화 로그 출력
+        private int pendingInvalidateCount = 0; // 대기 중인 무효화 횟수
 
         private void Awake()
         {
@@ -101,10 +108,20 @@ namespace Core
             }
         }
 
+        public void SetLayoutHash(string layoutHash) // 레이아웃 해시 설정
+        {
+            if (currentLayoutHash != layoutHash) // 레이아웃 해시가 변경되었는지 확인
+            {
+                string oldHash = currentLayoutHash; // 이전 레이아웃 해시 저장
+                currentLayoutHash = layoutHash; // 레이아웃 해시 갱신
+                InvalidateAll($"layout_hash 변경: {oldHash} -> {layoutHash}"); // 레이아웃이 변경되면 모든 캐시 무효화
+            }
+        }
+
         public bool TryGet(Vector2Int start, Vector2Int goal, out CachedPath result) // 캐시에서 경로를 조회
         {
             totalQueries++; // 총 조회 횟수 증가
-            CacheKey key = new CacheKey(start, goal); // 캐시 키 생성
+            CacheKey key = new CacheKey(start, goal, currentLayoutHash); // 캐시 키 생성
 
             if (cache.TryGetValue(key, out result)) // 캐시에서 경로 조회 시도
             {
@@ -133,7 +150,7 @@ namespace Core
 
         public void Put(Vector2Int start, Vector2Int goal, CachedPath result) // 캐시에 경로 저장
         {
-            CacheKey key = new CacheKey(start, goal); // 캐시 키 생성
+            CacheKey key = new CacheKey(start, goal, currentLayoutHash); // 캐시 키 생성
 
             if (cache.Count >= maxCacheSize && !cache.ContainsKey(key)) // 캐시 크기 초과 시 오래된 항목 제거
             {
@@ -174,7 +191,7 @@ namespace Core
             }
         }
 
-        public void InvalidateAll() // 모든 캐시 무효화
+        public void InvalidateAll(string reason) // 모든 캐시 무효화
         {
             int oldCount = cache.Count; // 이전 캐시 크기
             cache.Clear(); // 캐시 초기화
@@ -185,7 +202,65 @@ namespace Core
             
             if (enableDetailedLogging) // 상세 로그 출력
             {
-                Debug.Log($"[PathCache] 모든 캐시 무효화 - 이전 크기: {oldCount}");
+                Debug.Log($"[PathCache] 모든 캐시 무효화 - 이유: {reason} 이전 크기: {oldCount}");
+            }
+        }
+
+        public void InvalidateEdges(List<(Vector2Int from, Vector2Int to)> edges) // 특정 엣지 무효화
+        {
+            if (edges == null || edges.Count == 0) // 무효화할 엣지가 없으면 반환
+            {
+                return;
+            }
+
+            var edgeSet = new HashSet<(Vector2Int, Vector2Int)>(edges); // 영향을 받는 엣지 집합
+            var keysToRemove = new List<CacheKey>(); // 제거할 캐시 키 리스트
+            
+            foreach (var keyValue in cache) // 캐시 항목 순회
+            {
+                if (keyValue.Value.path == null || keyValue.Value.path.Count < 2) // 경로가 없거나 너무 짧으면 건너뜀
+                {
+                    continue; // 다음 항목으로
+                }
+
+                for (int i = 0; i < keyValue.Value.path.Count - 1; i++) // 경로의 각 엣지 순회
+                {
+                    var edge = (keyValue.Value.path[i], keyValue.Value.path[i + 1]); // 현재 엣지
+                    if (edgeSet.Contains(edge)) // 현재 엣지가 영향을 받는 엣지에 포함되면 제거
+                    {
+                        keysToRemove.Add(keyValue.Key); // 제거할 키에 추가
+                        break; // 다음 캐시 항목으로
+                    }
+                }
+            }
+
+            foreach (var key in keysToRemove) // 제거할 키 순회
+            {
+                cache.Remove(key); // 캐시에서 키 제거
+            }
+            
+            pendingInvalidateCount += keysToRemove.Count; // 대기 중인 무효화 횟수 증가
+            
+            bool isEditorMode = Application.isEditor; // 에디터 모드 여부 확인
+
+            if (isEditorMode) // 에디터 모드에서는 상세 로그 출력
+            {
+                var edgeString = edges.Select(e => $"({e.from.x}, {e.from.y}) -> ({e.to.x}, {e.to.y})").Take(10); // 영향을 받는 엣지 문자열 리스트
+                string edgeList = string.Join(", ", edgeString); // 엣지 문자열 합치기
+                if (edges.Count > 10) // 너무 많은 엣지가 있으면 생략 표시
+                {
+                    edgeList += $"... (총 {edges.Count()}개"; // 총 엣지 개수 표시
+                }
+                Debug.Log($"[PathCache] 엣지 무효화 요청 - 제거된 항목: {keysToRemove.Count}, 현재 크기: {cache.Count}, 무효화된 엣지: {edgeList}");
+            }
+            else
+            {
+                if (Time.realtimeSinceStartup - lastInvalidateLogTime >= InvalidateLogInterval) // 주기적으로 무효화 로그 출력
+                {
+                    lastInvalidateLogTime = Time.realtimeSinceStartup; // 마지막 로그 시간 갱신
+                    Debug.Log($"cache invalidate edges - 제거된 항목: {keysToRemove.Count}, 현재 크기: {cache.Count}, 대기 중인 무효화 횟수: {pendingInvalidateCount}");
+                    pendingInvalidateCount = 0; // 대기 중인 무효화 횟수 초기화
+                }
             }
         }
 
