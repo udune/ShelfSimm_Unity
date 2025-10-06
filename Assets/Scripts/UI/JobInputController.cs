@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using Core;
 using TMPro;
 using UnityEngine;
@@ -85,16 +86,14 @@ namespace UI
                 return; // 종료
             }
             
-            bookDropdown.ClearOptions(); // 기존 옵션 제거
-            bookDropdown.AddOptions(new List<string> // 더미 도서 목록 추가
+            BookRegistry bookRegistry = FindObjectOfType<BookRegistry>(); // 씬에서 BookRegistry 컴포넌트 탐색
+            if (bookRegistry != null) // 도서 레지스트리가 있을 때
             {
-                "도서를 선택하세요",
-                "The Great Gatsby",
-                "1984",
-                "To Kill a Mockingbird",
-                "Pride and Prejudice"
-            });
-            bookDropdown.value = 0; // 기본값 설정
+                var books = bookRegistry.GetAllAvailableBooks(); // 모든 도서 목록 가져오기
+                var options = new List<string> { "도서를 선택하세요" }; // 기본 옵션 추가
+                options.AddRange(books.Select(book => book.DisplayText)); // 도서 이름 추가
+                bookDropdown.AddOptions(options); // 드롭다운에 옵션 추가
+            }
         }
 
         private void OnCellCodesChanged(string input) // 칸 코드 입력 필드 값 변경 시 호출되는 메서드
