@@ -98,18 +98,27 @@ namespace Core
 
         private void Awake()
         {
-            // 캐시 초기화
-            cache = new Dictionary<CacheKey, CachedPath>();
+            EnsureCacheInitialized();
+        }
 
-            // 초기화 로그 출력
-            if (enableDetailedLogging)
+        private void EnsureCacheInitialized() // 캐시 초기화 확인
+        {
+            if (cache == null) // 캐시가 null이면 초기화
             {
-                Debug.Log($"[PathCache] 초기화 완료 - 최대 크기: {maxCacheSize}");
+                cache = new Dictionary<CacheKey, CachedPath>();
+
+                // 초기화 로그 출력
+                if (enableDetailedLogging)
+                {
+                    Debug.Log($"[PathCache] 초기화 완료 - 최대 크기: {maxCacheSize}");
+                }
             }
         }
 
         public void SetLayoutHash(string layoutHash) // 레이아웃 해시 설정
         {
+            EnsureCacheInitialized(); // 캐시 초기화 확인
+
             if (currentLayoutHash != layoutHash) // 레이아웃 해시가 변경되었는지 확인
             {
                 string oldHash = currentLayoutHash; // 이전 레이아웃 해시 저장
@@ -120,6 +129,8 @@ namespace Core
 
         public bool TryGet(Vector2Int start, Vector2Int goal, out CachedPath result) // 캐시에서 경로를 조회
         {
+            EnsureCacheInitialized(); // 캐시 초기화 확인
+
             totalQueries++; // 총 조회 횟수 증가
             CacheKey key = new CacheKey(start, goal, currentLayoutHash); // 캐시 키 생성
 
@@ -150,6 +161,8 @@ namespace Core
 
         public void Put(Vector2Int start, Vector2Int goal, CachedPath result) // 캐시에 경로 저장
         {
+            EnsureCacheInitialized(); // 캐시 초기화 확인
+
             CacheKey key = new CacheKey(start, goal, currentLayoutHash); // 캐시 키 생성
 
             if (cache.Count >= maxCacheSize && !cache.ContainsKey(key)) // 캐시 크기 초과 시 오래된 항목 제거

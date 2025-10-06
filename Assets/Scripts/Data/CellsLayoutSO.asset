@@ -28,7 +28,7 @@ MonoBehaviour:
     approach_priority: []
     blocked: 0
   - code: A15
-    x: 5
+    x: 3
     y: 3
     width: 90
     height: 200
