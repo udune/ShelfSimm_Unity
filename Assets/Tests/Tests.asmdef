@@ -2,7 +2,8 @@
     "name": "Tests",
     "references": [
         "Core",
-        "Data"
+        "Data",
+        "Managers"
     ],
     "optionalUnityReferences": [
         "TestAssemblies"

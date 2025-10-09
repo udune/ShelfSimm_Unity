@@ -1,10 +1,11 @@
 using System.Collections.Generic;
 using System.Security.Cryptography;
 using System.Text;
+using Core;
 using Data;
 using UnityEngine;
 
-namespace Core
+namespace Managers
 {
     // LayoutHashManager는 CellsLayoutSO의 레이아웃 정보를 기반으로 고유한 해시 값을 생성하고 관리하는 클래스입니다.
     public class LayoutHashManager : MonoBehaviour

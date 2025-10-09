@@ -1,6 +1,7 @@
 using NUnit.Framework;
 using UnityEngine;
 using Core;
+using Managers;
 using Data;
 
 namespace Tests.EditMode
