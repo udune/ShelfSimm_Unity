@@ -76,10 +76,14 @@ namespace Core
             Debug.Log($"작업 처리 시작 (예상 소요시간: {handleDuration}초)");
         }
 
-        private void UpdateHandling() // 작업 처리 시작
+        private void UpdateHandling() // 작업 처리 업데이트
         {
-            handleTimer += Time.deltaTime; // 작업 처리 타이머 초기화
-            if (handleTimer >= handleDuration) // 작업 처리 시간이 경과한 경우
+            handleTimer += Time.deltaTime; // 타이머 증가
+
+            // config.handleTime이 동적으로 변경될 수 있으므로 매번 확인
+            float currentHandleTime = config != null ? config.handleTime : handleDuration;
+
+            if (handleTimer >= currentHandleTime) // 작업 처리 시간이 경과한 경우
             {
                 OnHandleComplete(); // 작업 완료 처리
             }

@@ -2,7 +2,7 @@ using System;
 using Core;
 using NUnit.Framework;
 
-namespace Tests.EditMode
+namespace Tests_EditMode
 {
     // CodeNormalizer 클래스에 대한 단위 테스트 클래스
     public class CodeNormalizerTests

@@ -3,7 +3,7 @@ using UnityEngine;
 using Core;  // 기존 Core namespace
 using Data;  // 기존 ErrorCode
 
-namespace Tests.EditMode  // 기존 Tests namespace
+namespace Tests_EditMode  // 기존 Tests namespace
 {
     public class CodeRegistryTests
     {

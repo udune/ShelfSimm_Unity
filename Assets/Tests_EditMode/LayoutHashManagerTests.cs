@@ -4,7 +4,7 @@ using Core;
 using Managers;
 using Data;
 
-namespace Tests.EditMode
+namespace Tests_EditMode
 {
     /// <summary>
     /// T-205: 캐시 키에 layout_hash 포함 + 전역 퍼지 테스트

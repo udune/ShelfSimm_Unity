@@ -5,7 +5,7 @@ using Core;
 using Data;
 using Object = UnityEngine.Object;
 
-namespace Tests.EditMode
+namespace Tests_EditMode
 {
     /// <summary>
     /// T-105: 도서 드롭다운 바인딩 (더미데이터) 테스트
