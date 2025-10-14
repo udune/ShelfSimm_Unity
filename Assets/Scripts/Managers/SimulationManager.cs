@@ -1,5 +1,6 @@
 using System;
 using Core;
+using Data;
 using UnityEngine;
 using Random = UnityEngine.Random;
 
@@ -14,6 +15,7 @@ namespace Managers
         [SerializeField] private RobotController robotController; // 로봇 컨트롤러 참조
 
         private bool isPaused; // 시뮬레이션 일시정지 상태
+        private Summary summary; // 시뮬레이션 요약 정보
 
         private void Awake() // 싱글톤 패턴 구현
         {
@@ -41,10 +43,86 @@ namespace Managers
         private void InitializeSimulation() // 시뮬레이션 초기화 메서드
         {
             Time.fixedDeltaTime = 0.02f; // 고정 업데이트 간격 설정
-            
             Random.InitState(config.randomSeed); // 랜덤 시드 초기화
+
+            summary = new Summary(); // 요약 정보 초기화
             
             Debug.Log($"시뮬레이션 초기화 완료: Robot Speed = {config.robotSpeed}, Handle Time = {config.handleTime}, Move Timeout = {config.moveTimeoutSec}, Top N = {config.topN}, Warehouse Pos = {config.warehousePos}");
+        }
+
+        // 시뮬레이션 요약 정보 반환 메서드
+        public void SetTotalTargets(int count)
+        {
+            if (summary != null) // summary가 초기화된 경우에만 설정
+            {
+                summary.totalTargets = count; // 총 목표 수 설정
+            }
+        }
+        
+        public void RecordSuccess() // 성공 기록 메서드
+        {
+            if (summary != null) // summary가 초기화된 경우에만 기록
+            {
+                summary.RecordSuccess(); // 성공 기록
+                UpdateDashboard(); // 대시보드 업데이트
+            }
+        }
+
+        public void RecordFailure(ErrorCode errorCode) // 실패 기록 메서드
+        {
+            if (summary != null) // summary가 초기화된 경우에만 기록
+            {
+                summary.RecordFailure(errorCode); // 실패 기록
+                UpdateDashboard(); // 대시보드 업데이트
+                CheckSimulationComplete(); // 시뮬레이션 완료 여부 체크
+            }
+        }
+        
+        private void CheckSimulationComplete() // 시뮬레이션 완료 여부 체크 메서드
+        {
+            if (summary == null)
+            {
+                return;
+            }
+            
+            int remaining = summary.totalTargets - summary.attempted; // 남은 목표 수 계산
+            if (remaining <= 0) // 모든 목표가 처리된 경우 
+            {
+                StopSimulation(); // 시뮬레이션 중지
+            }
+        }
+
+        private void StopSimulation()
+        {
+            if (summary == null)
+            {
+                return;
+            }
+            
+            Debug.Log(summary.ToString());
+
+            if (UIManager.Instance != null) // UIManager가 할당된 경우
+            {
+                UIManager.Instance.ShowSummary(summary); // 요약 정보 UI에 표시
+            }
+            
+            if (robotController != null)
+            {
+                robotController.Stop(); // 로봇 컨트롤러 중지
+            }
+        }
+        
+        public Summary GetSummary() // 시뮬레이션 요약 정보 반환 메서드
+        {
+            return summary; // 요약 정보 반환
+        }
+
+        private void UpdateDashboard() // 대시보드 UI 업데이트 메서드
+        {
+            if (UIManager.Instance != null && summary != null) // UIManager와 summary가 초기화된 경우
+            {
+                UIManager.Instance.UpdateDashboard(summary); // 대시보드 업데이트
+            }
         }
 
         public void TogglePause() // 시뮬레이션 일시정지 토글 메서드
