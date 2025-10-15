@@ -38,7 +38,10 @@ public class GridRendererExample : MonoBehaviour
     
     void Update()
     {
-        if (!autoSimulate) return;
+        if (!autoSimulate)
+        {
+            return;
+        }
         
         timer += Time.deltaTime;
         if (timer >= simulateInterval)
@@ -50,19 +53,28 @@ public class GridRendererExample : MonoBehaviour
     
     void SimulateRobotMovement()
     {
-        // 이전 위치 지우기
         if (lastRobotPos.x >= 0)
         {
             gridRenderer.UpdateCell(lastRobotPos.x, lastRobotPos.y, "empty");
         }
-        
-        // 새 위치
-        int x = Random.Range(0, 50);
-        int y = Random.Range(0, 50);
-        
-        gridRenderer.UpdateCell(x, y, "robot");
+    
+        int dx = Random.Range(-1, 2);
+        int dy = Random.Range(-1, 2);
+    
+        int newX = Mathf.Clamp(lastRobotPos.x + dx, 0, 49);
+        int newY = Mathf.Clamp(lastRobotPos.y + dy, 0, 49);
+    
+        // 장애물이면 이동 안함
+        if (gridRenderer.GetCellType(newX, newY) == "obstacle")
+        {
+            Debug.Log("장애물로 인해 이동 불가");
+            newX = lastRobotPos.x;
+            newY = lastRobotPos.y;
+        }
+    
+        gridRenderer.UpdateCell(newX, newY, "robot");
         gridRenderer.RenderChanges();
-        
-        lastRobotPos = new Vector2Int(x, y);
+    
+        lastRobotPos = new Vector2Int(newX, newY);
     }
 }

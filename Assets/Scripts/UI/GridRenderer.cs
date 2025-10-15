@@ -25,7 +25,10 @@ public class GridRenderer : MonoBehaviour
         gridTexture = new Texture2D(texWidth, texHeight);
         gridTexture.filterMode = FilterMode.Point; // 픽셀 아트 스타일
 
-        if (gridImage != null) gridImage.texture = gridTexture;
+        if (gridImage != null)
+        {
+            gridImage.texture = gridTexture;
+        }
 
         // 전체 초기화
         ClearGrid();
@@ -90,6 +93,12 @@ public class GridRenderer : MonoBehaviour
         }
     }
 
+    public string GetCellType(int x, int y)
+    {
+        var pos = new Vector2Int(x, y);
+        return cellStates.ContainsKey(pos) ? cellStates[pos] : "empty";
+    }
+    
     private Color GetColor(string type)
     {
         return type switch

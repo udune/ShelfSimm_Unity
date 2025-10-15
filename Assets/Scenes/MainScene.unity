@@ -6744,7 +6744,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::GridRenderer
   gridImage: {fileID: 1015332418}
-  cellSize: 10
+  cellSize: 5
 --- !u!222 &1015332417
 CanvasRenderer:
   m_ObjectHideFlags: 0
