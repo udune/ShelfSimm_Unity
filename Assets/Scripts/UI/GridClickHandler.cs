@@ -1,4 +1,3 @@
-using System;
 using Managers;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -11,8 +10,7 @@ public class GridClickHandler : MonoBehaviour, IPointerClickHandler
     [SerializeField] private RawImage gridImage;
     [SerializeField] private int cellSize = 10; // 셀 크기 (픽셀 단위)
     
-    [Header("Cell Data Registry")]
-    [SerializeField] private CellRegistry cellRegistry;
+    [SerializeField] private CellInfoPanel infoPanel;
 
     private CellHighlightManager highlightManager;
     private int gridWidth;
@@ -33,11 +31,6 @@ public class GridClickHandler : MonoBehaviour, IPointerClickHandler
         if (highlightManager == null)
         {
             highlightManager = FindObjectOfType<CellHighlightManager>();
-        }
-
-        if (cellRegistry == null)
-        {
-            cellRegistry = FindObjectOfType<CellRegistry>();
         }
 
         gridWidth = 50;
@@ -76,10 +69,9 @@ public class GridClickHandler : MonoBehaviour, IPointerClickHandler
             PositionHighlight(gridPos);
         }
             
-        // 6. 정보 패널 업데이트
-        CellInfoPanel infoPanel = FindObjectOfType<CellInfoPanel>();
         if (infoPanel != null)
         {
+            Debug.Log("true");
             infoPanel.UpdateCellInfo(cellCode, isAccessible);
         }
             
@@ -118,11 +110,6 @@ public class GridClickHandler : MonoBehaviour, IPointerClickHandler
     
     private string GetCellCode(int x, int y)
     {
-        if (cellRegistry != null)
-        {
-            return cellRegistry.GetCellCode(x, y);
-        }
-            
         // 레지스트리가 없으면 기본 포맷 반환
         return $"Cell_{x}_{y}";
     }
@@ -134,12 +121,6 @@ public class GridClickHandler : MonoBehaviour, IPointerClickHandler
         if (cellType == "obstacle" || cellType == "bookshelf")
         {
             return false;
-        }
-            
-        // 셀 레지스트리에서 접근성 확인
-        if (cellRegistry != null)
-        {
-            return cellRegistry.IsAccessible(x, y);
         }
             
         return true;
