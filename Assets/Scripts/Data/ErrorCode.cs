@@ -12,7 +12,8 @@ namespace Data
         INVALID_LAYOUT,     // 잘못된 레이아웃
         DUPLICATE_CODE,     // 중복 코드
         OVERLAP_CELL,       // 칸 영역 겹침
-        INVALID_VALUE       // 잘못된 값
+        INVALID_VALUE,      // 잘못된 값
+        CANCELLED_BY_STOP   // 시뮬레이션 중지로 인한 취소
     }
     
     // ErrorCode 열거형에 대한 확장 메서드 클래스
@@ -34,6 +35,7 @@ namespace Data
                 ErrorCode.DUPLICATE_CODE => "중복된 코드입니다",
                 ErrorCode.OVERLAP_CELL => "칸 영역이 겹칩니다",
                 ErrorCode.INVALID_VALUE => "잘못된 값입니다",
+                ErrorCode.CANCELLED_BY_STOP => "사용자에 의해 작업이 취소되었습니다",
                 _ => "알 수 없는 오류입니다"
             };
         }
