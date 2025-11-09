@@ -4,165 +4,150 @@ using UnityEngine;
 
 namespace Core
 {
-    // 로봇 상태를 나타내는 열거형
     public class RobotController : MonoBehaviour
     {
-        [SerializeField] private SimulationConfig config; // 시뮬레이션 설정 참조
+        [SerializeField] private SimulationConfig config;
 
-        private RobotState currentState = RobotState.IDLE; // 현재 로봇 상태
-        private float handleTimer; // 작업 처리 타이머
-        private float handleDuration; // 작업 처리 시간
-        private bool isPaused; // 일시정지 상태
-        private bool isStopped; // 중지 상태
-        
-        public RobotState CurrentState => currentState; // 현재 상태 반환
-        public bool IsPaused => isPaused; // 일시정지 상태 반환
-        public bool IsStopped => isStopped; // 중지 상태 반환
+        private RobotState currentState = RobotState.IDLE;
+        private float handleTimer;
+        private bool isPaused;
+        private bool isStopped;
 
-        private void Start() // 초기화
-        {
-            if (config == null) // config가 할당되지 않은 경우 오류 로그 출력
-            {
-                Debug.LogError("SimulationConfig is not assigned.");
-                return;
-            }
-            
-            currentState = RobotState.IDLE; // 초기 상태 설정
-            isStopped = false; // 중지 상태 초기화
-        }
+        private Job currentJob;
+        private Cell targetCell;
+        private Book targetBook;
+        private Action<ErrorCode> onJobCompleteCallback;
+
+        public RobotState CurrentState => currentState;
+        public bool IsPaused => isPaused;
+        public bool IsStopped => isStopped;
 
         private void Update()
         {
-            if (isStopped || isPaused) // 일시정지 또는 중지 상태인 경우 업데이트 중지
+            if (isStopped || isPaused || currentState != Core.RobotState.HANDLING)
             {
                 return;
             }
-
-            switch (currentState) // 현재 상태에 따라 처리
-            {
-                case RobotState.HANDLING: // 작업 처리 중
-                    UpdateHandling(); // 작업 처리 업데이트
-                    break;
-            }
+            UpdateHandling();
         }
 
-        public void TransitionTo(RobotState newState) // 상태 전환 메서드
+        public void StartJob(Job job, Cell cell, Book book, Action<ErrorCode> onComplete)
         {
-            if (isStopped) // 중지 상태인 경우 상태 전환 불가
+            if (currentState != Core.RobotState.IDLE)
             {
-                return;
-            }
-            
-            if (currentState == newState) // 현재 상태와 전환하려는 상태가 같은 경우 아무 작업도 수행하지 않음
-            {
+                Debug.LogWarning("로봇이 다른 작업을 수행 중입니다. 새 작업이 거부되었습니다.");
+                onComplete?.Invoke(ErrorCode.ROBOT_BUSY);
                 return;
             }
 
-            OnStateExit(currentState); // 현재 상태 종료 작업 수행
-            currentState = newState; // 상태 변경
-            OnStateEnter(currentState); // 새로운 상태 진입 작업 수행
-        }
+            currentJob = job;
+            targetCell = cell;
+            targetBook = book;
+            onJobCompleteCallback = onComplete;
 
-        private void OnStateEnter(RobotState state) // 상태 진입 시 필요한 작업 수행
-        {
-            switch (state) // 상태에 따른 초기화 작업
+            ErrorCode errorCode;
+            bool canProceed = (job.Action == Data.JobAction.PUT)
+                ? cell.CanPutBook(book, job.Quantity, out errorCode)
+                : cell.CanPickBook(job.Quantity, out errorCode);
+
+            if (canProceed)
             {
-                case RobotState.HANDLING: // 작업 처리 상태 진입 시
-                    StartHandling(); // 작업 처리 시작
-                    break;
+                TransitionTo(Core.RobotState.HANDLING);
+            }
+            else
+            {
+                Debug.LogError($"[Job Failed] {job.Action} 작업 불가: {errorCode.ToMessage()}");
+                onJobCompleteCallback?.Invoke(errorCode);
+                ClearJobData();
             }
         }
 
-        private void OnStateExit(RobotState state) // 상태 종료 시 필요한 작업 수행
+        private void TransitionTo(Core.RobotState newState)
         {
-            // 상태 종료 시 필요한 작업 수행
-        }
+            if ((isStopped && newState != Core.RobotState.IDLE) || currentState == newState) return;
 
-        private void StartHandling() // 작업 처리 시작
-        {
-            handleDuration = config.handleTime; // 작업 처리 시간 설정
-            handleTimer = 0f; // 작업 처리 타이머 초기화
-            Debug.Log($"작업 처리 시작 (예상 소요시간: {handleDuration}초)");
-        }
-
-        private void UpdateHandling() // 작업 처리 업데이트
-        {
-            handleTimer += Time.deltaTime; // 타이머 증가
-
-            // config.handleTime이 동적으로 변경될 수 있으므로 매번 확인
-            float currentHandleTime = config != null ? config.handleTime : handleDuration;
-
-            if (handleTimer >= currentHandleTime) // 작업 처리 시간이 경과한 경우
+            currentState = newState;
+            if (currentState == Core.RobotState.HANDLING)
             {
-                OnHandleComplete(); // 작업 완료 처리
+                StartHandling();
             }
         }
 
-        private void OnHandleComplete() // 작업 완료 처리
+        private void StartHandling()
         {
-            Debug.Log($"작업 처리 완료 (소요시간: {handleTimer:F2}초)");
-            
-            // 재고 수량 업데이트 등 작업 완료 후 필요한 로직 추가
-            
-            TransitionTo(RobotState.IDLE); // 작업 완료 후 대기 상태로 전환
+            handleTimer = 0f;
+            Debug.Log($"[Job Start] {currentJob.Action} 작업 처리 시작 (예상 소요시간: {config.handleTime}초)");
         }
 
-        public void Pause() // 로봇 일시정지
+        private void UpdateHandling()
         {
-            if (isStopped)
+            handleTimer += Time.deltaTime;
+            if (handleTimer >= config.handleTime)
             {
-                return;
+                OnHandleComplete();
             }
-            
-            isPaused = true; // 일시정지 상태 설정
-            Debug.Log("로봇 일시정지");
+        }
+
+        private void OnHandleComplete()
+        {
+            Debug.Log($"[Job Success] 작업 처리 완료 (소요시간: {handleTimer:F2}초)");
+
+            if (currentJob.Action == Data.JobAction.PUT)
+            {
+                targetCell.PutBook(targetBook, currentJob.Quantity);
+            }
+            else // PICK
+            {
+                targetCell.PickBook(currentJob.Quantity);
+            }
+
+            onJobCompleteCallback?.Invoke(ErrorCode.NONE);
+            ClearJobData();
+            TransitionTo(Core.RobotState.IDLE);
+        }
+
+        public void Pause()
+        {
+            if (isStopped) return;
+            isPaused = true;
         }
         
-        public void Resume() // 로봇 재개
+        public void Resume()
         {
-            if (isStopped)
-            {
-                return;
-            }
-            
-            isPaused = false; // 일시정지 해제
-            Debug.Log("로봇 재개");
+            if (isStopped) return;
+            isPaused = false;
         }
 
         public void Stop()
         {
             isStopped = true;
-            Debug.Log("로봇 중지");
-
-            CancelCurrentJob(); // 현재 작업 취소
-            
-            ForceTransitionToIdle();  // 강제로 IDLE 상태로 전환
-            
-            Debug.Log("로봇이 강제로 IDLE 상태로 전환되었습니다.");
+            CancelCurrentJob();
+            TransitionTo(Core.RobotState.IDLE);
         }
         
-        private void CancelCurrentJob() // 현재 작업 취소
+        private void CancelCurrentJob()
         {
-            if (currentState == RobotState.HANDLING) // 작업 처리 중인 경우
+            if (currentState == Core.RobotState.HANDLING && currentJob != null)
             {
                 Debug.Log("현재 작업이 취소되었습니다.");
-                // 현재 작업 취소 로직 추가 (예: 재고 수량 복원 등)
-                handleTimer = 0f; // 타이머 초기화
+                onJobCompleteCallback?.Invoke(ErrorCode.CANCELLED_BY_STOP);
+                ClearJobData();
             }
         }
-        
-        private void ForceTransitionToIdle() // 강제로 IDLE 상태로 전환
+
+        private void ClearJobData()
         {
-            OnStateExit(currentState); // 현재 상태 종료 작업 수행
-            currentState = RobotState.IDLE; // 상태를 IDLE로 변경
+            currentJob = null;
+            targetCell = null;
+            targetBook = null;
+            onJobCompleteCallback = null;
         }
         
-        public void UpdateHandleTime(float newHandleTime) // 작업 처리 시간 업데이트
+        public void UpdateHandleTime(float newHandleTime)
         {
-            if (newHandleTime > 0) // 유효한 작업 처리 시간인 경우
+            if (newHandleTime > 0)
             {
-                config.handleTime = newHandleTime; // 작업 처리 시간 업데이트
-                Debug.Log($"작업 처리 시간 업데이트: {newHandleTime}초");
+                config.handleTime = newHandleTime;
             }
         }
     }

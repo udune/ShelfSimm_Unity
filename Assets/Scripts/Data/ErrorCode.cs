@@ -3,6 +3,7 @@ namespace Data
     // 다양한 오류 코드를 나타내는 열거형
     public enum ErrorCode
     {
+        NONE,               // 오류 없음
         CAPACITY_FULL,      // 칸이 가득 참
         HEIGHT_LIMIT,       // 높이 제한 초과
         ROUTE_BLOCKED,      // 경로 차단됨
@@ -13,7 +14,9 @@ namespace Data
         DUPLICATE_CODE,     // 중복 코드
         OVERLAP_CELL,       // 칸 영역 겹침
         INVALID_VALUE,      // 잘못된 값
-        CANCELLED_BY_STOP   // 시뮬레이션 중지로 인한 취소
+        CANCELLED_BY_STOP,  // 시뮬레이션 중지로 인한 취소
+        INSUFFICIENT_STOCK, // 재고 부족
+        ROBOT_BUSY          // 로봇이 다른 작업 중
     }
     
     // ErrorCode 열거형에 대한 확장 메서드 클래스
@@ -25,6 +28,7 @@ namespace Data
             // 각 오류 코드에 대한 메시지 반환
             return errorCode switch
             {
+                ErrorCode.NONE => "정상 처리",
                 ErrorCode.CAPACITY_FULL => "이 칸은 가득 찼습니다",
                 ErrorCode.HEIGHT_LIMIT => "도서 높이가 칸 높이보다 큽니다",
                 ErrorCode.ROUTE_BLOCKED => "접근 가능한 경로가 없습니다",
@@ -36,6 +40,8 @@ namespace Data
                 ErrorCode.OVERLAP_CELL => "칸 영역이 겹칩니다",
                 ErrorCode.INVALID_VALUE => "잘못된 값입니다",
                 ErrorCode.CANCELLED_BY_STOP => "사용자에 의해 작업이 취소되었습니다",
+                ErrorCode.INSUFFICIENT_STOCK => "칸의 재고가 부족합니다",
+                ErrorCode.ROBOT_BUSY => "로봇이 현재 다른 작업을 수행 중입니다",
                 _ => "알 수 없는 오류입니다"
             };
         }
