@@ -82,9 +82,9 @@ namespace API
         {
             string json = JsonUtility.ToJson(request);
             if (logRequests)
-                Debug.Log($"[API] POST /runs - Body: {json}");
+                Debug.Log($"[API] POST /Runs - Body: {json}");
     
-            using (UnityWebRequest www = new UnityWebRequest($"{baseUrl}/runs", "POST"))
+            using (UnityWebRequest www = new UnityWebRequest($"{baseUrl}/Runs", "POST"))
             {
                 byte[] bodyRaw = Encoding.UTF8.GetBytes(json);
                 www.uploadHandler = new UploadHandlerRaw(bodyRaw);
@@ -114,9 +114,9 @@ namespace API
         {
             string json = JsonUtility.ToJson(request);
             if (logRequests)
-                Debug.Log($"[API] POST /jobs/batch - Body: {json}");
+                Debug.Log($"[API] POST /Jobs/batch - Body: {json}");
     
-            using (UnityWebRequest www = new UnityWebRequest($"{baseUrl}/jobs/batch", "POST"))
+            using (UnityWebRequest www = new UnityWebRequest($"{baseUrl}/Jobs/batch", "POST"))
             {
                 byte[] bodyRaw = Encoding.UTF8.GetBytes(json);
                 www.uploadHandler = new UploadHandlerRaw(bodyRaw);
@@ -145,9 +145,9 @@ namespace API
         {
             string json = JsonUtility.ToJson(request);
             if (logRequests)
-                Debug.Log($"[API] PATCH /jobs/{jobId}/result - Body: {json}");
+                Debug.Log($"[API] PATCH /Jobs/{jobId}/result - Body: {json}");
     
-            using (UnityWebRequest www = new UnityWebRequest($"{baseUrl}/jobs/{jobId}/result", "PATCH"))
+            using (UnityWebRequest www = new UnityWebRequest($"{baseUrl}/Jobs/{jobId}/result", "PATCH"))
             {
                 byte[] bodyRaw = Encoding.UTF8.GetBytes(json);
                 www.uploadHandler = new UploadHandlerRaw(bodyRaw);
@@ -175,9 +175,9 @@ namespace API
         {
             string json = JsonUtility.ToJson(request);
             if (logRequests)
-                Debug.Log($"[API] PATCH /runs/{runId}/status - Body: {json}");
+                Debug.Log($"[API] PATCH /Runs/{runId}/status - Body: {json}");
 
-            using (UnityWebRequest www = new UnityWebRequest($"{baseUrl}/runs/{runId}/status", "PATCH"))
+            using (UnityWebRequest www = new UnityWebRequest($"{baseUrl}/Runs/{runId}/status", "PATCH"))
             {
                 byte[] bodyRaw = Encoding.UTF8.GetBytes(json);
                 www.uploadHandler = new UploadHandlerRaw(bodyRaw);
@@ -204,9 +204,9 @@ namespace API
         public IEnumerator GetRunResultsCsv(string runId, Action<string> onSuccess, Action<string> onError = null)
         {
             if (logRequests)
-                Debug.Log($"[API] GET /runs/{runId}/results.csv");
+                Debug.Log($"[API] GET /Runs/{runId}/results.csv");
 
-            using (UnityWebRequest www = UnityWebRequest.Get($"{baseUrl}/runs/{runId}/results.csv"))
+            using (UnityWebRequest www = UnityWebRequest.Get($"{baseUrl}/Runs/{runId}/results.csv"))
             {
                 www.certificateHandler = new BypassCertificate();
                 yield return www.SendWebRequest();
