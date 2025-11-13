@@ -6526,9 +6526,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0fbd36dfc03a43b49ae1407f2f73c567, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::RobotSimulatorExample
-  moveTimeOutSec: 30
-  gridWidth: 50
-  gridHeight: 50
+  simulationManager: {fileID: 0}
 --- !u!1 &822818896
 GameObject:
   m_ObjectHideFlags: 0
@@ -11515,6 +11513,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: dada780c1413483bb69bc34788ab1bfd, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  apiClient: {fileID: 0}
+  useApiMode: 1
   config: {fileID: 11400000, guid: ebb46b30fffcbc246a120d21b036c7d2, type: 2}
   robotController: {fileID: 3215963422953575073, guid: 628bb9714dbc18e4ca4dd62fd358e690, type: 3}
 --- !u!1 &1789293630
