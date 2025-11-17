@@ -36,13 +36,13 @@ namespace Core
 
         private void Update()
         {
-            if (isStopped || isPaused || currentState != Core.RobotState.HANDLING) return;
+            if (isStopped || isPaused || currentState != RobotState.HANDLING) return;
             UpdateHandling();
         }
 
         public void StartJob(Job job, Cell cell, Book book, Action<Job, ErrorCode> onComplete)
         {
-            if (currentState != Core.RobotState.IDLE)
+            if (currentState != RobotState.IDLE)
             {
                 Debug.LogWarning("로봇이 다른 작업을 수행 중입니다. 새 작업이 거부되었습니다.");
                 onComplete?.Invoke(job, ErrorCode.ROBOT_BUSY);
@@ -63,7 +63,7 @@ namespace Core
 
             if (canProceed)
             {
-                TransitionTo(Core.RobotState.HANDLING);
+                TransitionTo(RobotState.HANDLING);
             }
             else
             {
@@ -74,9 +74,9 @@ namespace Core
             }
         }
 
-        private void TransitionTo(Core.RobotState newState)
+        private void TransitionTo(RobotState newState)
         {
-            if ((isStopped && newState != Core.RobotState.IDLE) || currentState == newState) return;
+            if ((isStopped && newState != RobotState.IDLE) || currentState == newState) return;
             currentState = newState;
         }
 
@@ -130,13 +130,13 @@ namespace Core
         public void Stop()
         {
             isStopped = true;
-            if (currentState == Core.RobotState.HANDLING && currentJob != null)
+            if (currentState == RobotState.HANDLING && currentJob != null)
             {
                 ReportJobResult(ErrorCode.CANCELLED_BY_STOP);
                 onJobCompleteCallback?.Invoke(currentJob, ErrorCode.CANCELLED_BY_STOP);
                 ClearJobData();
             }
-            TransitionTo(Core.RobotState.IDLE);
+            TransitionTo(RobotState.IDLE);
         }
 
         private void ClearJobData()
