@@ -16,7 +16,6 @@ namespace Tests_PlayMode
         private RobotController robotController;
         private SimulationConfig config;
 
-        // 테스트용 데이터
         private Job testJob;
         private Cell testCell;
         private Book testBook;
@@ -24,11 +23,9 @@ namespace Tests_PlayMode
         [SetUp]
         public void SetUp()
         {
-            // 설정 생성
             config = ScriptableObject.CreateInstance<SimulationConfig>();
             config.handleTime = 2f;
 
-            // SimulationManager, RobotController 생성 및 연결
             simManagerObj = new GameObject("SimulationManager");
             simManager = simManagerObj.AddComponent<SimulationManager>();
             robotObj = new GameObject("Robot");
@@ -42,7 +39,6 @@ namespace Tests_PlayMode
             robotConfigField?.SetValue(robotController, config);
             robotControllerField?.SetValue(simManager, robotController);
 
-            // 테스트용 데이터 생성
             testBook = new Book("Test Book", 30, 100);
             testCell = new Cell("A01", 100, 120);
             testJob = new Job(Data.JobAction.PUT, "A01", "Test Book", 1);
@@ -58,49 +54,42 @@ namespace Tests_PlayMode
 
         private void StartTestJob()
         {
-            // 네 번째 인자로 빈 콜백 함수를 전달
-            robotController.StartJob(testJob, testCell, testBook, _ => {});
+            robotController.StartJob(testJob, testCell, testBook, (job, errorCode) => {});
         }
 
         [UnityTest]
         public IEnumerator Pause_StopsHandlingTimer()
         {
-            // Given: 로봇이 작업을 시작
             StartTestJob();
             yield return new WaitForSeconds(0.5f);
             
-            // When: 일시정지
             simManager.TogglePause();
             yield return new WaitForSeconds(1f);
             
-            // Then: 여전히 HANDLING 상태 유지
             Assert.AreEqual(Core.RobotState.HANDLING, robotController.CurrentState);
-            Assert.IsTrue(robotController.IsPaused);
+            Assert.AreEqual(0f, Time.timeScale);
         }
 
         [UnityTest]
         public IEnumerator Resume_ContinuesTimerFromPausedPoint()
         {
-            // Given: 작업 시작 후 1초 경과
             StartTestJob();
             yield return new WaitForSeconds(1f);
             
-            // When: 일시정지 -> 1초 대기 -> 재개
             simManager.TogglePause();
             yield return new WaitForSeconds(1f);
             simManager.TogglePause(); // Resume
             
-            // Then: 남은 1초 후 작업 완료
             yield return new WaitForSeconds(1.2f);
             Assert.AreEqual(Core.RobotState.IDLE, robotController.CurrentState);
-            Assert.IsFalse(robotController.IsPaused);
+            Assert.AreEqual(1f, Time.timeScale);
         }
 
         [UnityTest]
         public IEnumerator HandleTime_ChangeReflectedAccurately()
         {
             // Given: handle_time을 3초로 변경
-            simManager.UpdateHandleTime(3f);
+            config.handleTime = 3f;
             
             // When: 작업 시작
             StartTestJob();

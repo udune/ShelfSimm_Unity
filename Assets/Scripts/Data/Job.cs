@@ -4,17 +4,19 @@ namespace Data
 
     public class Job
     {
+        public string JobId { get; set; } // 서버에서 발급한 고유 ID
         public JobAction Action { get; }
         public string CellCode { get; }
         public string BookTitle { get; }
         public int Quantity { get; }
 
-        public Job(JobAction action, string cellCode, string bookTitle, int quantity)
+        public Job(JobAction action, string cellCode, string bookTitle, int quantity, string jobId = null)
         {
             Action = action;
             CellCode = cellCode;
             BookTitle = bookTitle;
             Quantity = quantity;
+            JobId = jobId;
         }
     }
 }
