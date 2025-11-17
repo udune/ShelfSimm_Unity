@@ -1,19 +1,21 @@
 using System;
 using System.Collections;
+using System.Collections.Generic;
 using System.Text;
 using UnityEngine;
 using UnityEngine.Networking;
 
 namespace API
 {
-    // ===== DTO 클래스들 =====
+    #region DTO Classes
+
     [Serializable]
     public class CreateRunRequest
     {
         public int randomSeed;
-        public float handleTimeSec = 2f;
-        public float robotSpeedCellsPerSec = 3f;
-        public int topN = 3;
+        public float handleTimeSec;
+        public float robotSpeedCellsPerSec;
+        public int topN;
     }
     
     [Serializable]
@@ -28,8 +30,8 @@ namespace API
     [Serializable]
     public class JobDto
     {
-        public string action; // PUT, PICK
-        public string cellCode; // D20, A15
+        public string action;
+        public string cellCode;
         public string bookTitle;
         public int quantity;
     }
@@ -46,18 +48,20 @@ namespace API
     {
         public int accepted;
         public string runId;
+        // TODO: 서버 API가 Job ID 목록을 반환하도록 수정되면 아래 필드 활성화
+        // public string[] jobIds; 
     }
     
     [Serializable]
     public class UpdateJobResultRequest
     {
-        public string startTs; // ISO 8601
+        public string startTs;
         public string endTs;
         public float travelTimeSec;
         public float handleTimeSec;
         public float totalTimeSec;
         public int pathLengthCells;
-        public string result; // SUCCESS, FAIL
+        public string result;
         public string failReason;
         public string robotName;
     }
@@ -65,10 +69,44 @@ namespace API
     [Serializable]
     public class UpdateRunStatusRequest
     {
-        public string status; // COMPLETED, FAILED 등
+        public string status;
     }
-    
-    // ===== API 클라이언트 =====
+
+    [Serializable]
+    public class BookDto
+    {
+        public string id;
+        public string title;
+        public int thicknessMm;
+        public int heightMm;
+    }
+
+    [Serializable]
+    public class BookListDto
+    {
+        public List<BookDto> items;
+    }
+
+    [Serializable]
+    public class JobDetailsDto
+    {
+        public string id;
+        public string action;
+        public string cellCode;
+        public string bookTitle;
+        public int quantity;
+    }
+
+    [Serializable]
+    public class RunDetailsDto
+    {
+        public string id;
+        public string status;
+        public List<JobDetailsDto> jobs;
+    }
+
+    #endregion
+
     public class ApiClient : MonoBehaviour
     {
         [Header("API 설정")]
@@ -76,24 +114,18 @@ namespace API
         [SerializeField] private bool logRequests = true;
     
         private string currentRunId;
-    
-        // ===== 1. Run 생성 =====
+
         public IEnumerator CreateRun(CreateRunRequest request, Action<RunResponse> onSuccess, Action<string> onError = null)
         {
+            string url = $"{baseUrl}/Runs";
             string json = JsonUtility.ToJson(request);
-            if (logRequests)
-                Debug.Log($"[API] POST /Runs - Body: {json}");
-    
-            using (UnityWebRequest www = new UnityWebRequest($"{baseUrl}/Runs", "POST"))
+            if (logRequests) Debug.Log($"[API] POST {url} - Body: {json}");
+
+            using (UnityWebRequest www = UnityWebRequest.Post(url, json, "application/json"))
             {
-                byte[] bodyRaw = Encoding.UTF8.GetBytes(json);
-                www.uploadHandler = new UploadHandlerRaw(bodyRaw);
-                www.downloadHandler = new DownloadHandlerBuffer();
-                www.SetRequestHeader("Content-Type", "application/json");
                 www.certificateHandler = new BypassCertificate();
-    
                 yield return www.SendWebRequest();
-    
+
                 if (www.result == UnityWebRequest.Result.Success)
                 {
                     var response = JsonUtility.FromJson<RunResponse>(www.downloadHandler.text);
@@ -103,29 +135,23 @@ namespace API
                 }
                 else
                 {
-                    Debug.LogError($"[API] Error: {www.error}\\n{www.downloadHandler.text}");
+                    Debug.LogError($"[API] Error: {www.error}\n{www.downloadHandler.text}");
                     onError?.Invoke(www.error);
                 }
             }
         }
     
-        // ===== 2. Job 일괄 생성 =====
         public IEnumerator CreateJobsBatch(CreateJobsBatchRequest request, Action<JobsBatchResponse> onSuccess, Action<string> onError = null)
         {
+            string url = $"{baseUrl}/Jobs/batch";
             string json = JsonUtility.ToJson(request);
-            if (logRequests)
-                Debug.Log($"[API] POST /Jobs/batch - Body: {json}");
-    
-            using (UnityWebRequest www = new UnityWebRequest($"{baseUrl}/Jobs/batch", "POST"))
+            if (logRequests) Debug.Log($"[API] POST {url} - Body: {json}");
+
+            using (UnityWebRequest www = UnityWebRequest.Post(url, json, "application/json"))
             {
-                byte[] bodyRaw = Encoding.UTF8.GetBytes(json);
-                www.uploadHandler = new UploadHandlerRaw(bodyRaw);
-                www.downloadHandler = new DownloadHandlerBuffer();
-                www.SetRequestHeader("Content-Type", "application/json");
                 www.certificateHandler = new BypassCertificate();
-    
                 yield return www.SendWebRequest();
-    
+
                 if (www.result == UnityWebRequest.Result.Success)
                 {
                     var response = JsonUtility.FromJson<JobsBatchResponse>(www.downloadHandler.text);
@@ -134,29 +160,28 @@ namespace API
                 }
                 else
                 {
-                    Debug.LogError($"[API] Error: {www.error}");
+                    Debug.LogError($"[API] Error: {www.error}\n{www.downloadHandler.text}");
                     onError?.Invoke(www.error);
                 }
             }
         }
     
-        // ===== 3. Job 결과 업데이트 =====
         public IEnumerator UpdateJobResult(string jobId, UpdateJobResultRequest request, Action onSuccess = null, Action<string> onError = null)
         {
+            string url = $"{baseUrl}/Jobs/{jobId}/result";
             string json = JsonUtility.ToJson(request);
-            if (logRequests)
-                Debug.Log($"[API] PATCH /Jobs/{jobId}/result - Body: {json}");
-    
-            using (UnityWebRequest www = new UnityWebRequest($"{baseUrl}/Jobs/{jobId}/result", "PATCH"))
+            if (logRequests) Debug.Log($"[API] PATCH {url} - Body: {json}");
+
+            using (UnityWebRequest www = new UnityWebRequest(url, "PATCH"))
             {
                 byte[] bodyRaw = Encoding.UTF8.GetBytes(json);
                 www.uploadHandler = new UploadHandlerRaw(bodyRaw);
                 www.downloadHandler = new DownloadHandlerBuffer();
                 www.SetRequestHeader("Content-Type", "application/json");
                 www.certificateHandler = new BypassCertificate();
-    
+
                 yield return www.SendWebRequest();
-    
+
                 if (www.result == UnityWebRequest.Result.Success)
                 {
                     Debug.Log($"[API] Job Updated: {jobId}");
@@ -164,20 +189,19 @@ namespace API
                 }
                 else
                 {
-                    Debug.LogError($"[API] Error: {www.error}");
+                    Debug.LogError($"[API] Error: {www.error}\n{www.downloadHandler.text}");
                     onError?.Invoke(www.error);
                 }
             }
         }
 
-        // ===== 4. Run 상태 업데이트 =====
         public IEnumerator UpdateRunStatus(string runId, UpdateRunStatusRequest request, Action onSuccess = null, Action<string> onError = null)
         {
+            string url = $"{baseUrl}/Runs/{runId}/status";
             string json = JsonUtility.ToJson(request);
-            if (logRequests)
-                Debug.Log($"[API] PATCH /Runs/{runId}/status - Body: {json}");
+            if (logRequests) Debug.Log($"[API] PATCH {url} - Body: {json}");
 
-            using (UnityWebRequest www = new UnityWebRequest($"{baseUrl}/Runs/{runId}/status", "PATCH"))
+            using (UnityWebRequest www = new UnityWebRequest(url, "PATCH"))
             {
                 byte[] bodyRaw = Encoding.UTF8.GetBytes(json);
                 www.uploadHandler = new UploadHandlerRaw(bodyRaw);
@@ -194,44 +218,96 @@ namespace API
                 }
                 else
                 {
-                    Debug.LogError($"[API] Error: {www.error}");
+                    Debug.LogError($"[API] Error: {www.error}\n{www.downloadHandler.text}");
                     onError?.Invoke(www.error);
                 }
             }
         }
 
-        // ===== 5. Run 결과 CSV 다운로드 =====
         public IEnumerator GetRunResultsCsv(string runId, Action<string> onSuccess, Action<string> onError = null)
         {
-            if (logRequests)
-                Debug.Log($"[API] GET /Runs/{runId}/results.csv");
+            string url = $"{baseUrl}/Runs/{runId}/results.csv";
+            if (logRequests) Debug.Log($"[API] GET {url}");
 
-            using (UnityWebRequest www = UnityWebRequest.Get($"{baseUrl}/Runs/{runId}/results.csv"))
+            using (UnityWebRequest www = UnityWebRequest.Get(url))
             {
                 www.certificateHandler = new BypassCertificate();
                 yield return www.SendWebRequest();
 
                 if (www.result == UnityWebRequest.Result.Success)
                 {
-                    string csvData = www.downloadHandler.text;
                     Debug.Log($"[API] CSV Data Received for Run: {runId}");
-                    onSuccess?.Invoke(csvData);
+                    onSuccess?.Invoke(www.downloadHandler.text);
                 }
                 else
                 {
-                    Debug.LogError($"[API] Error: {www.error}");
+                    Debug.LogError($"[API] Error: {www.error}\n{www.downloadHandler.text}");
+                    onError?.Invoke(www.error);
+                }
+            }
+        }
+
+        public IEnumerator GetAllBooks(Action<List<BookDto>> onSuccess, Action<string> onError = null)
+        {
+            string url = $"{baseUrl}/Books";
+            if (logRequests) Debug.Log($"[API] GET {url}");
+
+            using (UnityWebRequest www = UnityWebRequest.Get(url))
+            {
+                www.certificateHandler = new BypassCertificate();
+                yield return www.SendWebRequest();
+
+                if (www.result == UnityWebRequest.Result.Success)
+                {
+                    string jsonResponse = "{\"items\":" + www.downloadHandler.text + "}";
+                    BookListDto bookList = JsonUtility.FromJson<BookListDto>(jsonResponse);
+                    
+                    Debug.Log($"[API] Books Received: {bookList.items.Count} items");
+                    onSuccess?.Invoke(bookList.items);
+                }
+                else
+                {
+                    Debug.LogError($"[API] Error getting books: {www.error}\n{www.downloadHandler.text}");
+                    onError?.Invoke(www.error);
+                }
+            }
+        }
+
+        public IEnumerator GetRunDetails(string runId, Action<RunDetailsDto> onSuccess, Action<string> onError = null)
+        {
+            string url = $"{baseUrl}/Runs/{runId}";
+            if (logRequests) Debug.Log($"[API] GET {url}");
+
+            using (UnityWebRequest www = UnityWebRequest.Get(url))
+            {
+                www.certificateHandler = new BypassCertificate();
+                yield return www.SendWebRequest();
+
+                if (www.result == UnityWebRequest.Result.Success)
+                {
+                    RunDetailsDto runDetails = JsonUtility.FromJson<RunDetailsDto>(www.downloadHandler.text);
+                    Debug.Log($"[API] Run Details Received: {runDetails.jobs.Count} jobs found.");
+                    onSuccess?.Invoke(runDetails);
+                }
+                else
+                {
+                    Debug.LogError($"[API] Error getting run details: {www.error}\n{www.downloadHandler.text}");
                     onError?.Invoke(www.error);
                 }
             }
         }
     
-        // ===== 현재 Run ID 가져오기 =====
-        public string GetCurrentRunId() => currentRunId;
+        public string GetCurrentRunId()
+        {
+            return currentRunId;
+        }
     }
     
-    // HTTPS 인증서 검증 우회 (개발용만 사용!)
     public class BypassCertificate : CertificateHandler
     {
-        protected override bool ValidateCertificate(byte[] certificateData) => true;
+        protected override bool ValidateCertificate(byte[] certificateData)
+        {
+            return true;
+        }
     }
 }

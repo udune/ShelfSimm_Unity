@@ -10,11 +10,6 @@ using Random = UnityEngine.Random;
 
 namespace Managers
 {
-    /// <summary>
-    /// 시뮬레이션의 전체 흐름(시작, 정지, 일시정지)을 관리하고,
-    /// 작업(Job)을 순서대로 RobotController에게 할당하는 오케스트레이터 클래스입니다.
-    /// API 모드에서는 서버와의 통신을 통해 시뮬레이션의 시작과 끝, 개별 작업 결과를 보고합니다.
-    /// </summary>
     public class SimulationManager : MonoBehaviour
     {
         #region Singleton
@@ -35,7 +30,7 @@ namespace Managers
         [SerializeField] private RobotController robotController;
         [SerializeField] private ApiClient apiClient;
         
-        // TODO: 임시 데이터. 실제로는 데이터 관리 시스템에서 가져와야 합니다.
+        [Header("임시 데이터")]
         [SerializeField] private List<Cell> allCells; 
         [SerializeField] private List<Book> allBooks;
         
@@ -133,6 +128,22 @@ namespace Managers
         {
             Debug.Log("API 모드로 시뮬레이션 초기화를 시작합니다...");
 
+            // 1. 책 정보 로드
+            bool booksLoaded = false;
+            yield return apiClient.GetAllBooks(
+                onSuccess: bookDtos => {
+                    allBooks = bookDtos.Select(dto => new Book(dto.title, dto.thicknessMm, dto.heightMm)).ToList();
+                    booksLoaded = true;
+                },
+                onError: error => Debug.LogError($"책 정보 로드 실패: {error}")
+            );
+            if (!booksLoaded)
+            {
+                Debug.LogError("API 초기화 실패: 책 정보를 가져올 수 없습니다.");
+                yield break;
+            }
+
+            // 2. Run 생성
             var createRunReq = new CreateRunRequest
             {
                 randomSeed = config.randomSeed,
@@ -140,23 +151,18 @@ namespace Managers
                 robotSpeedCellsPerSec = config.robotSpeed,
                 topN = config.topN
             };
-
             bool runCreated = false;
             yield return apiClient.CreateRun(createRunReq,
-                onSuccess: response => {
-                    _currentRunId = response.id;
-                    runCreated = true;
-                    Debug.Log($"Run 생성됨: {_currentRunId}");
-                },
+                onSuccess: response => { _currentRunId = response.id; runCreated = true; },
                 onError: error => Debug.LogError($"Run 생성 실패: {error}")
             );
-
             if (!runCreated)
             {
-                Debug.LogError("API 초기화 실패. 시뮬레이션을 중단합니다.");
+                Debug.LogError("API 초기화 실패: Run을 생성할 수 없습니다.");
                 yield break;
             }
 
+            // 3. Job 일괄 생성
             var localJobs = GetTestJobs();
             var jobDtos = localJobs.Select(job => new API.JobDto
             {
@@ -165,28 +171,52 @@ namespace Managers
                 bookTitle = job.BookTitle,
                 quantity = job.Quantity
             }).ToArray();
+            var createJobsReq = new CreateJobsBatchRequest { runId = _currentRunId, jobs = jobDtos };
 
-            var createJobsReq = new CreateJobsBatchRequest
-            {
-                runId = _currentRunId,
-                jobs = jobDtos
-            };
-
-            bool jobsCreated = false;
+            bool jobsBatched = false;
             yield return apiClient.CreateJobsBatch(createJobsReq,
-                onSuccess: response => {
-                    jobsCreated = true;
-                    Debug.Log($"{response.accepted}개 작업이 서버에 등록되었습니다.");
-                },
+                onSuccess: response => { jobsBatched = true; },
                 onError: error => Debug.LogError($"Jobs 생성 실패: {error}")
             );
-            
-            if (!jobsCreated)
+            if (!jobsBatched)
             {
-                Debug.LogError("API 작업 생성 실패. 시뮬레이션을 중단합니다.");
+                Debug.LogError("API 초기화 실패: Jobs를 생성할 수 없습니다.");
                 yield break;
             }
 
+            // 4. Job ID 매핑을 위해 Run 상세 정보 다시 요청
+            bool idsMapped = false;
+            yield return apiClient.GetRunDetails(_currentRunId,
+                onSuccess: runDetails => {
+                    var serverJobs = runDetails.jobs.ToDictionary(
+                        j => (j.cellCode, j.bookTitle, j.action), 
+                        j => j.id
+                    );
+
+                    foreach (var localJob in localJobs)
+                    {
+                        var key = (localJob.CellCode, localJob.BookTitle, localJob.Action.ToString());
+                        if (serverJobs.TryGetValue(key, out string jobId))
+                        {
+                            localJob.JobId = jobId;
+                        }
+                        else
+                        {
+                            Debug.LogWarning($"서버에서 해당 Job의 ID를 찾을 수 없습니다: {key}");
+                        }
+                    }
+                    idsMapped = true;
+                    Debug.Log("Job ID 매핑 완료.");
+                },
+                onError: error => Debug.LogError($"Run 상세 정보 조회 실패: {error}")
+            );
+            if (!idsMapped)
+            {
+                Debug.LogError("API 초기화 실패: Job ID를 매핑할 수 없습니다.");
+                yield break;
+            }
+
+            // 5. 모든 API 통신이 성공하면, 로컬 시뮬레이션을 시작합니다.
             InitializeSimulation();
             StartSimulationWithJobs(localJobs);
         }
@@ -203,9 +233,15 @@ namespace Managers
             _isPaused = false;
             ElapsedTime = 0f;
             
-            // TODO: 임시 데이터 초기화. 실제로는 외부(예: 파일, 서버)에서 로드해야 합니다.
-            allCells = new List<Cell> { new Cell("A01", 100, 120), new Cell("B02", 80, 150) };
-            allBooks = new List<Book> { new Book("Test Book A", 30, 100), new Book("Test Book B", 25, 130) };
+            // API 모드가 아닐 경우를 대비해 임시 데이터 초기화
+            if (allBooks == null || allBooks.Count == 0)
+            {
+                allBooks = new List<Book> { new Book("Test Book A", 30, 100), new Book("Test Book B", 25, 130) };
+            }
+            if (allCells == null || allCells.Count == 0)
+            {
+                allCells = new List<Cell> { new Cell("A01", 100, 120), new Cell("B02", 80, 150) };
+            }
         }
         
         #endregion
@@ -384,22 +420,11 @@ namespace Managers
 
         #region Helper & Test Methods
         
-        /// <summary>
-        /// 제공된 코드로 `allCells` 리스트에서 일치하는 Cell 객체를 찾습니다.
-        /// </summary>
-        /// <param name="code">찾을 Cell의 코드</param>
-        /// <returns>일치하는 Cell 객체. 없으면 null을 반환합니다.</returns>
         private Cell FindCellByCode(string code)
         {
-            // LINQ의 Find 메서드를 사용하여 조건에 맞는 첫 번째 요소를 찾습니다.
             return allCells.Find(c => c.CellCode == code);
         }
 
-        /// <summary>
-        /// 제공된 제목으로 `allBooks` 리스트에서 일치하는 Book 객체를 찾습니다.
-        /// </summary>
-        /// <param name="title">찾을 Book의 제목</param>
-        /// <returns>일치하는 Book 객체. 없으면 null을 반환합니다.</returns>
         private Book FindBookByTitle(string title)
         {
             return allBooks.Find(b => b.Title == title);
