@@ -1,10 +1,7 @@
 {
-    "name": "Core",
-    "rootNamespace": "Core",
-    "references": [
-        "Data",
-        "API"
-    ],
+    "name": "API",
+    "rootNamespace": "API",
+    "references": [],
     "includePlatforms": [],
     "excludePlatforms": [],
     "allowUnsafeCode": false,
