@@ -184,6 +184,9 @@ namespace Managers
                 yield break;
             }
 
+            // [오류 수정 2] 서버가 Jobs를 처리할 시간을 주기 위해 짧은 대기시간 추가
+            yield return new WaitForSeconds(0.5f);
+
             // 4. Job ID 매핑을 위해 Run 상세 정보 다시 요청
             bool idsMapped = false;
             yield return apiClient.GetRunDetails(_currentRunId,
@@ -250,6 +253,13 @@ namespace Managers
 
         public void StartSimulationWithJobs(List<Job> jobs)
         {
+            // [오류 수정 1] 시뮬레이션이 초기화되지 않은 상태에서 호출될 경우를 대비한 안전장치
+            if (_jobQueue == null || _summary == null)
+            {
+                Debug.LogWarning("시뮬레이션이 초기화되지 않았습니다. 지금 초기화를 진행합니다.");
+                InitializeSimulation();
+            }
+
             if (jobs == null || jobs.Count == 0)
             {
                 Debug.LogWarning("시작할 작업이 없습니다.");
