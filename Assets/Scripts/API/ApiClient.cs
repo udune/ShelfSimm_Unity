@@ -109,6 +109,8 @@ namespace API
 
     public class ApiClient : MonoBehaviour
     {
+        public static ApiClient Instance { get; private set; }
+
         [Header("API 설정")]
         [SerializeField] private string baseUrl = "https://shelfsim-api-190183336439.asia-northeast3.run.app/api";
         [SerializeField] private bool logRequests = true;
@@ -119,6 +121,16 @@ namespace API
 
         private string currentRunId;
         private bool hasShownSecurityWarning = false;
+
+        private void Awake()
+        {
+            if (Instance != null && Instance != this)
+            {
+                Destroy(gameObject);
+                return;
+            }
+            Instance = this;
+        }
 
         public IEnumerator CreateRun(CreateRunRequest request, Action<RunResponse> onSuccess, Action<string> onError = null)
         {

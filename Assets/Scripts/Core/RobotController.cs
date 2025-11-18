@@ -30,7 +30,7 @@ namespace Core
 
         private void Start()
         {
-            if (apiClient == null) apiClient = FindObjectOfType<ApiClient>();
+            if (apiClient == null) apiClient = ApiClient.Instance;
         }
 
         private void Update()

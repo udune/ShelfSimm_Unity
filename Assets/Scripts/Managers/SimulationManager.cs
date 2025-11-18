@@ -69,15 +69,13 @@ namespace Managers
 
         private void Awake()
         {
-            if (Instance == null)
-            {
-                Instance = this;
-            }
-            else
+            if (Instance != null && Instance != this)
             {
                 Destroy(gameObject);
                 return;
             }
+
+            Instance = this;
 
             if (config != null)
             {
@@ -89,7 +87,7 @@ namespace Managers
         {
             if (apiClient == null)
             {
-                apiClient = FindObjectOfType<ApiClient>();
+                apiClient = ApiClient.Instance;
             }
 
             if (useApiMode && apiClient != null)

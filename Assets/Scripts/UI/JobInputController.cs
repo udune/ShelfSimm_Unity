@@ -25,9 +25,12 @@ namespace UI
         [SerializeField] private GameObject errorPanel; // 에러 메시지 패널
         [SerializeField] private TextMeshProUGUI errorText; // 에러 메시지 텍스트
 
-        [Header("Setting")] 
+        [Header("Setting")]
         [SerializeField] private Color validColor = Color.white; // 유효한 입력 색상
         [SerializeField] private Color invalidColor = Color.red; // 유효하지 않은 입력 색상
+
+        [Header("References")]
+        [SerializeField] private BookRegistry bookRegistry; // 도서 레지스트리 참조
 
         private JobInputData currentJobInput = new JobInputData(); // 현재 작업 입력 데이터
         private bool isInitialized = false; // 초기화 여부
@@ -86,8 +89,12 @@ namespace UI
             {
                 return; // 종료
             }
-            
-            BookRegistry bookRegistry = FindObjectOfType<BookRegistry>(); // 씬에서 BookRegistry 컴포넌트 탐색
+
+            if (bookRegistry == null) // BookRegistry가 할당되지 않았을 때
+            {
+                bookRegistry = FindObjectOfType<BookRegistry>(); // 씬에서 BookRegistry 컴포넌트 탐색
+            }
+
             if (bookRegistry != null) // 도서 레지스트리가 있을 때
             {
                 var books = bookRegistry.GetAllAvailableBooks(); // 모든 도서 목록 가져오기

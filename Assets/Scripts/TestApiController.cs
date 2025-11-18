@@ -10,7 +10,7 @@ public class TestApiController : MonoBehaviour
     {
         // API 클라이언트 자동 찾기
         if (apiClient == null)
-            apiClient = FindObjectOfType<ApiClient>();
+            apiClient = ApiClient.Instance;
 
         // 테스트 시작
         StartCoroutine(RunFullTest());
