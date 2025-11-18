@@ -14,7 +14,7 @@ namespace UI
     
         [SerializeField] private CellInfoPanel infoPanel;
 
-        private CellHighlightManager highlightManager;
+        [SerializeField] private CellHighlightManager highlightManager;
         private int gridWidth;
         private int gridHeight;
 

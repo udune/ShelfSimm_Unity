@@ -18,7 +18,7 @@ namespace Example
             // SimulationManager 인스턴스를 자동으로 찾기
             if (simulationManager == null)
             {
-                simulationManager = FindObjectOfType<SimulationManager>();
+                simulationManager = SimulationManager.Instance;
             }
 
             if (simulationManager == null)
