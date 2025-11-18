@@ -1,4 +1,4 @@
-using Data.Data;
+using Data;
 using NUnit.Framework;
 
 namespace Tests_EditMode.Tests_EditMode

@@ -1,10 +1,7 @@
-using Core.Core;
-using Data.Data;
+using Core;
+using Data;
 using NUnit.Framework;
 using UnityEngine;
-// 기존 Core namespace
-
-// 기존 ErrorCode
 
 namespace Tests_EditMode.Tests_EditMode  // 기존 Tests namespace
 {

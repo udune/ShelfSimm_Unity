@@ -1,6 +1,6 @@
 using System;
-using Core.Core;
-using Data.Data;
+using Core;
+using Data;
 using NUnit.Framework;
 using UnityEngine;
 using Object = UnityEngine.Object;

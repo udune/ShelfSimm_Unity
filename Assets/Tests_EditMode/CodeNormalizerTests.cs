@@ -1,5 +1,5 @@
 using System;
-using Core.Core;
+using Core;
 using NUnit.Framework;
 
 namespace Tests_EditMode.Tests_EditMode

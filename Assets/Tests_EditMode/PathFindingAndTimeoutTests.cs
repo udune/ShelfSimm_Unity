@@ -1,5 +1,5 @@
 using System.Collections.Generic;
-using Data.Data;
+using Data;
 using NUnit.Framework;
 using UnityEngine;
 

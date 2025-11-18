@@ -1,4 +1,4 @@
-using Core.Core;
+using Core;
 using NUnit.Framework;
 using UnityEngine;
 

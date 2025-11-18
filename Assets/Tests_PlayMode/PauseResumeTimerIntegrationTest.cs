@@ -1,7 +1,7 @@
 using System.Collections;
-using Core.Core;
-using Data.Data;
-using Managers.Managers;
+using Core;
+using Data;
+using Managers;
 using NUnit.Framework;
 using UnityEngine;
 using UnityEngine.TestTools;

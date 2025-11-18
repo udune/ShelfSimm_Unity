@@ -1,5 +1,5 @@
-using Core.Core;
-using Data.Data;
+using Core;
+using Data;
 using Managers;
 using NUnit.Framework;
 using UnityEngine;
