@@ -65,6 +65,12 @@ namespace Managers
         
         #endregion
 
+        #region Constants
+
+        private const float API_JOB_PROCESSING_DELAY = 0.5f; // 서버가 Jobs를 처리할 시간 (초)
+
+        #endregion
+
         #region Unity Lifecycle Methods
 
         private void Awake()
@@ -184,7 +190,7 @@ namespace Managers
             }
 
             // [오류 수정 2] 서버가 Jobs를 처리할 시간을 주기 위해 짧은 대기시간 추가
-            yield return new WaitForSeconds(0.5f);
+            yield return new WaitForSeconds(API_JOB_PROCESSING_DELAY);
 
             // 4. Job ID 매핑을 위해 Run 상세 정보 다시 요청
             bool idsMapped = false;
@@ -365,6 +371,9 @@ namespace Managers
                 UIManager.Instance.ShowSummary(_summary);
             }
 
+            // 주의: Time.timeScale은 전역 설정으로 모든 시간 기반 작업에 영향을 줍니다
+            // (UI 애니메이션, 파티클 시스템, 모든 Update/FixedUpdate 등)
+            // WebGL 환경에서는 브라우저 탭 전환 시 예상치 못한 동작을 할 수 있습니다
             Time.timeScale = 0f;
         }
 
@@ -377,6 +386,8 @@ namespace Managers
             }
 
             _isPaused = !_isPaused;
+
+            // 주의: Time.timeScale은 전역 설정으로 모든 시간 기반 작업에 영향을 줍니다
             Time.timeScale = _isPaused ? 0f : 1f;
 
             if (robotController != null)

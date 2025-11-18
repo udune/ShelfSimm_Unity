@@ -18,6 +18,8 @@ namespace UI
         private int gridWidth;
         private int gridHeight;
 
+        private const int DEFAULT_GRID_SIZE = 50; // 기본 그리드 크기 (fallback)
+
         private void Start()
         {
             if (gridRenderer == null)
@@ -45,9 +47,9 @@ namespace UI
             else
             {
                 // fallback: 기본값 사용
-                gridWidth = 50;
-                gridHeight = 50;
-                Debug.LogWarning("[GridClickHandler] GridRenderer가 초기화되지 않아 기본 그리드 크기 사용: 50x50");
+                gridWidth = DEFAULT_GRID_SIZE;
+                gridHeight = DEFAULT_GRID_SIZE;
+                Debug.LogWarning($"[GridClickHandler] GridRenderer가 초기화되지 않아 기본 그리드 크기 사용: {DEFAULT_GRID_SIZE}x{DEFAULT_GRID_SIZE}");
             }
         }
 

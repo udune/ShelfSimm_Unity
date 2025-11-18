@@ -130,6 +130,20 @@ namespace API
                 return;
             }
             Instance = this;
+
+            // 보안 경고: SSL 인증서 우회가 활성화되어 있는지 확인
+            if (bypassSslValidation)
+            {
+                Debug.LogWarning("[API 보안 경고] SSL 인증서 검증이 비활성화되어 있습니다! 이는 개발/테스트 전용입니다.");
+                Debug.LogWarning("[API 보안 경고] 프로덕션 빌드 전에 반드시 bypassSslValidation을 false로 설정하세요!");
+
+                #if !UNITY_EDITOR && !DEVELOPMENT_BUILD
+                Debug.LogError("[API 치명적 오류] 프로덕션 빌드에서 SSL 우회가 활성화되어 있습니다! 보안 위험!");
+                // 프로덕션 빌드에서는 강제로 비활성화
+                bypassSslValidation = false;
+                Debug.LogWarning("[API] 보안을 위해 SSL 우회를 강제로 비활성화했습니다.");
+                #endif
+            }
         }
 
         public IEnumerator CreateRun(CreateRunRequest request, Action<RunResponse> onSuccess, Action<string> onError = null)
