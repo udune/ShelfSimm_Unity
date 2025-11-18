@@ -1,10 +1,10 @@
+using Core.Core;
+using Data.Data;
+using Managers;
 using NUnit.Framework;
 using UnityEngine;
-using Core;
-using Managers;
-using Data;
 
-namespace Tests_EditMode
+namespace Tests_EditMode.Tests_EditMode
 {
     /// <summary>
     /// T-205: 캐시 키에 layout_hash 포함 + 전역 퍼지 테스트

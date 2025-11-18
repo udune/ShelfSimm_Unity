@@ -2,7 +2,7 @@ using System;
 using UnityEngine;
 using Random = UnityEngine.Random;
 
-namespace Core
+namespace Core.Core
 {
     // 설정 구조체
     [Serializable]

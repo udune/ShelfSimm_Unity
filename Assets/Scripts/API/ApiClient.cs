@@ -5,7 +5,7 @@ using System.Text;
 using UnityEngine;
 using UnityEngine.Networking;
 
-namespace API
+namespace API.API
 {
     #region DTO Classes
 

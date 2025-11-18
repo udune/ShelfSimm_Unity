@@ -2,13 +2,14 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
-using Core;
-using Data;
-using API;
+using API.API;
+using Core.Core;
+using Data.Data;
+using Managers.Managers;
 using UnityEngine;
 using Random = UnityEngine.Random;
 
-namespace Managers
+namespace Managers.Managers
 {
     public class SimulationManager : MonoBehaviour
     {
@@ -164,7 +165,7 @@ namespace Managers
 
             // 3. Job 일괄 생성
             var localJobs = GetTestJobs();
-            var jobDtos = localJobs.Select(job => new API.JobDto
+            var jobDtos = localJobs.Select(job => new JobDto
             {
                 action = job.Action.ToString(),
                 cellCode = job.CellCode,
@@ -444,9 +445,9 @@ namespace Managers
         {
             return new List<Job>
             {
-                new Job(Data.JobAction.PUT, "A01", "Test Book A", 2),
-                new Job(Data.JobAction.PUT, "B02", "Test Book B", 3),
-                new Job(Data.JobAction.PICK, "A01", "Test Book A", 1)
+                new Job(JobAction.PUT, "A01", "Test Book A", 2),
+                new Job(JobAction.PUT, "B02", "Test Book B", 3),
+                new Job(JobAction.PICK, "A01", "Test Book A", 1)
             };
         }
         

@@ -1,7 +1,7 @@
 using System;
-using Data;
+using Data.Data;
 
-namespace Core
+namespace Core.Core
 {
     // 코드 검증 결과를 나타내는 구조체
     [Serializable]

@@ -2,7 +2,7 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 
-namespace Core
+namespace Core.Core
 {
     // 타이브레이커 서비스
     public class TiebreakerService

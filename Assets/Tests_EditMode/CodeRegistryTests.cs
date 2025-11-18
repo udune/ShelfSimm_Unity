@@ -1,9 +1,12 @@
+using Core.Core;
+using Data.Data;
 using NUnit.Framework;
 using UnityEngine;
-using Core;  // 기존 Core namespace
-using Data;  // 기존 ErrorCode
+// 기존 Core namespace
 
-namespace Tests_EditMode  // 기존 Tests namespace
+// 기존 ErrorCode
+
+namespace Tests_EditMode.Tests_EditMode  // 기존 Tests namespace
 {
     public class CodeRegistryTests
     {

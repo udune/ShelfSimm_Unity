@@ -1,13 +1,14 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
+using Data.Data;
 using UnityEditor;
 using UnityEngine;
 
-namespace Data
+namespace Editor
 {
     [CustomEditor(typeof(CellsLayoutSO))] // CellsLayoutSO에 대한 커스텀 에디터
-    public class CellsLayoutSOEditor : Editor // Unity 에디터용 클래스
+    public class CellsLayoutSOEditor : UnityEditor.Editor // Unity 에디터용 클래스
     {
         private SerializedProperty layoutHashProp; // layout_hash 프로퍼티
 

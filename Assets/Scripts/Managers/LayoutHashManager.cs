@@ -1,8 +1,8 @@
 using System.Collections.Generic;
 using System.Security.Cryptography;
 using System.Text;
-using Core;
-using Data;
+using Core.Core;
+using Data.Data;
 using UnityEngine;
 
 namespace Managers

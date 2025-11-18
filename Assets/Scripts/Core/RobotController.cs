@@ -1,9 +1,10 @@
 using System;
+using API.API;
 using Data;
-using API;
+using Data.Data;
 using UnityEngine;
 
-namespace Core
+namespace Core.Core
 {
     public class RobotController : MonoBehaviour
     {
@@ -19,13 +20,12 @@ namespace Core
         private bool isPaused;
         private bool isStopped;
 
-        // 작업 및 API 보고용 데이터
         private Job currentJob;
         private Cell targetCell;
         private Book targetBook;
         private Action<Job, ErrorCode> onJobCompleteCallback;
         private DateTime jobStartTime;
-        private int pathLength; // TODO: 경로 탐색 후 이 값을 설정해야 함
+        private int pathLength;
 
         public RobotState CurrentState => currentState;
 
@@ -37,14 +37,18 @@ namespace Core
         private void Update()
         {
             if (isStopped || isPaused || currentState != RobotState.HANDLING) return;
-            UpdateHandling();
+            
+            handleTimer += Time.deltaTime;
+            if (handleTimer >= config.handleTime)
+            {
+                OnHandleComplete();
+            }
         }
 
         public void StartJob(Job job, Cell cell, Book book, Action<Job, ErrorCode> onComplete)
         {
             if (currentState != RobotState.IDLE)
             {
-                Debug.LogWarning("로봇이 다른 작업을 수행 중입니다. 새 작업이 거부되었습니다.");
                 onComplete?.Invoke(job, ErrorCode.ROBOT_BUSY);
                 return;
             }
@@ -54,10 +58,10 @@ namespace Core
             targetBook = book;
             onJobCompleteCallback = onComplete;
             jobStartTime = DateTime.UtcNow;
-            pathLength = 10; // 임시 값, 실제로는 경로 탐색 결과로 설정해야 함
+            pathLength = 10; // 임시 값
 
             ErrorCode errorCode;
-            bool canProceed = (job.Action == Data.JobAction.PUT)
+            bool canProceed = (job.Action == JobAction.PUT)
                 ? cell.CanPutBook(book, job.Quantity, out errorCode)
                 : cell.CanPickBook(job.Quantity, out errorCode);
 
@@ -67,52 +71,43 @@ namespace Core
             }
             else
             {
-                Debug.LogError($"[Job Failed] {job.Action} 작업 불가: {errorCode.ToMessage()}");
-                ReportJobResult(errorCode); // 실패 즉시 보고
-                onJobCompleteCallback?.Invoke(currentJob, errorCode);
-                ClearJobData();
-            }
-        }
-
-        private void TransitionTo(RobotState newState)
-        {
-            if ((isStopped && newState != RobotState.IDLE) || currentState == newState) return;
-            currentState = newState;
-        }
-
-        private void UpdateHandling()
-        {
-            handleTimer += Time.deltaTime;
-            if (handleTimer >= config.handleTime)
-            {
-                OnHandleComplete();
+                HandleJobCompletion(errorCode);
             }
         }
 
         private void OnHandleComplete()
         {
-            if (currentJob.Action == Data.JobAction.PUT) targetCell.PutBook(targetBook, currentJob.Quantity);
-            else targetCell.PickBook(currentJob.Quantity);
+            if (currentJob.Action == JobAction.PUT)
+            {
+                targetCell.PutBook(targetBook, currentJob.Quantity);
+            }
+            else
+            {
+                targetCell.PickBook(currentJob.Quantity);
+            }
+            HandleJobCompletion(ErrorCode.NONE);
+        }
 
-            ReportJobResult(ErrorCode.NONE); // 성공 보고
-            onJobCompleteCallback?.Invoke(currentJob, ErrorCode.NONE);
+        private void HandleJobCompletion(ErrorCode resultCode)
+        {
+            float totalTime = (float)(DateTime.UtcNow - jobStartTime).TotalSeconds;
+            ReportJobResult(resultCode, totalTime);
+            
+            onJobCompleteCallback?.Invoke(currentJob, resultCode);
+            
             ClearJobData();
             TransitionTo(RobotState.IDLE);
         }
 
-        private void ReportJobResult(ErrorCode resultCode)
+        private void ReportJobResult(ErrorCode resultCode, float totalTime)
         {
             if (!reportToApi || apiClient == null || string.IsNullOrEmpty(currentJob?.JobId)) return;
 
-            var endTime = DateTime.UtcNow;
-            var totalTime = (float)(endTime - jobStartTime).TotalSeconds;
-            var travelTime = totalTime - config.handleTime; // 간단한 추정
-
             var request = new UpdateJobResultRequest
             {
-                startTs = jobStartTime.ToString("o"), // ISO 8601 형식
-                endTs = endTime.ToString("o"),
-                travelTimeSec = Mathf.Max(0, travelTime),
+                startTs = jobStartTime.ToString("o"),
+                endTs = DateTime.UtcNow.ToString("o"),
+                travelTimeSec = Mathf.Max(0, totalTime - config.handleTime),
                 handleTimeSec = config.handleTime,
                 totalTimeSec = totalTime,
                 pathLengthCells = pathLength,
@@ -121,22 +116,13 @@ namespace Core
                 robotName = gameObject.name
             };
 
-            StartCoroutine(apiClient.UpdateJobResult(currentJob.JobId, request,
-                onSuccess: () => Debug.Log($"작업 결과 업로드 완료: {currentJob.JobId}"),
-                onError: (error) => Debug.LogWarning($"결과 업로드 실패: {error}")
-            ));
+            StartCoroutine(apiClient.UpdateJobResult(currentJob.JobId, request));
         }
 
-        public void Stop()
+        private void TransitionTo(RobotState newState)
         {
-            isStopped = true;
-            if (currentState == RobotState.HANDLING && currentJob != null)
-            {
-                ReportJobResult(ErrorCode.CANCELLED_BY_STOP);
-                onJobCompleteCallback?.Invoke(currentJob, ErrorCode.CANCELLED_BY_STOP);
-                ClearJobData();
-            }
-            TransitionTo(RobotState.IDLE);
+            if ((isStopped && newState != RobotState.IDLE) || currentState == newState) return;
+            currentState = newState;
         }
 
         private void ClearJobData()
@@ -146,10 +132,25 @@ namespace Core
             targetBook = null;
             onJobCompleteCallback = null;
         }
+
+        public void Pause()
+        {
+            isPaused = true;
+        }
         
-        // 외부에서 경로 탐색 후 호출
-        public void SetPathLength(int length) => pathLength = length;
-        
-        // 사용되지 않는 메서드들 (Pause/Resume 등)은 간결성을 위해 제거
+        public void Resume()
+        {
+            isPaused = false;
+        }
+
+        public void Stop()
+        {
+            isStopped = true;
+            if (currentState == RobotState.HANDLING && currentJob != null)
+            {
+                HandleJobCompletion(ErrorCode.CANCELLED_BY_STOP);
+            }
+            TransitionTo(RobotState.IDLE);
+        }
     }
 }

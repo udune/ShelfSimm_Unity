@@ -1,7 +1,7 @@
-using Data;
+using Data.Data;
 using NUnit.Framework;
 
-namespace Tests_EditMode
+namespace Tests_EditMode.Tests_EditMode
 {
     // T-304: 요약 집계 (표준 포맷) + UI 표시 테스트
     // AC-9.1: 남은 타깃이 0개가 되면 시뮬레이션을 중단하고 표준 포맷으로 실패 사유 요약 표시

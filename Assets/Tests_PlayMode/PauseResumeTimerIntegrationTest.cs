@@ -1,12 +1,12 @@
 using System.Collections;
-using Core;
-using Data;
-using Managers;
+using Core.Core;
+using Data.Data;
+using Managers.Managers;
 using NUnit.Framework;
 using UnityEngine;
 using UnityEngine.TestTools;
 
-namespace Tests_PlayMode
+namespace Tests_PlayMode.Tests_PlayMode
 {
     public class PauseResumeTimerIntegrationTest
     {
@@ -41,7 +41,7 @@ namespace Tests_PlayMode
 
             testBook = new Book("Test Book", 30, 100);
             testCell = new Cell("A01", 100, 120);
-            testJob = new Job(Data.JobAction.PUT, "A01", "Test Book", 1);
+            testJob = new Job(JobAction.PUT, "A01", "Test Book", 1);
         }
 
         [TearDown]
@@ -66,7 +66,7 @@ namespace Tests_PlayMode
             simManager.TogglePause();
             yield return new WaitForSeconds(1f);
             
-            Assert.AreEqual(Core.RobotState.HANDLING, robotController.CurrentState);
+            Assert.AreEqual(RobotState.HANDLING, robotController.CurrentState);
             Assert.AreEqual(0f, Time.timeScale);
         }
 
@@ -81,7 +81,7 @@ namespace Tests_PlayMode
             simManager.TogglePause(); // Resume
             
             yield return new WaitForSeconds(1.2f);
-            Assert.AreEqual(Core.RobotState.IDLE, robotController.CurrentState);
+            Assert.AreEqual(RobotState.IDLE, robotController.CurrentState);
             Assert.AreEqual(1f, Time.timeScale);
         }
 
@@ -96,11 +96,11 @@ namespace Tests_PlayMode
             
             // Then: 2.5초 후에는 아직 완료 안됨
             yield return new WaitForSeconds(2.5f);
-            Assert.AreEqual(Core.RobotState.HANDLING, robotController.CurrentState);
+            Assert.AreEqual(RobotState.HANDLING, robotController.CurrentState);
             
             // Then: 3초 후에는 완료됨
             yield return new WaitForSeconds(0.7f);
-            Assert.AreEqual(Core.RobotState.IDLE, robotController.CurrentState);
+            Assert.AreEqual(RobotState.IDLE, robotController.CurrentState);
         }
     }
 }

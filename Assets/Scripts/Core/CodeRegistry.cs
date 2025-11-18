@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace Core
+namespace Core.Core
 {
     // 칸 코드를 관리하는 클래스
     public class CodeRegistry : MonoBehaviour

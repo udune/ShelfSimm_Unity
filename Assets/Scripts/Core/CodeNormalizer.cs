@@ -1,7 +1,7 @@
 using System;
 using System.Text.RegularExpressions;
 
-namespace Core
+namespace Core.Core
 {
     // 코드 정규화 결과 구조체
     [Serializable]

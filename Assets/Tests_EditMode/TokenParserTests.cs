@@ -1,7 +1,7 @@
-using Core;
+using Core.Core;
 using NUnit.Framework;
 
-namespace Tests_EditMode
+namespace Tests_EditMode.Tests_EditMode
 {
     /// <summary>
     /// TokenParser 단위 테스트

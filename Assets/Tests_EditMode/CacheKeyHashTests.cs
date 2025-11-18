@@ -1,8 +1,8 @@
+using Core.Core;
 using NUnit.Framework;
 using UnityEngine;
-using Core;
 
-namespace Tests_EditMode
+namespace Tests_EditMode.Tests_EditMode
 {
     /// <summary>
     /// CacheKey에 layout_hash 포함 검증 테스트

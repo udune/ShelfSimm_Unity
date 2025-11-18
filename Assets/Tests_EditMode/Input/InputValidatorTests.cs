@@ -1,9 +1,10 @@
 using System.Collections.Generic;
-using Core;
+using Core.Core;
+using Data.Data;
 using NUnit.Framework;
 using UnityEngine;
 
-namespace Tests.EditMode.Input
+namespace Tests_EditMode.Tests_EditMode.Input
 {
     /// <summary>
     /// InputValidator 단위 테스트

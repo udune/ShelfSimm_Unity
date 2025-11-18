@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace Data
+namespace Data.Data
 {
     public enum RobotState
     {

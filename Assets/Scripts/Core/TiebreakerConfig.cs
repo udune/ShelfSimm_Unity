@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace Core
+namespace Core.Core
 {
     // 타이브레이커 설정
     [CreateAssetMenu(fileName = "TiebreakerConfig", menuName = "Scriptable Objects/TiebreakerConfig")]

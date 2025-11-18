@@ -1,10 +1,10 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using Data;
+using Data.Data;
 using UnityEngine;
 
-namespace Core
+namespace Core.Core
 {
     // 칸과 거리 정보를 함께 담는 구조체
     [Serializable]

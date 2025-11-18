@@ -1,41 +1,44 @@
+using Managers.Managers;
+using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
-using Managers;
-using TMPro;
 
-public class DashboardUI : MonoBehaviour
+namespace UI
 {
-    [SerializeField] private Button pauseResumeButton;
-    [SerializeField] private TextMeshProUGUI pauseResumeButtonText;
-    [SerializeField] private Button stopButton;
-
-    private bool isPaused = false;
-
-    void Start()
+    public class DashboardUI : MonoBehaviour
     {
-        pauseResumeButton.onClick.AddListener(TogglePauseResume);
-        stopButton.onClick.AddListener(StopSimulation);
-        
-        // 초기 버튼 텍스트 설정
-        if(pauseResumeButtonText != null)
+        [SerializeField] private Button pauseResumeButton;
+        [SerializeField] private TextMeshProUGUI pauseResumeButtonText;
+        [SerializeField] private Button stopButton;
+
+        private bool isPaused = false;
+
+        void Start()
         {
-            pauseResumeButtonText.text = "중지";
-        }
-    }
-
-    private void TogglePauseResume()
-    {
-        isPaused = !isPaused;
-        SimulationManager.Instance.TogglePause();
+            pauseResumeButton.onClick.AddListener(TogglePauseResume);
+            stopButton.onClick.AddListener(StopSimulation);
         
-        if(pauseResumeButtonText != null)
-        {
-            pauseResumeButtonText.text = isPaused ? "재개" : "중지";
+            // 초기 버튼 텍스트 설정
+            if(pauseResumeButtonText != null)
+            {
+                pauseResumeButtonText.text = "중지";
+            }
         }
-    }
 
-    private void StopSimulation()
-    {
-        SimulationManager.Instance.StopSimulation();
+        private void TogglePauseResume()
+        {
+            isPaused = !isPaused;
+            SimulationManager.Instance.TogglePause();
+        
+            if(pauseResumeButtonText != null)
+            {
+                pauseResumeButtonText.text = isPaused ? "재개" : "중지";
+            }
+        }
+
+        private void StopSimulation()
+        {
+            SimulationManager.Instance.StopSimulation();
+        }
     }
 }

@@ -1,8 +1,9 @@
 using System;
 using System.Collections.Generic;
+using Data.Data;
 using UnityEngine;
 
-namespace Core
+namespace Core.Core
 {
     // 작업 입력 데이터 구조체
     [Serializable]
@@ -17,13 +18,6 @@ namespace Core
         [Header("파싱 결과")] 
         public List<string> parsedCodes = new(); // 파싱된 칸 코드 리스트
         public List<string> invalidCodes = new(); // 유효하지 않은 칸 코드 리스트
-    }
-
-    // 작업 유형 열거형
-    public enum JobAction
-    {
-        PUT, // 넣기
-        PICK // 빼기
     }
 
     // 입력 검증 결과 구조체

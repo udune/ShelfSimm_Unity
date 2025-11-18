@@ -1,4 +1,4 @@
-namespace Data
+namespace Data.Data
 {
     public class Book
     {

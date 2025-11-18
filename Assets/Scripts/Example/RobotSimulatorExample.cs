@@ -1,6 +1,6 @@
 using System.Collections.Generic;
-using Data;
-using Managers;
+using Data.Data;
+using Managers.Managers;
 using UnityEngine;
 
 namespace Example

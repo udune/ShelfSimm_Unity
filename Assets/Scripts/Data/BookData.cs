@@ -1,7 +1,7 @@
 using System;
 using UnityEngine;
 
-namespace Data
+namespace Data.Data
 {
     // 도서 정보를 나타내는 데이터 클래스
     [Serializable]

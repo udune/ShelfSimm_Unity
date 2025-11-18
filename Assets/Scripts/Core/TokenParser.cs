@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
 
-namespace Core
+namespace Core.Core
 {
     // 토큰 파싱 결과 구조체
     [Serializable]

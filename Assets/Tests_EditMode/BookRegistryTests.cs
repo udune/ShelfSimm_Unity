@@ -1,11 +1,11 @@
 using System;
+using Core.Core;
+using Data.Data;
 using NUnit.Framework;
 using UnityEngine;
-using Core;
-using Data;
 using Object = UnityEngine.Object;
 
-namespace Tests_EditMode
+namespace Tests_EditMode.Tests_EditMode
 {
     /// <summary>
     /// T-105: 도서 드롭다운 바인딩 (더미데이터) 테스트

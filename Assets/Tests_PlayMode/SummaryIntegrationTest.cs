@@ -1,22 +1,23 @@
 using System.Collections;
-using Data;
-using Managers;
+using Core.Core;
+using Data.Data;
+using Managers.Managers;
 using NUnit.Framework;
 using UnityEngine;
 using UnityEngine.TestTools;
 
-namespace Tests_PlayMode
+namespace Tests_PlayMode.Tests_PlayMode
 {
     public class SummaryIntegrationTest
     {
         private GameObject simManagerObj;
         private SimulationManager simManager;
-        private Core.SimulationConfig config;
+        private SimulationConfig config;
 
         [SetUp]
         public void SetUp()
         {
-            config = ScriptableObject.CreateInstance<Core.SimulationConfig>();
+            config = ScriptableObject.CreateInstance<SimulationConfig>();
             // ... config 설정 ...
 
             simManagerObj = new GameObject("SimulationManager");

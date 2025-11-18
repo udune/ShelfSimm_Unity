@@ -2,7 +2,7 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace Managers
+namespace Managers.Managers
 {
     public class CellHighlightManager : MonoBehaviour
     {

@@ -1,8 +1,9 @@
 using Data;
+using Data.Data;
 using TMPro;
 using UnityEngine;
 
-namespace Managers
+namespace Managers.Managers
 {
     public class UIManager : MonoBehaviour
     {
