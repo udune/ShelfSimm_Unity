@@ -27,6 +27,10 @@ namespace UI
             var texWidth = gridWidth * cellSize;
             var texHeight = gridHeight * cellSize;
 
+            // WebGL 메모리 최적화 참고:
+            // 큰 그리드(예: 50x50 셀, 10픽셀 = 500x500 텍스처)는 상당한 메모리를 사용할 수 있습니다.
+            // WebGL 환경에서는 메모리 제한이 더 엄격하므로, 큰 그리드 사용 시 주의가 필요합니다.
+            // 필요시 cellSize를 줄이거나 텍스처 풀링을 고려하세요.
             gridTexture = new Texture2D(texWidth, texHeight);
             gridTexture.filterMode = FilterMode.Point; // 픽셀 아트 스타일
 
