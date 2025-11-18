@@ -1,6 +1,6 @@
 using System.Collections.Generic;
-using Core.Core;
-using Data.Data;
+using Core;
+using Data;
 using UnityEngine;
 
 namespace Tests

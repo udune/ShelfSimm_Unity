@@ -1,14 +1,14 @@
 using System;
 using UnityEngine;
 
-namespace Data.Data
+namespace Data
 {
     // 도서 정보를 나타내는 데이터 클래스
     [Serializable]
     public class BookData
     {
         [Header("기본 정보")]
-        [SerializeField] private readonly string id; // 도서 고유 ID
+        [SerializeField] private string id; // 도서 고유 ID
         [SerializeField] private string title; // 도서 제목
         [SerializeField] private string author; // 저자
         [SerializeField] private string isbn; // ISBN 번호

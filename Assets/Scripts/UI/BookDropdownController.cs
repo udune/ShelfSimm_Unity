@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
-using Core.Core;
-using Data.Data;
+using Core;
+using Data;
 using TMPro;
 using UnityEngine;
 

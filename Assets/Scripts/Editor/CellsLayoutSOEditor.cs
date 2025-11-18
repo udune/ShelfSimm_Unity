@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
-using Data.Data;
+using Data;
 using UnityEditor;
 using UnityEngine;
 

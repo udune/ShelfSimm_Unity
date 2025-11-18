@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace Data.Data
+namespace Data
 {
     // 로봇의 상태를 나타내는 열거형
     [Serializable]

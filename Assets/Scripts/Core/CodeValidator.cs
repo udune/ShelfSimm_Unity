@@ -1,10 +1,9 @@
 using System;
 using System.Collections.Generic;
 using Data;
-using Data.Data;
 using UnityEngine;
 
-namespace Core.Core
+namespace Core
 {
     public class CodeValidator : MonoBehaviour
     {

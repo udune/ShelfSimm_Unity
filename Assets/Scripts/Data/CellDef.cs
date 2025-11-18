@@ -1,7 +1,7 @@
 using System;
 using UnityEngine;
 
-namespace Data.Data
+namespace Data
 {
     // 격자 내의 단일 칸 정의
     [Serializable]

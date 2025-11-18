@@ -1,9 +1,9 @@
 using System;
 using System.Collections.Generic;
-using Data.Data;
+using Data;
 using UnityEngine;
 
-namespace Core.Core
+namespace Core
 {
     // 작업 입력 데이터 구조체
     [Serializable]
