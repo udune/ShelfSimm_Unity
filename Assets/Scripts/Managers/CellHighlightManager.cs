@@ -1,3 +1,4 @@
+using System.Collections;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -18,24 +19,24 @@ namespace Managers.Managers
         [SerializeField] private Color accessibleColor = Color.green;
         [SerializeField] private Color blockedColor = Color.red;
         
-        private bool isBlinking = false;
+        private Coroutine blinkCoroutine;
         private GameObject currentSelectedCell;
 
         public void SelectCell(GameObject cell, bool isAccessible)
         {
             if (cell == null)
             {
+                ClearHighlight();
                 return;
             }
 
-            if (currentSelectedCell != cell && currentSelectedCell != null)
+            // 다른 셀이 선택되면 이전 하이라이트 정리
+            if (currentSelectedCell != cell)
             {
                 ClearHighlight();
+                currentSelectedCell = cell;
+                ShowHighlight(cell);
             }
-
-            currentSelectedCell = cell;
-
-            ShowHighlight(cell);
 
             ShowAccessibilityBadge(isAccessible);
         }
@@ -43,34 +44,28 @@ namespace Managers.Managers
         private void ShowHighlight(GameObject cell)
         {
             if (highlightBorder == null)
-            {
-                return;
-            }
+            { return; }
 
             highlightBorder.transform.position = cell.transform.position;
             highlightBorder.color = highlightColor;
             highlightBorder.gameObject.SetActive(true);
 
-            // 이미 깜빡이고 있다면 중지
-            if (isBlinking)
-            {
-                CancelInvoke(nameof(ToggleHighlight));
-            }
-
-            isBlinking = true;
-            // 0.3초 간격으로 깜빡임 시작
-            InvokeRepeating(nameof(ToggleHighlight), blinkDuration, blinkDuration);
+            // 코루틴을 사용하여 깜빡임 시작
+            blinkCoroutine = StartCoroutine(BlinkRoutine());
         }
 
-        private void ToggleHighlight()
+        private IEnumerator BlinkRoutine()
         {
-            if (highlightBorder == null)
+            // 무한 반복
+            while (true)
             {
-                return;
+                // blinkDuration 만큼 기다린 후 가시성 토글
+                yield return new WaitForSeconds(blinkDuration);
+                if (highlightBorder != null)
+                {
+                    highlightBorder.gameObject.SetActive(!highlightBorder.gameObject.activeSelf);
+                }
             }
-
-            // 가시성 토글 (visible ↔ invisible)
-            highlightBorder.gameObject.SetActive(!highlightBorder.gameObject.activeSelf);
         }
 
         private void ShowAccessibilityBadge(bool isAccessible)
@@ -81,7 +76,6 @@ namespace Managers.Managers
             }
             
             accessibilityBadge.SetActive(true);
-
             if (isAccessible)
             {
                 badgeText.text = "접근 가능";
@@ -96,10 +90,11 @@ namespace Managers.Managers
         
         public void ClearHighlight()
         {
-            if (isBlinking)
+            // 실행 중인 코루틴이 있다면 중지
+            if (blinkCoroutine != null)
             {
-                CancelInvoke(nameof(ToggleHighlight));
-                isBlinking = false;
+                StopCoroutine(blinkCoroutine);
+                blinkCoroutine = null;
             }
 
             if (highlightBorder != null)
