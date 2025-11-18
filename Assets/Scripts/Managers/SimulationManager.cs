@@ -28,9 +28,11 @@ namespace Managers.Managers
         [Header("내부 컴포넌트 참조")]
         [SerializeField] private RobotController robotController;
         [SerializeField] private ApiClient apiClient;
-        
+        [SerializeField] private SimpleAStarPathFinder pathFinder;
+        [SerializeField] private CellsLayoutSO cellsLayout;
+
         [Header("임시 데이터")]
-        [SerializeField] private List<Cell> allCells; 
+        [SerializeField] private List<Cell> allCells;
         [SerializeField] private List<Book> allBooks;
         
         #endregion
@@ -138,7 +140,7 @@ namespace Managers.Managers
             );
             if (!booksLoaded)
             {
-                Debug.LogError("API 초기화 실패: 책 정보를 가져올 수 없습니다.");
+                HandleApiInitializationFailure("API 초기화 실패: 책 정보를 가져올 수 없습니다.");
                 yield break;
             }
 
@@ -157,7 +159,7 @@ namespace Managers.Managers
             );
             if (!runCreated)
             {
-                Debug.LogError("API 초기화 실패: Run을 생성할 수 없습니다.");
+                HandleApiInitializationFailure("API 초기화 실패: Run을 생성할 수 없습니다.");
                 yield break;
             }
 
@@ -179,7 +181,7 @@ namespace Managers.Managers
             );
             if (!jobsBatched)
             {
-                Debug.LogError("API 초기화 실패: Jobs를 생성할 수 없습니다.");
+                HandleApiInitializationFailure("API 초기화 실패: Jobs를 생성할 수 없습니다.");
                 yield break;
             }
 
@@ -214,7 +216,7 @@ namespace Managers.Managers
             );
             if (!idsMapped)
             {
-                Debug.LogError("API 초기화 실패: Job ID를 매핑할 수 없습니다.");
+                HandleApiInitializationFailure("API 초기화 실패: Job ID를 매핑할 수 없습니다.");
                 yield break;
             }
 
@@ -279,13 +281,14 @@ namespace Managers.Managers
             if (_jobQueue.Count > 0)
             {
                 Job nextJob = _jobQueue.Dequeue();
-                
+
                 Cell targetCell = FindCellByCode(nextJob.CellCode);
                 Book targetBook = FindBookByTitle(nextJob.BookTitle);
 
                 if (targetCell != null && targetBook != null)
                 {
-                    robotController.StartJob(nextJob, targetCell, targetBook, OnJobFinished);
+                    int pathLength = CalculatePathLength(nextJob.CellCode);
+                    robotController.StartJob(nextJob, targetCell, targetBook, pathLength, OnJobFinished);
                 }
                 else
                 {
@@ -337,10 +340,11 @@ namespace Managers.Managers
             {
                 return;
             }
-            
+
             _isRunning = false;
+            _isPaused = false; // 일시정지 상태 초기화
             Debug.Log("시뮬레이션을 중지합니다.");
-            
+
             if (robotController != null)
             {
                 robotController.Stop();
@@ -362,14 +366,33 @@ namespace Managers.Managers
             {
                 UIManager.Instance.ShowSummary(_summary);
             }
-            
+
             Time.timeScale = 0f;
         }
 
         public void TogglePause()
         {
+            if (!_isRunning)
+            {
+                Debug.LogWarning("시뮬레이션이 실행 중이 아니므로 일시정지/재개할 수 없습니다.");
+                return;
+            }
+
             _isPaused = !_isPaused;
             Time.timeScale = _isPaused ? 0f : 1f;
+
+            if (robotController != null)
+            {
+                if (_isPaused)
+                {
+                    robotController.Pause();
+                }
+                else
+                {
+                    robotController.Resume();
+                }
+            }
+
             Debug.Log(_isPaused ? "시뮬레이션 일시정지됨." : "시뮬레이션 재개됨.");
         }
         
@@ -448,7 +471,39 @@ namespace Managers.Managers
                 new Job(JobAction.PICK, "A01", "Test Book A", 1)
             };
         }
-        
+
+        private int CalculatePathLength(string cellCode)
+        {
+            if (pathFinder == null || cellsLayout == null)
+            {
+                return 0;
+            }
+
+            CellDef cellDef = cellsLayout.GetCellByCode(cellCode);
+            if (cellDef == null)
+            {
+                return 0;
+            }
+
+            Vector2Int start = cellsLayout.warehouse;
+            Vector2Int goal = new Vector2Int(cellDef.x, cellDef.y);
+
+            List<Vector2Int> path = pathFinder.FindPath(start, goal);
+            return path != null ? path.Count : 0;
+        }
+
+        private void HandleApiInitializationFailure(string errorMessage)
+        {
+            Debug.LogError(errorMessage);
+
+            if (UIManager.Instance != null)
+            {
+                UIManager.Instance.ShowError(errorMessage);
+            }
+
+            _isRunning = false;
+        }
+
         #endregion
     }
 }

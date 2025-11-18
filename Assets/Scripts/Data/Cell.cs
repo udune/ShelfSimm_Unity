@@ -128,13 +128,17 @@ namespace Data.Data
         /// <param name="quantity">출고할 수량</param>
         public void PickBook(int quantity)
         {
+            string bookTitle = StoredBookTitle; // 로그 출력 전에 제목 저장
+            int previousCapacity = MaxCapacity; // 용량도 저장
+
             CurrentStock -= quantity;
             if (CurrentStock == 0)
             {
                 StoredBookTitle = null;
                 MaxCapacity = 0; // 칸이 비었으므로 용량 초기화
             }
-            Debug.Log($"[Cell] {CellCode}: {StoredBookTitle} {quantity}권 출고. 현재 {CurrentStock}/{MaxCapacity}권");
+
+            Debug.Log($"[Cell] {CellCode}: {bookTitle} {quantity}권 출고. 현재 {CurrentStock}/{(CurrentStock == 0 ? previousCapacity : MaxCapacity)}권");
         }
     }
 }

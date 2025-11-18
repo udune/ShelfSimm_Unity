@@ -45,7 +45,7 @@ namespace Core.Core
             }
         }
 
-        public void StartJob(Job job, Cell cell, Book book, Action<Job, ErrorCode> onComplete)
+        public void StartJob(Job job, Cell cell, Book book, int calculatedPathLength, Action<Job, ErrorCode> onComplete)
         {
             if (currentState != RobotState.IDLE)
             {
@@ -58,7 +58,7 @@ namespace Core.Core
             targetBook = book;
             onJobCompleteCallback = onComplete;
             jobStartTime = DateTime.UtcNow;
-            pathLength = 10; // 임시 값
+            pathLength = calculatedPathLength;
 
             ErrorCode errorCode;
             bool canProceed = (job.Action == JobAction.PUT)
@@ -103,13 +103,17 @@ namespace Core.Core
         {
             if (!reportToApi || apiClient == null || string.IsNullOrEmpty(currentJob?.JobId)) return;
 
+            // 경로 길이와 로봇 속도로 이동 시간 계산
+            float travelTimeSec = (config.robotSpeed > 0) ? (pathLength / config.robotSpeed) : 0f;
+            float calculatedTotalTime = travelTimeSec + config.handleTime;
+
             var request = new UpdateJobResultRequest
             {
                 startTs = jobStartTime.ToString("o"),
                 endTs = DateTime.UtcNow.ToString("o"),
-                travelTimeSec = Mathf.Max(0, totalTime - config.handleTime),
+                travelTimeSec = travelTimeSec,
                 handleTimeSec = config.handleTime,
-                totalTimeSec = totalTime,
+                totalTimeSec = calculatedTotalTime,
                 pathLengthCells = pathLength,
                 result = (resultCode == ErrorCode.NONE) ? "SUCCESS" : "FAIL",
                 failReason = (resultCode != ErrorCode.NONE) ? resultCode.ToString() : null,

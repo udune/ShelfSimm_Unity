@@ -12,11 +12,15 @@ namespace Managers.Managers
         [Header("Summary UI")]
         [SerializeField] private GameObject summaryPanel; // 시뮬레이션 종료 후 요약 팝업
         [SerializeField] private TextMeshProUGUI summaryText; // 시뮬레이션 종료 후 요약 텍스트
-        
+
         [Header("Real-time Dashboard UI")]
         [SerializeField] private TextMeshProUGUI completedCountText; // 완료 건수
         [SerializeField] private TextMeshProUGUI elapsedTimeText;    // 경과 시간
         [SerializeField] private TextMeshProUGUI averageTimeText;    // 평균 처리 시간
+
+        [Header("Error UI (Optional)")]
+        [SerializeField] private GameObject errorPanel; // 에러 표시 팝업 (선택 사항)
+        [SerializeField] private TextMeshProUGUI errorText; // 에러 메시지 텍스트
 
         private void Awake()
         {
@@ -32,6 +36,11 @@ namespace Managers.Managers
             if (summaryPanel != null)
             {
                 summaryPanel.SetActive(false);
+            }
+
+            if (errorPanel != null)
+            {
+                errorPanel.SetActive(false);
             }
         }
 
@@ -67,6 +76,33 @@ namespace Managers.Managers
             if (summaryPanel != null)
             {
                 summaryPanel.SetActive(false);
+            }
+        }
+
+        // 에러 메시지를 표시하는 메서드
+        public void ShowError(string errorMessage)
+        {
+            Debug.LogError(errorMessage);
+
+            // 에러 패널이 설정되어 있으면 UI로 표시
+            if (errorPanel != null && errorText != null)
+            {
+                errorPanel.SetActive(true);
+                errorText.text = errorMessage;
+            }
+            // 에러 패널이 없으면 summary 패널을 재사용 (fallback)
+            else if (summaryPanel != null && summaryText != null)
+            {
+                summaryPanel.SetActive(true);
+                summaryText.text = $"[에러]\n{errorMessage}";
+            }
+        }
+
+        public void CloseError()
+        {
+            if (errorPanel != null)
+            {
+                errorPanel.SetActive(false);
             }
         }
 

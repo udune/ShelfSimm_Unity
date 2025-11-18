@@ -6,7 +6,7 @@ namespace UI
 {
     public class GridRenderer : MonoBehaviour
     {
-        [Header("그리드 설정")] 
+        [Header("그리드 설정")]
         [SerializeField] private RawImage gridImage;
         [SerializeField] private int cellSize = 10; // 픽셀 단위
 
@@ -15,6 +15,9 @@ namespace UI
         private int height;
         private readonly Dictionary<Vector2Int, string> cellStates = new();
         private readonly HashSet<Vector2Int> dirtyPixels = new();
+
+        public int Width => width;
+        public int Height => height;
 
         public void Init(int gridWidth, int gridHeight)
         {

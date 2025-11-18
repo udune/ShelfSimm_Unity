@@ -83,7 +83,7 @@ namespace Core.Core
 
         public List<Vector2Int> FindPath(Vector2Int start, Vector2Int goal) // A* 알고리즘으로 경로 찾기
         {
-            if (!IsWalkable(start) && !IsWalkable(goal)) // 출발지와 목적지가 모두 갈 수 없는 곳이면
+            if (!IsWalkable(start) || !IsWalkable(goal)) // 출발지나 목적지 중 하나라도 갈 수 없는 곳이면
             {
                 Debug.LogWarning($"[SimpleAStarPathfinder] 갈 수 없는 위치: start({start.x},{start.y}) goal({goal.x},{goal.y})");
                 return null; // 경로 못 찾음

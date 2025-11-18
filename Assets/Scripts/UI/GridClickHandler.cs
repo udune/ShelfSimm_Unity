@@ -36,8 +36,20 @@ namespace UI
                 highlightManager = FindObjectOfType<CellHighlightManager>();
             }
 
-            gridWidth = 50;
-            gridHeight = 50;
+            // GridRenderer에서 동적으로 그리드 크기 가져오기
+            if (gridRenderer != null && gridRenderer.Width > 0 && gridRenderer.Height > 0)
+            {
+                gridWidth = gridRenderer.Width;
+                gridHeight = gridRenderer.Height;
+                Debug.Log($"[GridClickHandler] GridRenderer로부터 그리드 크기 로드: {gridWidth}x{gridHeight}");
+            }
+            else
+            {
+                // fallback: 기본값 사용
+                gridWidth = 50;
+                gridHeight = 50;
+                Debug.LogWarning("[GridClickHandler] GridRenderer가 초기화되지 않아 기본 그리드 크기 사용: 50x50");
+            }
         }
 
         public void OnPointerClick(PointerEventData eventData)
@@ -74,7 +86,6 @@ namespace UI
             
             if (infoPanel != null)
             {
-                Debug.Log("true");
                 infoPanel.UpdateCellInfo(cellCode, isAccessible);
             }
             

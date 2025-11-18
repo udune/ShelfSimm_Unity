@@ -54,7 +54,7 @@ namespace Tests_PlayMode.Tests_PlayMode
 
         private void StartTestJob()
         {
-            robotController.StartJob(testJob, testCell, testBook, (job, errorCode) => {});
+            robotController.StartJob(testJob, testCell, testBook, 0, (job, errorCode) => {});
         }
 
         [UnityTest]
