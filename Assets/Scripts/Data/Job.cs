@@ -1,4 +1,4 @@
-namespace Data.Data
+namespace Data
 {
     public enum JobAction { PUT, PICK }
 

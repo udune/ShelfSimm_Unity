@@ -1,7 +1,7 @@
 using System;
 using UnityEngine;
 
-namespace Core.Core
+namespace Core
 {
     [CreateAssetMenu(fileName = "SimulationConfig", menuName = "Scriptable Objects/SimulationConfig")]
     public class SimulationConfig : ScriptableObject

@@ -1,4 +1,4 @@
-namespace Core.Core
+namespace Core
 {
     public static class RobotNames
     {

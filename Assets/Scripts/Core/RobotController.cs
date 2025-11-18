@@ -1,10 +1,9 @@
 using System;
-using API.API;
+using API;
 using Data;
-using Data.Data;
 using UnityEngine;
 
-namespace Core.Core
+namespace Core
 {
     public class RobotController : MonoBehaviour
     {
@@ -36,8 +35,8 @@ namespace Core.Core
 
         private void Update()
         {
-            if (isStopped || isPaused || currentState != RobotState.HANDLING) return;
-            
+            if (isStopped || isPaused || currentState != RobotState.HANDLING || config == null) return;
+
             handleTimer += Time.deltaTime;
             if (handleTimer >= config.handleTime)
             {
@@ -101,7 +100,7 @@ namespace Core.Core
 
         private void ReportJobResult(ErrorCode resultCode, float totalTime)
         {
-            if (!reportToApi || apiClient == null || string.IsNullOrEmpty(currentJob?.JobId)) return;
+            if (!reportToApi || apiClient == null || config == null || string.IsNullOrEmpty(currentJob?.JobId)) return;
 
             // 경로 길이와 로봇 속도로 이동 시간 계산
             float travelTimeSec = (config.robotSpeed > 0) ? (pathLength / config.robotSpeed) : 0f;

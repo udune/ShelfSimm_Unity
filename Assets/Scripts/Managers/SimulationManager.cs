@@ -1,13 +1,13 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
-using API.API;
-using Core.Core;
-using Data.Data;
+using API;
+using Core;
+using Data;
 using UnityEngine;
 using Random = UnityEngine.Random;
 
-namespace Managers.Managers
+namespace Managers
 {
     public class SimulationManager : MonoBehaviour
     {

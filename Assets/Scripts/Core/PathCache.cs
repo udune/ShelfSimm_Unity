@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 
-namespace Core.Core
+namespace Core
 {
     // 캐시 키 구조체
     [Serializable]

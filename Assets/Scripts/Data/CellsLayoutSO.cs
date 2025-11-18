@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace Data.Data
+namespace Data
 {
     // 격자 내의 단일 칸 정의
     [CreateAssetMenu(fileName = "CellsLayoutSO", menuName = "Scriptable Objects/CellsLayoutSO")]

@@ -3,7 +3,7 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace Managers.Managers
+namespace Managers
 {
     public class CellHighlightManager : MonoBehaviour
     {
@@ -108,6 +108,11 @@ namespace Managers.Managers
             }
 
             currentSelectedCell = null;
+        }
+
+        private void OnDisable()
+        {
+            ClearHighlight();
         }
 
         public GameObject GetSelectedCell()

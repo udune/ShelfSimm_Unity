@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace Core.Core
+namespace Core
 {
     public static class PathFinder
     {

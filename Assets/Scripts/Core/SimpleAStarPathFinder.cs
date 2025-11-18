@@ -2,7 +2,7 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 
-namespace Core.Core
+namespace Core
 {
     // A* 알고리즘으로 최단 경로를 찾는 클래스
     public class SimpleAStarPathFinder : MonoBehaviour

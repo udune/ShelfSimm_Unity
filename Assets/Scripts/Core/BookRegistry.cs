@@ -2,10 +2,9 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Data;
-using Data.Data;
 using UnityEngine;
 
-namespace Core.Core
+namespace Core
 {
     // 도서 데이터를 관리하는 클래스
     public class BookRegistry : MonoBehaviour

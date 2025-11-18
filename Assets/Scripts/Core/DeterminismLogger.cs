@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace Core.Core
+namespace Core
 {
     // 결정론적 로그 출력 클래스
     public static class DeterminismLogger
