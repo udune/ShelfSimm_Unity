@@ -1,5 +1,6 @@
 using System;
 using UnityEngine;
+using Core.Core;
 
 namespace Data
 {
@@ -31,7 +32,7 @@ namespace Data
         /// </summary>
         /// <param name="book">입고할 책 정보</param>
         /// <param name="quantity">입고할 수량</param>
-        /// <param name="errorMessage">오류 발생 시 오류 메시지</param>
+        /// <param name="errorCode">오류 발생 시 오류 코드</param>
         /// <returns>입고 가능 여부</returns>
         public bool CanPutBook(Book book, int quantity, out ErrorCode errorCode)
         {
@@ -40,13 +41,16 @@ namespace Data
             if (quantity <= 0)
             {
                 errorCode = ErrorCode.INVALID_VALUE;
+                Debug.LogWarning($"[Cell] {errorCode.ToMessage()}");
                 return false;
             }
 
-            // 1. 높이 제한 검증
+            // 1. 높이 제한 검증 (AC-11)
             if (book.HeightMm > HeightMm)
             {
                 errorCode = ErrorCode.HEIGHT_LIMIT;
+                string detailedMessage = ErrorMessageFormatter.FormatHeightError(CellCode, book.Title, book.HeightMm, HeightMm);
+                Debug.LogWarning($"[Cell] {detailedMessage}");
                 return false;
             }
 
@@ -54,6 +58,8 @@ namespace Data
             if (!IsEmpty && StoredBookTitle != book.Title)
             {
                 errorCode = ErrorCode.BOOK_MISMATCH;
+                string detailedMessage = ErrorMessageFormatter.FormatBookMismatchError(CellCode, StoredBookTitle, book.Title);
+                Debug.LogWarning($"[Cell] {detailedMessage}");
                 return false;
             }
 
@@ -63,18 +69,22 @@ namespace Data
                 MaxCapacity = Mathf.FloorToInt((float)WidthMm / book.ThicknessMm);
                 if (MaxCapacity == 0) // 책 두께가 칸 너비보다 커서 한 권도 못 들어가는 경우
                 {
-                    errorCode = ErrorCode.CAPACITY_FULL; // 또는 새로운 에러코드 (e.g., BOOK_TOO_WIDE)
+                    errorCode = ErrorCode.CAPACITY_FULL;
+                    string detailedMessage = ErrorMessageFormatter.FormatCapacityError(CellCode, CurrentStock, MaxCapacity, quantity);
+                    Debug.LogWarning($"[Cell] {detailedMessage}");
                     return false;
                 }
             }
             // 칸이 비어있지 않으면 이미 MaxCapacity가 계산되어 있음
 
-            // 4. 입고 제한 검증 (current + quantity <= capacity)
+            // 4. 입고 제한 검증 (current + quantity <= capacity) - AC-10, AC-10.1
             int remainingCapacity = MaxCapacity - CurrentStock;
             if (quantity > remainingCapacity)
             {
                 // AC-10.1: 잔여 용량이 quantity 미만이면 부분 적재 없이 전체 실패
                 errorCode = ErrorCode.CAPACITY_FULL;
+                string detailedMessage = ErrorMessageFormatter.FormatCapacityError(CellCode, CurrentStock, MaxCapacity, quantity);
+                Debug.LogWarning($"[Cell] {detailedMessage}");
                 return false;
             }
 
@@ -101,7 +111,7 @@ namespace Data
         /// 책을 출고하기 전에 수량 제한을 검증합니다.
         /// </summary>
         /// <param name="quantity">출고할 수량</param>
-        /// <param name="errorMessage">오류 발생 시 오류 메시지</param>
+        /// <param name="errorCode">오류 발생 시 오류 코드</param>
         /// <returns>출고 가능 여부</returns>
         public bool CanPickBook(int quantity, out ErrorCode errorCode)
         {
@@ -110,13 +120,16 @@ namespace Data
             if (quantity <= 0)
             {
                 errorCode = ErrorCode.INVALID_VALUE;
+                Debug.LogWarning($"[Cell] {errorCode.ToMessage()}");
                 return false;
             }
 
-            // 1. 출고 제한 검증 (current >= quantity)
+            // 1. 출고 제한 검증 (current >= quantity) - AC-10.1 (출고 버전)
             if (CurrentStock < quantity)
             {
-                errorCode = ErrorCode.INSUFFICIENT_STOCK; // 재고 부족 에러코드 필요
+                errorCode = ErrorCode.INSUFFICIENT_STOCK;
+                string detailedMessage = ErrorMessageFormatter.FormatInsufficientStockError(CellCode, StoredBookTitle, CurrentStock, quantity);
+                Debug.LogWarning($"[Cell] {detailedMessage}");
                 return false;
             }
             return true;
