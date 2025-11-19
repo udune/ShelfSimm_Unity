@@ -1,5 +1,5 @@
 using NUnit.Framework;
-using Core.Core;
+using Core;
 using Data;
 
 namespace Tests

@@ -1,6 +1,6 @@
 using Data;
 
-namespace Core.Core
+namespace Core
 {
     /// <summary>
     /// 에러 메시지를 상세 정보와 함께 포맷팅하는 유틸리티 클래스

@@ -1,7 +1,7 @@
 using TMPro;
 using UnityEngine;
 using Data;
-using Core.Core;
+using Core;
 
 namespace UI
 {
