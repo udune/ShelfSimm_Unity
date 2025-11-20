@@ -162,27 +162,44 @@ namespace Core
     {
         private readonly WarehouseInventory _warehouse;
         private readonly Cell _cell;
+        private readonly string _expectedBookId;
         private readonly string _expectedBookTitle;
         private bool _cellUpdated = false;
         private bool _warehouseUpdated = false;
 
-        public PickTransaction(WarehouseInventory warehouse, Cell cell, string expectedBookTitle, int quantity)
+        public PickTransaction(WarehouseInventory warehouse, Cell cell, string expectedBookId, string expectedBookTitle, int quantity)
         {
             _warehouse = warehouse;
             _cell = cell;
+            _expectedBookId = expectedBookId;
             _expectedBookTitle = expectedBookTitle;
             CellCode = cell.CellCode;
             BookTitle = expectedBookTitle;
             Quantity = quantity;
         }
 
+        // Backward compatibility constructor (uses title as ID)
+        public PickTransaction(WarehouseInventory warehouse, Cell cell, string expectedBookTitle, int quantity)
+            : this(warehouse, cell, expectedBookTitle, expectedBookTitle, quantity)
+        {
+        }
+
         public override bool Execute()
         {
-            // 1. 도서 일치 검증 (BOOK_MISMATCH 우선 처리)
-            if (_cell.IsEmpty || _cell.StoredBookTitle != _expectedBookTitle)
+            // 1. 도서 일치 검증 (BOOK_MISMATCH 우선 처리) - AC-15.2
+            // 1.1. 빈 칸 검증 (book_id 누락 우선 처리)
+            if (_cell.IsEmpty)
             {
                 ErrorCode = ErrorCode.BOOK_MISMATCH;
-                Debug.LogWarning($"[PickTransaction] Book mismatch: Expected '{_expectedBookTitle}', Found '{_cell.StoredBookTitle ?? "EMPTY"}'");
+                Debug.LogWarning($"[PickTransaction] Cell is empty: Expected book_id '{_expectedBookId}', but cell has no book");
+                return false;
+            }
+
+            // 1.2. book_id 불일치 검증
+            if (_cell.StoredBookId != _expectedBookId)
+            {
+                ErrorCode = ErrorCode.BOOK_MISMATCH;
+                Debug.LogWarning($"[PickTransaction] Book ID mismatch: Expected '{_expectedBookId}', Found '{_cell.StoredBookId}'");
                 return false;
             }
 
