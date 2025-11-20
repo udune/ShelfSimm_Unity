@@ -1,5 +1,4 @@
 using NUnit.Framework;
-using Core;
 using Data;
 
 namespace Tests
@@ -192,7 +191,10 @@ namespace Tests
                 ErrorCode.INVALID_VALUE,
                 ErrorCode.CANCELLED_BY_STOP,
                 ErrorCode.INSUFFICIENT_STOCK,
-                ErrorCode.ROBOT_BUSY
+                ErrorCode.ROBOT_BUSY,
+                ErrorCode.CELL_LOCKED,
+                ErrorCode.TRANSACTION_FAILED,
+                ErrorCode.WAREHOUSE_INSUFFICIENT_STOCK
             };
 
             // Act & Assert
