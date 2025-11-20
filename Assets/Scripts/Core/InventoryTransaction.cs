@@ -13,7 +13,7 @@ namespace Core
         public string CellCode { get; protected set; }
         public string BookTitle { get; protected set; }
         public int Quantity { get; protected set; }
-        public ErrorCode ErrorCode { get; protected set; }
+        public ErrorCode ErrorCode { get; set; }
         public bool IsCommitted { get; private set; }
         public bool IsRolledBack { get; private set; }
 
