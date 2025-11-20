@@ -189,7 +189,7 @@ namespace Tests
         }
 
         [Test]
-        public void BackwardCompatibility_OldConstructor_UsesTitle AsId()
+        public void BackwardCompatibility_OldConstructor_UsesTitle()
         {
             // Arrange
             var book = new Book("Test Book", 20, 250); // Old constructor
