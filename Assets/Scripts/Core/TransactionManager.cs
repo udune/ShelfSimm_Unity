@@ -86,7 +86,18 @@ namespace Core
         }
 
         /// <summary>
-        /// PICK 작업을 트랜잭션으로 실행합니다.
+        /// PICK 작업을 트랜잭션으로 실행합니다. (book_id + title)
+        /// </summary>
+        public bool ExecutePick(WarehouseInventory warehouse, Cell cell, string expectedBookId, string expectedBookTitle, int quantity, out ErrorCode errorCode)
+        {
+            var transaction = new PickTransaction(warehouse, cell, expectedBookId, expectedBookTitle, quantity);
+            bool success = ExecuteTransaction(transaction);
+            errorCode = transaction.ErrorCode;
+            return success;
+        }
+
+        /// <summary>
+        /// PICK 작업을 트랜잭션으로 실행합니다. (backward compatibility - title only)
         /// </summary>
         public bool ExecutePick(WarehouseInventory warehouse, Cell cell, string expectedBookTitle, int quantity, out ErrorCode errorCode)
         {

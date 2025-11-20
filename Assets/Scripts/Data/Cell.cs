@@ -8,6 +8,7 @@ namespace Data
         public string CellCode { get; private set; }
         public int WidthMm { get; private set; }
         public int HeightMm { get; private set; }
+        public string StoredBookId { get; private set; } // 현재 보관된 책의 ID (AC-15.2)
         public string StoredBookTitle { get; private set; } // 현재 보관된 책의 제목
         public int CurrentStock { get; private set; } // 현재 재고 수량
 
@@ -21,6 +22,7 @@ namespace Data
             CellCode = cellCode;
             WidthMm = widthMm;
             HeightMm = heightMm;
+            StoredBookId = null;
             StoredBookTitle = null;
             CurrentStock = 0;
             MaxCapacity = 0; // 초기에는 0, 책이 입고될 때 계산됨
@@ -53,11 +55,11 @@ namespace Data
                 return false;
             }
 
-            // 2. 기존 책과의 일치 여부 검증 (칸이 비어있지 않은 경우)
-            if (!IsEmpty && StoredBookTitle != book.Title)
+            // 2. 기존 책과의 일치 여부 검증 (칸이 비어있지 않은 경우) - AC-15.2
+            if (!IsEmpty && StoredBookId != book.BookId)
             {
                 errorCode = ErrorCode.BOOK_MISMATCH;
-                string detailedMessage = ErrorMessageFormatter.FormatBookMismatchError(CellCode, StoredBookTitle, book.Title);
+                string detailedMessage = ErrorMessageFormatter.FormatBookMismatchError(CellCode, $"{StoredBookTitle} (ID: {StoredBookId})", $"{book.Title} (ID: {book.BookId})");
                 Debug.LogWarning($"[Cell] {detailedMessage}");
                 return false;
             }
@@ -99,11 +101,12 @@ namespace Data
         {
             if (IsEmpty)
             {
+                StoredBookId = book.BookId;
                 StoredBookTitle = book.Title;
                 MaxCapacity = Mathf.FloorToInt((float)WidthMm / book.ThicknessMm); // 다시 계산 (CanPutBook에서 이미 했지만 안전하게)
             }
             CurrentStock += quantity;
-            Debug.Log($"[Cell] {CellCode}: {book.Title} {quantity}권 입고. 현재 {CurrentStock}/{MaxCapacity}권");
+            Debug.Log($"[Cell] {CellCode}: {book.Title} (ID: {book.BookId}) {quantity}권 입고. 현재 {CurrentStock}/{MaxCapacity}권");
         }
 
         /// <summary>
@@ -140,17 +143,19 @@ namespace Data
         /// <param name="quantity">출고할 수량</param>
         public void PickBook(int quantity)
         {
+            string bookId = StoredBookId; // 로그 출력 전에 ID 저장
             string bookTitle = StoredBookTitle; // 로그 출력 전에 제목 저장
             int previousCapacity = MaxCapacity; // 용량도 저장
 
             CurrentStock -= quantity;
             if (CurrentStock == 0)
             {
+                StoredBookId = null;
                 StoredBookTitle = null;
                 MaxCapacity = 0; // 칸이 비었으므로 용량 초기화
             }
 
-            Debug.Log($"[Cell] {CellCode}: {bookTitle} {quantity}권 출고. 현재 {CurrentStock}/{(CurrentStock == 0 ? previousCapacity : MaxCapacity)}권");
+            Debug.Log($"[Cell] {CellCode}: {bookTitle} (ID: {bookId}) {quantity}권 출고. 현재 {CurrentStock}/{(CurrentStock == 0 ? previousCapacity : MaxCapacity)}권");
         }
     }
 }
