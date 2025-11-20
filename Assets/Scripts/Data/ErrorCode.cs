@@ -16,7 +16,10 @@ namespace Data
         INVALID_VALUE,      // 잘못된 값
         CANCELLED_BY_STOP,  // 시뮬레이션 중지로 인한 취소
         INSUFFICIENT_STOCK, // 재고 부족
-        ROBOT_BUSY          // 로봇이 다른 작업 중
+        ROBOT_BUSY,         // 로봇이 다른 작업 중
+        CELL_LOCKED,        // 셀이 잠겨 있음 (동시성 제어)
+        TRANSACTION_FAILED, // 트랜잭션 실패
+        WAREHOUSE_INSUFFICIENT_STOCK // 창고 재고 부족
     }
     
     // ErrorCode 열거형에 대한 확장 메서드 클래스
@@ -42,6 +45,9 @@ namespace Data
                 ErrorCode.CANCELLED_BY_STOP => "사용자에 의해 작업이 취소되었습니다",
                 ErrorCode.INSUFFICIENT_STOCK => "칸의 현재 재고가 요청한 출고 수량보다 부족합니다 (부분 출고 불가)",
                 ErrorCode.ROBOT_BUSY => "로봇이 현재 다른 작업을 수행 중입니다",
+                ErrorCode.CELL_LOCKED => "해당 칸이 다른 작업에 의해 잠겨 있습니다",
+                ErrorCode.TRANSACTION_FAILED => "트랜잭션 처리 중 오류가 발생했습니다",
+                ErrorCode.WAREHOUSE_INSUFFICIENT_STOCK => "창고의 현재 재고가 요청한 입고 수량보다 부족합니다",
                 _ => "알 수 없는 오류입니다"
             };
         }
