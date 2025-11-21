@@ -5,13 +5,13 @@ namespace Data
 {
     public class Summary
     {
-        public int totalTargets; // 총 목표 수
-        public int attempted; // 시도한 수
-        public int success; // 성공한 수
-        public int failed; // 실패한 수
-        public Dictionary<ErrorCode, int> reasons; // 실패 이유별 카운트
-        
-        public Summary() // 생성자
+        public int totalTargets;
+        public int attempted;
+        public int success;
+        public int failed;
+        public Dictionary<ErrorCode, int> reasons;
+
+        public Summary()
         {
             totalTargets = 0;
             attempted = 0;
@@ -20,38 +20,37 @@ namespace Data
             reasons = new Dictionary<ErrorCode, int>();
         }
 
-        public void RecordSuccess() // 성공 기록
+        public void RecordSuccess()
         {
-            attempted++; // 시도한 수 증가
-            success++; // 성공한 수 증가
+            attempted++;
+            success++;
         }
 
-        // 실패 기록
         public void RecordFailure(ErrorCode errorCode)
         {
-            attempted++; // 시도한 수 증가
-            failed++; // 실패한 수 증가
+            attempted++;
+            failed++;
 
-            if (reasons.ContainsKey(errorCode)) // 이미 해당 오류 코드가 있으면 카운트 증가
+            if (reasons.ContainsKey(errorCode))
             {
-                reasons[errorCode]++; // 해당 오류 코드 카운트 증가
+                reasons[errorCode]++;
             }
             else
             {
-                reasons[errorCode] = 1; // 해당 오류 코드 처음 등장, 카운트 1로 설정
+                reasons[errorCode] = 1;
             }
         }
 
-        public override string ToString() // 요약 정보 문자열로 변환
+        public override string ToString()
         {
             var reasonStr = "";
-            foreach (var reason in reasons) // 실패 이유들을 문자열로 변환
+            foreach (var reason in reasons)
             {
                 if (reasonStr.Length > 0)
                 {
                     reasonStr += ", ";
                 }
-                reasonStr += $"{reason.Key}:{reason.Value}"; // 예: ROUTE_BLOCKED:3
+                reasonStr += $"{reason.Key}:{reason.Value}";
             }
             
             return $"summary:\n" +

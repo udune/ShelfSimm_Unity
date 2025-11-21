@@ -7,10 +7,10 @@ namespace UI
 {
     public class SettingsUI : MonoBehaviour
     {
-        [Header("참조")]
+        [Header("References")]
         [SerializeField] private SimulationConfig config;
 
-        [Header("UI 컴포넌트")]
+        [Header("UI Components")]
         [SerializeField] private TMP_InputField handleTimeInput;
         [SerializeField] private Button applyButton;
         [SerializeField] private TextMeshProUGUI statusText;
@@ -40,7 +40,7 @@ namespace UI
             {
                 if (newValue > 0)
                 {
-                    config.handleTime = newValue; // SimulationConfig의 값을 직접 변경
+                    config.handleTime = newValue;
                     ShowStatus($"설정 적용됨: 작업 처리 시간 = {newValue:F1}초", Color.green);
                 }
                 else

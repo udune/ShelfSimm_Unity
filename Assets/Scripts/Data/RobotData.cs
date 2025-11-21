@@ -4,24 +4,22 @@ using UnityEngine;
 
 namespace Data
 {
-    // 로봇의 상태를 나타내는 열거형
     [Serializable]
     public class RobotData
     {
-        public string id; // 로봇ID
-        public string name; // 로봇이름
-        public Vector2Int position; // 로봇현재위치
-        public RobotState state; // 로봇상태
-        public Vector2Int? targetPosition; // 로봇목표위치
-        public List<Vector2Int> path; // 로봇경로
-        public int pathIndex; // 현재경로인덱스
+        public string id;
+        public string name;
+        public Vector2Int position;
+        public RobotState state;
+        public Vector2Int? targetPosition;
+        public List<Vector2Int> path;
+        public int pathIndex;
 
-        public float moveStartTime; // 이동시작시간
-        public float moveTimeoutSec; // 이동타임아웃초
+        public float moveStartTime;
+        public float moveTimeoutSec;
 
-        public ErrorCode? errorCode; // 오류코드
-        
-        // 생성자
+        public ErrorCode? errorCode;
+
         public RobotData(string id, string name, Vector2Int position, float timeout = 30f)
         {
             this.id = id;

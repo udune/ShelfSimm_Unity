@@ -1,34 +1,30 @@
 namespace Data
 {
-    // 다양한 오류 코드를 나타내는 열거형
     public enum ErrorCode
     {
-        NONE,               // 오류 없음
-        CAPACITY_FULL,      // 칸이 가득 참
-        HEIGHT_LIMIT,       // 높이 제한 초과
-        ROUTE_BLOCKED,      // 경로 차단됨
-        ROUTE_TIMEOUT,      // 이동 타임아웃
-        BOOK_MISMATCH,      // 도서 불일치
-        INVALID_CODE,       // 잘못된 칸 코드
-        INVALID_LAYOUT,     // 잘못된 레이아웃
-        DUPLICATE_CODE,     // 중복 코드
-        OVERLAP_CELL,       // 칸 영역 겹침
-        INVALID_VALUE,      // 잘못된 값
-        CANCELLED_BY_STOP,  // 시뮬레이션 중지로 인한 취소
-        INSUFFICIENT_STOCK, // 재고 부족
-        ROBOT_BUSY,         // 로봇이 다른 작업 중
-        CELL_LOCKED,        // 셀이 잠겨 있음 (동시성 제어)
-        TRANSACTION_FAILED, // 트랜잭션 실패
-        WAREHOUSE_INSUFFICIENT_STOCK // 창고 재고 부족
+        NONE,
+        CAPACITY_FULL,
+        HEIGHT_LIMIT,
+        ROUTE_BLOCKED,
+        ROUTE_TIMEOUT,
+        BOOK_MISMATCH,
+        INVALID_CODE,
+        INVALID_LAYOUT,
+        DUPLICATE_CODE,
+        OVERLAP_CELL,
+        INVALID_VALUE,
+        CANCELLED_BY_STOP,
+        INSUFFICIENT_STOCK,
+        ROBOT_BUSY,
+        CELL_LOCKED,
+        TRANSACTION_FAILED,
+        WAREHOUSE_INSUFFICIENT_STOCK
     }
-    
-    // ErrorCode 열거형에 대한 확장 메서드 클래스
+
     public static class ErrorCodeExtensions
     {
-        // ErrorCode를 사용자 친화적인 메시지로 변환하는 메서드
         public static string ToMessage(this ErrorCode errorCode)
         {
-            // 각 오류 코드에 대한 메시지 반환
             return errorCode switch
             {
                 ErrorCode.NONE => "정상 처리",

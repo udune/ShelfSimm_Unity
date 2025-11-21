@@ -15,7 +15,6 @@ namespace Data
             HeightMm = heightMm;
         }
 
-        // Backward compatibility constructor (uses title as ID if not provided)
         public Book(string title, int thicknessMm, int heightMm)
             : this(title, title, thicknessMm, heightMm)
         {
