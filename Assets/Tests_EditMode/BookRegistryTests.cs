@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using API;
 using Core;
 using Data;
 using NUnit.Framework;
@@ -410,6 +412,162 @@ namespace Tests_EditMode.Tests_EditMode
                 Assert.IsFalse(string.IsNullOrEmpty(bookIds[i]), $"인덱스 {i}의 ID가 비어있어서는 안됨");
                 Assert.IsTrue(bookIds[i].StartsWith("BOOK"), $"ID '{bookIds[i]}'는 'BOOK'으로 시작해야 함");
             }
+        }
+
+        #endregion
+
+        #region API 통합 테스트
+
+        [Test]
+        [Description("API에서 받은 BookDto 리스트를 BookData로 변환하여 로드")]
+        public void LoadBooksFromApi_ValidBookDtos_LoadsSuccessfully()
+        {
+            // Given: API에서 받은 BookDto 리스트
+            var bookDtos = new List<BookDto>
+            {
+                new BookDto { id = "API001", title = "API Book 1", thicknessMm = 30, heightMm = 210 },
+                new BookDto { id = "API002", title = "API Book 2", thicknessMm = 25, heightMm = 200 },
+                new BookDto { id = "API003", title = "API Book 3", thicknessMm = 35, heightMm = 220 }
+            };
+
+            // When: API 데이터 로드
+            bookRegistry.LoadBooksFromApi(bookDtos);
+
+            // Then: API 데이터가 로드되어야 함
+            Assert.AreEqual(3, bookRegistry.GetBookCount(), "API 책 3개가 로드되어야 함");
+
+            var loadedBook = bookRegistry.GetBookById("API001");
+            Assert.IsNotNull(loadedBook, "API 책을 찾을 수 있어야 함");
+            Assert.AreEqual("API Book 1", loadedBook.Title, "제목이 일치해야 함");
+            Assert.AreEqual(30, loadedBook.Thickness, "두께가 일치해야 함");
+            Assert.AreEqual(210, loadedBook.Height, "높이가 일치해야 함");
+        }
+
+        [Test]
+        [Description("API에서 받은 BookDto의 누락된 필드에 기본값 적용")]
+        public void LoadBooksFromApi_MissingFields_UsesDefaultValues()
+        {
+            // Given: API에서 받은 BookDto (일부 필드만 제공)
+            var bookDtos = new List<BookDto>
+            {
+                new BookDto { id = "API001", title = "API Book", thicknessMm = 30, heightMm = 210 }
+            };
+
+            // When: API 데이터 로드
+            bookRegistry.LoadBooksFromApi(bookDtos);
+
+            // Then: 누락된 필드에 기본값이 적용되어야 함
+            var loadedBook = bookRegistry.GetBookById("API001");
+            Assert.IsNotNull(loadedBook);
+            Assert.AreEqual("Unknown", loadedBook.Author, "저자는 'Unknown' 기본값이어야 함");
+            Assert.AreEqual(150, loadedBook.Width, "너비는 150mm 기본값이어야 함");
+            Assert.AreEqual("일반", loadedBook.Category, "카테고리는 '일반' 기본값이어야 함");
+            Assert.AreEqual("", loadedBook.ISBN, "ISBN은 빈 문자열이어야 함");
+            Assert.IsTrue(loadedBook.IsAvailable, "사용 가능 상태여야 함");
+        }
+
+        [Test]
+        [Description("API 데이터가 비어있을 때 더미 데이터 유지")]
+        public void LoadBooksFromApi_EmptyList_KeepsDummyData()
+        {
+            // Given: 초기 더미 데이터
+            int initialCount = bookRegistry.GetBookCount();
+            Assert.Greater(initialCount, 0, "초기 더미 데이터가 있어야 함");
+
+            // When: 빈 API 데이터 로드 시도
+            bookRegistry.LoadBooksFromApi(new List<BookDto>());
+
+            // Then: 더미 데이터가 유지되어야 함
+            Assert.AreEqual(initialCount, bookRegistry.GetBookCount(), "더미 데이터가 유지되어야 함");
+        }
+
+        [Test]
+        [Description("API 데이터가 null일 때 더미 데이터 유지")]
+        public void LoadBooksFromApi_NullList_KeepsDummyData()
+        {
+            // Given: 초기 더미 데이터
+            int initialCount = bookRegistry.GetBookCount();
+            Assert.Greater(initialCount, 0, "초기 더미 데이터가 있어야 함");
+
+            // When: null API 데이터 로드 시도
+            bookRegistry.LoadBooksFromApi(null);
+
+            // Then: 더미 데이터가 유지되어야 함
+            Assert.AreEqual(initialCount, bookRegistry.GetBookCount(), "더미 데이터가 유지되어야 함");
+        }
+
+        [Test]
+        [Description("API 데이터 로드 후 기존 더미 데이터 대체")]
+        public void LoadBooksFromApi_ReplacesExistingDummyData()
+        {
+            // Given: 초기 더미 데이터
+            var initialBooks = bookRegistry.GetAllAvailableBooks();
+            string initialFirstBookId = initialBooks[0].Id;
+
+            // API에서 받은 새로운 데이터
+            var bookDtos = new List<BookDto>
+            {
+                new BookDto { id = "NEW001", title = "New Book", thicknessMm = 30, heightMm = 210 }
+            };
+
+            // When: API 데이터 로드
+            bookRegistry.LoadBooksFromApi(bookDtos);
+
+            // Then: 기존 더미 데이터가 대체되어야 함
+            Assert.AreEqual(1, bookRegistry.GetBookCount(), "새로운 API 책 1개만 있어야 함");
+
+            var oldBook = bookRegistry.GetBookById(initialFirstBookId);
+            Assert.IsNull(oldBook, "기존 더미 데이터는 제거되어야 함");
+
+            var newBook = bookRegistry.GetBookById("NEW001");
+            Assert.IsNotNull(newBook, "새로운 API 책이 로드되어야 함");
+        }
+
+        [Test]
+        [Description("더미 데이터로 리셋")]
+        public void ResetToDummyData_RestoresOriginalDummyBooks()
+        {
+            // Given: API 데이터로 교체된 상태
+            var bookDtos = new List<BookDto>
+            {
+                new BookDto { id = "API001", title = "API Book", thicknessMm = 30, heightMm = 210 }
+            };
+            bookRegistry.LoadBooksFromApi(bookDtos);
+            Assert.AreEqual(1, bookRegistry.GetBookCount(), "API 책만 있어야 함");
+
+            // When: 더미 데이터로 리셋
+            bookRegistry.ResetToDummyData();
+
+            // Then: 원래 더미 데이터가 복원되어야 함
+            Assert.GreaterOrEqual(bookRegistry.GetBookCount(), 5, "최소 5개 이상의 더미 도서가 복원되어야 함");
+
+            var apiBook = bookRegistry.GetBookById("API001");
+            Assert.IsNull(apiBook, "API 책은 제거되어야 함");
+
+            var dummyBook = bookRegistry.GetBookById("BOOK001");
+            Assert.IsNotNull(dummyBook, "더미 책이 복원되어야 함");
+        }
+
+        [Test]
+        [Description("API에서 ID가 없는 BookDto 처리")]
+        public void LoadBooksFromApi_MissingId_GeneratesTemporaryId()
+        {
+            // Given: ID가 없는 BookDto
+            var bookDtos = new List<BookDto>
+            {
+                new BookDto { id = null, title = "Book Without ID", thicknessMm = 30, heightMm = 210 }
+            };
+
+            // When: API 데이터 로드
+            bookRegistry.LoadBooksFromApi(bookDtos);
+
+            // Then: 임시 ID가 생성되어야 함
+            Assert.AreEqual(1, bookRegistry.GetBookCount(), "책이 로드되어야 함");
+
+            var books = bookRegistry.GetAllAvailableBooks();
+            Assert.IsNotNull(books[0].Id, "임시 ID가 생성되어야 함");
+            Assert.IsTrue(books[0].Id.StartsWith("BOOK_"), "임시 ID는 'BOOK_'로 시작해야 함");
+            Assert.AreEqual("Book Without ID", books[0].Title, "제목은 유지되어야 함");
         }
 
         #endregion

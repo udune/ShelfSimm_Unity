@@ -135,9 +135,11 @@ namespace Managers
 
             // 1. 책 정보 로드
             bool booksLoaded = false;
+            List<BookDto> loadedBookDtos = null;
             yield return apiClient.GetAllBooks(
                 onSuccess: bookDtos => {
                     allBooks = bookDtos.Select(dto => new Book(dto.title, dto.thicknessMm, dto.heightMm)).ToList();
+                    loadedBookDtos = bookDtos;
                     booksLoaded = true;
                 },
                 onError: error => Debug.LogError($"책 정보 로드 실패: {error}")
@@ -146,6 +148,18 @@ namespace Managers
             {
                 HandleApiInitializationFailure("API 초기화 실패: 책 정보를 가져올 수 없습니다.");
                 yield break;
+            }
+
+            // 1.1. BookRegistry 업데이트 (UI용)
+            var bookRegistry = FindObjectOfType<BookRegistry>();
+            if (bookRegistry != null && loadedBookDtos != null)
+            {
+                bookRegistry.LoadBooksFromApi(loadedBookDtos);
+                Debug.Log("[SimulationManager] BookRegistry가 API 데이터로 업데이트되었습니다.");
+            }
+            else
+            {
+                Debug.LogWarning("[SimulationManager] BookRegistry를 찾을 수 없거나 책 데이터가 없습니다.");
             }
 
             // 2. Run 생성
