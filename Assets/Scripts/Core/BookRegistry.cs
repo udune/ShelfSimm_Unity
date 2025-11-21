@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Data;
 using UnityEngine;
+using API;
 
 namespace Core
 {
@@ -185,13 +186,59 @@ namespace Core
             {
                 return false; // 유효하지 않은 ID인 경우 false 반환
             }
-            
+
             BookData book = bookDatabase[bookId]; // 제거할 도서 가져오기
             bookDatabase.Remove(bookId); // 딕셔너리에서 제거
             availableBooks.Remove(book); // 사용 가능한 도서 목록에서 제거
-            
+
             Debug.Log($"[BookRegistry] 도서 제거됨: {book.DisplayText}");
             return true; // 성공적으로 제거된 경우 true 반환
+        }
+
+        // API에서 받은 도서 데이터를 로드 (BookDto → BookData 변환)
+        public void LoadBooksFromApi(List<BookDto> bookDtos)
+        {
+            if (bookDtos == null || bookDtos.Count == 0)
+            {
+                Debug.LogWarning("[BookRegistry] API에서 받은 도서 데이터가 비어있습니다. 더미 데이터를 유지합니다.");
+                return;
+            }
+
+            Debug.Log($"[BookRegistry] API에서 {bookDtos.Count}개의 도서 데이터를 로드합니다...");
+
+            // 기존 데이터 초기화
+            bookDatabase.Clear();
+            availableBooks.Clear();
+
+            // BookDto를 BookData로 변환하여 추가
+            foreach (var dto in bookDtos)
+            {
+                // BookDto는 일부 필드만 제공하므로, 나머지는 기본값 사용
+                var bookData = new BookData(
+                    id: dto.id ?? $"BOOK_{System.Guid.NewGuid().ToString().Substring(0, 8)}", // ID가 없으면 임시 ID 생성
+                    title: dto.title ?? "Unknown Title",
+                    author: "Unknown", // API에서 제공하지 않음
+                    thickness: dto.thicknessMm,
+                    height: dto.heightMm,
+                    width: 150, // API에서 제공하지 않음, 기본값 사용 (일반적인 책 너비)
+                    category: "일반", // API에서 제공하지 않음
+                    isbn: "" // API에서 제공하지 않음
+                );
+
+                // 데이터베이스에 추가
+                bookDatabase[bookData.Id] = bookData;
+                availableBooks.Add(bookData);
+            }
+
+            Debug.Log($"[BookRegistry] API 도서 데이터 로드 완료: {bookDatabase.Count}개 도서, {availableBooks.Count}개 사용 가능");
+        }
+
+        // 모든 도서 데이터 초기화 (더미 데이터로 리셋)
+        public void ResetToDummyData()
+        {
+            Debug.Log("[BookRegistry] 더미 데이터로 리셋합니다...");
+            InitDummyData();
+            BuildDatabase();
         }
     }
 }
