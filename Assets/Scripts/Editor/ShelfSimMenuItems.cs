@@ -17,15 +17,6 @@ namespace Editor
             SimulationControlWindow.ShowWindow();
         }
 
-        [MenuItem("Window/ShelfSim/Toggle Grid Visualization %#G")]
-        public static void ToggleGridVisualization()
-        {
-            // This calls the static method in GridVisualizationEditor
-            var method = typeof(GridVisualizationEditor).GetMethod("ToggleVisualization",
-                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
-            method?.Invoke(null, null);
-        }
-
         [MenuItem("GameObject/ShelfSim/Create Simulation Manager", false, 10)]
         public static void CreateSimulationManager()
         {
