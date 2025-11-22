@@ -10,8 +10,8 @@ namespace Editor
         public static void CleanupOldUI()
         {
             if (!EditorUtility.DisplayDialog("Scene UI 정리",
-                "기존 UI 오브젝트들을 모두 삭제합니다.\n" +
-                "SimulationManager와 핵심 컴포넌트는 유지됩니다.\n\n" +
+                "기존 UI 오브젝트들을 삭제합니다.\n" +
+                "Grid View와 핵심 컴포넌트는 유지됩니다.\n\n" +
                 "계속하시겠습니까?",
                 "예", "아니오"))
             {
@@ -23,9 +23,35 @@ namespace Editor
             GameObject canvas = GameObject.Find("Canvas");
             if (canvas != null)
             {
-                Debug.Log("Canvas 및 모든 UI 삭제 중...");
-                Object.DestroyImmediate(canvas);
-                deletedCount++;
+                List<Transform> toDelete = new List<Transform>();
+
+                foreach (Transform child in canvas.transform)
+                {
+                    string name = child.name;
+
+                    if (name.Contains("Grid") ||
+                        name.Contains("Robot") ||
+                        name.Contains("EmptyCell"))
+                    {
+                        Debug.Log($"{name} 유지 (Grid View)");
+                        continue;
+                    }
+
+                    toDelete.Add(child);
+                }
+
+                foreach (Transform child in toDelete)
+                {
+                    Debug.Log($"{child.name} 삭제");
+                    Object.DestroyImmediate(child.gameObject);
+                    deletedCount++;
+                }
+
+                if (canvas.transform.childCount == 0 && canvas.GetComponent<UnityEngine.EventSystems.EventSystem>() == null)
+                {
+                    Debug.Log("Canvas 전체 삭제 (비어있음)");
+                    Object.DestroyImmediate(canvas);
+                }
             }
 
             string[] oldUINames = new string[]
@@ -38,7 +64,6 @@ namespace Editor
                 "CentralPanel",
                 "BottomBar",
                 "ControlButtons",
-                "GridContainer",
                 "Legend"
             };
 
@@ -59,7 +84,8 @@ namespace Editor
 
             EditorUtility.DisplayDialog("완료",
                 $"Scene 정리 완료!\n\n" +
-                $"삭제된 오브젝트: {deletedCount}개\n\n" +
+                $"삭제된 오브젝트: {deletedCount}개\n" +
+                $"Grid View 유지됨 ✅\n\n" +
                 "이제 'Tools → ShelfSim → Setup UI (Auto)'를 실행하여\n" +
                 "새로운 UI를 생성하세요.",
                 "확인");
@@ -70,7 +96,7 @@ namespace Editor
         {
             if (!EditorUtility.DisplayDialog("Scene 리셋",
                 "Scene을 초기 상태로 리셋합니다.\n" +
-                "SimulationManager, Camera, Light만 남기고 모두 삭제됩니다.\n\n" +
+                "SimulationManager, Camera, Light, Grid View는 유지됩니다.\n\n" +
                 "계속하시겠습니까?",
                 "예", "아니오"))
             {
@@ -88,8 +114,15 @@ namespace Editor
                 if (name == "Main Camera" ||
                     name == "Global Light 2D" ||
                     name.Contains("SimulationManager") ||
-                    name.Contains("EventSystem"))
+                    name.Contains("EventSystem") ||
+                    name.Contains("Grid") ||
+                    name.Contains("PathFinder") ||
+                    name.Contains("PathCache") ||
+                    name.Contains("Robot") ||
+                    name.Contains("BookRegistry") ||
+                    name.Contains("LayoutHashManager"))
                 {
+                    Debug.Log($"{name} 유지");
                     continue;
                 }
 
@@ -102,7 +135,8 @@ namespace Editor
 
             EditorUtility.DisplayDialog("완료",
                 $"Scene 리셋 완료!\n\n" +
-                $"삭제된 오브젝트: {deletedCount}개\n\n" +
+                $"삭제된 오브젝트: {deletedCount}개\n" +
+                $"핵심 컴포넌트 유지: Grid View, SimulationManager 등\n\n" +
                 "이제 'Tools → ShelfSim → Setup UI (Auto)'를 실행하여\n" +
                 "새로운 UI를 생성하세요.",
                 "확인");
