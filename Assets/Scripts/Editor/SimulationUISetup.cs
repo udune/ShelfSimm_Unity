@@ -129,8 +129,8 @@ namespace Editor
             RectTransform rect = area.AddComponent<RectTransform>();
             rect.anchorMin = new Vector2(0, 0);
             rect.anchorMax = new Vector2(0.6f, 1);
-            rect.offsetMin = new Vector2(10, 10);
-            rect.offsetMax = new Vector2(-5, -10);
+            rect.offsetMin = Vector2.zero;
+            rect.offsetMax = Vector2.zero;
 
             return area;
         }
@@ -143,8 +143,8 @@ namespace Editor
             RectTransform rect = area.AddComponent<RectTransform>();
             rect.anchorMin = new Vector2(0.6f, 0);
             rect.anchorMax = new Vector2(1, 1);
-            rect.offsetMin = new Vector2(5, 10);
-            rect.offsetMax = new Vector2(-10, -10);
+            rect.offsetMin = Vector2.zero;
+            rect.offsetMax = Vector2.zero;
 
             Image bg = area.AddComponent<Image>();
             bg.color = new Color(0.08f, 0.08f, 0.12f, 0.98f);
@@ -164,8 +164,8 @@ namespace Editor
             RectTransform rect = panel.AddComponent<RectTransform>();
             rect.anchorMin = new Vector2(0, 0.67f);
             rect.anchorMax = new Vector2(1, 1);
-            rect.offsetMin = new Vector2(15, 10);
-            rect.offsetMax = new Vector2(-15, -15);
+            rect.offsetMin = Vector2.zero;
+            rect.offsetMax = Vector2.zero;
 
             Image bg = panel.AddComponent<Image>();
             bg.color = new Color(0.15f, 0.15f, 0.20f, 1f);
@@ -174,12 +174,12 @@ namespace Editor
             shadow.effectColor = new Color(0, 0, 0, 0.3f);
             shadow.effectDistance = new Vector2(2, -2);
 
-            GameObject title = CreateText(panel.transform, "Title", "작업 입력", 26, TextAlignmentOptions.Center, true);
+            GameObject title = CreateText(panel.transform, "Title", "작업 입력", 24, TextAlignmentOptions.Center, true);
             RectTransform titleRect = title.GetComponent<RectTransform>();
-            titleRect.anchorMin = new Vector2(0, 0.9f);
+            titleRect.anchorMin = new Vector2(0, 0.92f);
             titleRect.anchorMax = new Vector2(1, 1);
-            titleRect.offsetMin = new Vector2(10, 0);
-            titleRect.offsetMax = new Vector2(-10, -10);
+            titleRect.offsetMin = Vector2.zero;
+            titleRect.offsetMax = Vector2.zero;
 
             float yStart = 0.83f;
             float spacing = 0.15f;
@@ -251,8 +251,8 @@ namespace Editor
             RectTransform rect = panel.AddComponent<RectTransform>();
             rect.anchorMin = new Vector2(0, 0.33f);
             rect.anchorMax = new Vector2(1, 0.66f);
-            rect.offsetMin = new Vector2(15, 5);
-            rect.offsetMax = new Vector2(-15, -5);
+            rect.offsetMin = Vector2.zero;
+            rect.offsetMax = Vector2.zero;
 
             Image bg = panel.AddComponent<Image>();
             bg.color = new Color(0.15f, 0.15f, 0.20f, 1f);
@@ -333,8 +333,8 @@ namespace Editor
             RectTransform rect = panel.AddComponent<RectTransform>();
             rect.anchorMin = new Vector2(0, 0);
             rect.anchorMax = new Vector2(1, 0.32f);
-            rect.offsetMin = new Vector2(15, 15);
-            rect.offsetMax = new Vector2(-15, -5);
+            rect.offsetMin = Vector2.zero;
+            rect.offsetMax = Vector2.zero;
 
             Image bg = panel.AddComponent<Image>();
             bg.color = new Color(0.12f, 0.12f, 0.16f, 1f);
@@ -420,10 +420,10 @@ namespace Editor
             GameObject textArea = new GameObject("TextArea");
             textArea.transform.SetParent(obj.transform, false);
             RectTransform textAreaRect = textArea.AddComponent<RectTransform>();
-            textAreaRect.anchorMin = Vector2.zero;
-            textAreaRect.anchorMax = Vector2.one;
-            textAreaRect.offsetMin = new Vector2(10, 2);
-            textAreaRect.offsetMax = new Vector2(-10, -2);
+            textAreaRect.anchorMin = new Vector2(0.02f, 0.1f);
+            textAreaRect.anchorMax = new Vector2(0.98f, 0.9f);
+            textAreaRect.offsetMin = Vector2.zero;
+            textAreaRect.offsetMax = Vector2.zero;
 
             GameObject textObj = new GameObject("Text");
             textObj.transform.SetParent(textArea.transform, false);
@@ -477,10 +477,10 @@ namespace Editor
             labelText.fontSize = 14;
             if (regularFont != null) labelText.font = regularFont;
             RectTransform labelRect = label.GetComponent<RectTransform>();
-            labelRect.anchorMin = new Vector2(0, 0);
-            labelRect.anchorMax = new Vector2(1, 1);
-            labelRect.offsetMin = new Vector2(10, 2);
-            labelRect.offsetMax = new Vector2(-25, -2);
+            labelRect.anchorMin = new Vector2(0.02f, 0.1f);
+            labelRect.anchorMax = new Vector2(0.9f, 0.9f);
+            labelRect.offsetMin = Vector2.zero;
+            labelRect.offsetMax = Vector2.zero;
 
             GameObject arrow = new GameObject("Arrow");
             arrow.transform.SetParent(obj.transform, false);
@@ -537,10 +537,10 @@ namespace Editor
             itemLabelText.fontSize = 14;
             if (regularFont != null) itemLabelText.font = regularFont;
             RectTransform itemLabelRect = itemLabel.GetComponent<RectTransform>();
-            itemLabelRect.anchorMin = Vector2.zero;
-            itemLabelRect.anchorMax = Vector2.one;
-            itemLabelRect.offsetMin = new Vector2(10, 2);
-            itemLabelRect.offsetMax = new Vector2(-10, -2);
+            itemLabelRect.anchorMin = new Vector2(0.05f, 0.1f);
+            itemLabelRect.anchorMax = new Vector2(0.95f, 0.9f);
+            itemLabelRect.offsetMin = Vector2.zero;
+            itemLabelRect.offsetMax = Vector2.zero;
 
             item.AddComponent<Toggle>();
 
@@ -659,10 +659,10 @@ namespace Editor
 
             GameObject errorText = CreateText(panel.transform, "ErrorText", "", 12, TextAlignmentOptions.Left);
             RectTransform errorRect = errorText.GetComponent<RectTransform>();
-            errorRect.anchorMin = Vector2.zero;
-            errorRect.anchorMax = Vector2.one;
-            errorRect.offsetMin = new Vector2(10, 5);
-            errorRect.offsetMax = new Vector2(-10, -5);
+            errorRect.anchorMin = new Vector2(0.02f, 0.1f);
+            errorRect.anchorMax = new Vector2(0.98f, 0.9f);
+            errorRect.offsetMin = Vector2.zero;
+            errorRect.offsetMax = Vector2.zero;
 
             panel.SetActive(false);
 

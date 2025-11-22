@@ -92,49 +92,7 @@ namespace Editor
                 "확인");
         }
 
-        [MenuItem("Tools/ShelfSim/Clean Unnecessary Objects", false, 22)]
-        public static void CleanUnnecessaryObjects()
-        {
-            if (!EditorUtility.DisplayDialog("불필요한 GameObject 정리",
-                "다음 GameObject들을 삭제합니다:\n\n" +
-                "• Managers (빈 GameObject)\n" +
-                "• JobItemPrefab (Scene에 있으면 안 됨)\n\n" +
-                "계속하시겠습니까?",
-                "예", "아니오"))
-            {
-                return;
-            }
-
-            int deletedCount = 0;
-
-            // Managers GameObject 삭제 (빈 컨테이너)
-            GameObject managers = GameObject.Find("Managers");
-            if (managers != null)
-            {
-                Debug.Log("Managers 삭제 (빈 GameObject)");
-                Object.DestroyImmediate(managers);
-                deletedCount++;
-            }
-
-            // JobItemPrefab 삭제 (Scene에 있으면 안 됨)
-            GameObject jobItemPrefab = GameObject.Find("JobItemPrefab");
-            if (jobItemPrefab != null)
-            {
-                Debug.Log("JobItemPrefab 삭제 (Prefab은 Assets 폴더에 저장해야 함)");
-                Object.DestroyImmediate(jobItemPrefab);
-                deletedCount++;
-            }
-
-            Debug.Log($"정리 완료! {deletedCount}개의 GameObject 삭제됨");
-
-            EditorUtility.DisplayDialog("완료",
-                $"불필요한 GameObject 정리 완료!\n\n" +
-                $"삭제된 GameObject: {deletedCount}개\n\n" +
-                "모든 필수 컴포넌트는 유지되었습니다.",
-                "확인");
-        }
-
-        [MenuItem("Tools/ShelfSim/Reset Scene (Keep Core)", false, 23)]
+        [MenuItem("Tools/ShelfSim/Reset Scene (Keep Core)", false, 22)]
         public static void ResetScene()
         {
             if (!EditorUtility.DisplayDialog("Scene 리셋",
@@ -159,13 +117,7 @@ namespace Editor
                 if (name == "Main Camera" ||
                     name == "Global Light 2D" ||
                     name == "EventSystem" ||
-                    name == "SimulationManager" ||
-                    name == "BookRegistry" ||
-                    name == "LayoutHashManager" ||
-                    name == "CellHighlightManager" ||
-                    name == "PathCache" ||
-                    name == "APIManager" ||
-                    name == "CodeManager" ||
+                    name == "Managers" ||
                     name == "AStarPathFinder" ||
                     name == "NearestSelector" ||
                     name.Contains("Grid") ||
