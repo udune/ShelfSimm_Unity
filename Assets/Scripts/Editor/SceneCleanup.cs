@@ -1,12 +1,13 @@
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using System.Collections.Generic;
 
 namespace Editor
 {
     public static class SceneCleanup
     {
-        [MenuItem("Tools/ShelfSim/Clean Scene UI 🧹", false, 21)]
+        [MenuItem("Tools/ShelfSim/Clean Scene UI", false, 21)]
         public static void CleanupOldUI()
         {
             if (!EditorUtility.DisplayDialog("Scene UI 정리",
@@ -23,7 +24,7 @@ namespace Editor
             GameObject canvas = GameObject.Find("Canvas");
             if (canvas != null)
             {
-                List<Transform> toDelete = new List<Transform>();
+                var toDelete = new List<Transform>();
 
                 foreach (Transform child in canvas.transform)
                 {
@@ -80,18 +81,60 @@ namespace Editor
 
             EditorUtility.SetDirty(SceneManager.GetActiveScene().GetRootGameObjects()[0]);
 
-            Debug.Log($"✅ Scene 정리 완료! {deletedCount}개의 오브젝트 삭제됨");
+            Debug.Log($"Scene 정리 완료! {deletedCount}개의 오브젝트 삭제됨");
 
             EditorUtility.DisplayDialog("완료",
                 $"Scene 정리 완료!\n\n" +
                 $"삭제된 오브젝트: {deletedCount}개\n" +
-                $"Grid View 유지됨 ✅\n\n" +
+                $"Grid View 유지됨\n\n" +
                 "이제 'Tools → ShelfSim → Setup UI (Auto)'를 실행하여\n" +
                 "새로운 UI를 생성하세요.",
                 "확인");
         }
 
-        [MenuItem("Tools/ShelfSim/Reset Scene (Keep Core) 🔄", false, 22)]
+        [MenuItem("Tools/ShelfSim/Clean Unnecessary Objects", false, 22)]
+        public static void CleanUnnecessaryObjects()
+        {
+            if (!EditorUtility.DisplayDialog("불필요한 GameObject 정리",
+                "다음 GameObject들을 삭제합니다:\n\n" +
+                "• Managers (빈 GameObject)\n" +
+                "• JobItemPrefab (Scene에 있으면 안 됨)\n\n" +
+                "계속하시겠습니까?",
+                "예", "아니오"))
+            {
+                return;
+            }
+
+            int deletedCount = 0;
+
+            // Managers GameObject 삭제 (빈 컨테이너)
+            GameObject managers = GameObject.Find("Managers");
+            if (managers != null)
+            {
+                Debug.Log("Managers 삭제 (빈 GameObject)");
+                Object.DestroyImmediate(managers);
+                deletedCount++;
+            }
+
+            // JobItemPrefab 삭제 (Scene에 있으면 안 됨)
+            GameObject jobItemPrefab = GameObject.Find("JobItemPrefab");
+            if (jobItemPrefab != null)
+            {
+                Debug.Log("JobItemPrefab 삭제 (Prefab은 Assets 폴더에 저장해야 함)");
+                Object.DestroyImmediate(jobItemPrefab);
+                deletedCount++;
+            }
+
+            Debug.Log($"정리 완료! {deletedCount}개의 GameObject 삭제됨");
+
+            EditorUtility.DisplayDialog("완료",
+                $"불필요한 GameObject 정리 완료!\n\n" +
+                $"삭제된 GameObject: {deletedCount}개\n\n" +
+                "모든 필수 컴포넌트는 유지되었습니다.",
+                "확인");
+        }
+
+        [MenuItem("Tools/ShelfSim/Reset Scene (Keep Core)", false, 23)]
         public static void ResetScene()
         {
             if (!EditorUtility.DisplayDialog("Scene 리셋",
@@ -111,16 +154,22 @@ namespace Editor
                 if (obj.transform.parent != null) continue;
 
                 string name = obj.name;
+
+                // 필수 GameObject 유지
                 if (name == "Main Camera" ||
                     name == "Global Light 2D" ||
-                    name.Contains("SimulationManager") ||
-                    name.Contains("EventSystem") ||
+                    name == "EventSystem" ||
+                    name == "SimulationManager" ||
+                    name == "BookRegistry" ||
+                    name == "LayoutHashManager" ||
+                    name == "CellHighlightManager" ||
+                    name == "PathCache" ||
+                    name == "APIManager" ||
+                    name == "CodeManager" ||
+                    name == "AStarPathFinder" ||
+                    name == "NearestSelector" ||
                     name.Contains("Grid") ||
-                    name.Contains("PathFinder") ||
-                    name.Contains("PathCache") ||
-                    name.Contains("Robot") ||
-                    name.Contains("BookRegistry") ||
-                    name.Contains("LayoutHashManager"))
+                    name.Contains("Robot"))
                 {
                     Debug.Log($"{name} 유지");
                     continue;
@@ -131,7 +180,7 @@ namespace Editor
                 deletedCount++;
             }
 
-            Debug.Log($"✅ Scene 리셋 완료! {deletedCount}개의 오브젝트 삭제됨");
+            Debug.Log($"Scene 리셋 완료! {deletedCount}개의 오브젝트 삭제됨");
 
             EditorUtility.DisplayDialog("완료",
                 $"Scene 리셋 완료!\n\n" +
