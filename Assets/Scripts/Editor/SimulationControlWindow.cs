@@ -203,17 +203,10 @@ namespace Editor
 
             EditorGUI.BeginDisabledGroup(!Application.isPlaying);
 
-            EditorGUILayout.BeginHorizontal();
+            EditorGUILayout.HelpBox("UI에서 작업을 입력하고 실행하세요.", MessageType.Info);
+            EditorGUILayout.Space(5);
 
-            GUI.backgroundColor = new Color(0.3f, 0.8f, 0.3f);
-            if (GUILayout.Button("▶ Start", GUILayout.Height(35)))
-            {
-                var jobs = GetTestJobs();
-                if (jobs != null)
-                {
-                    manager.StartSimulationWithJobs(jobs);
-                }
-            }
+            EditorGUILayout.BeginHorizontal();
 
             GUI.backgroundColor = new Color(1f, 0.8f, 0.2f);
             if (GUILayout.Button("⏸ Pause/Resume", GUILayout.Height(35)))
@@ -399,16 +392,6 @@ namespace Editor
                 return (T)field.GetValue(controller);
             }
             return default(T);
-        }
-
-        private System.Collections.Generic.List<Data.Job> GetTestJobs()
-        {
-            var method = typeof(SimulationManager).GetMethod("GetTestJobs", BindingFlags.NonPublic | BindingFlags.Instance);
-            if (method != null)
-            {
-                return method.Invoke(manager, null) as System.Collections.Generic.List<Data.Job>;
-            }
-            return null;
         }
     }
 }

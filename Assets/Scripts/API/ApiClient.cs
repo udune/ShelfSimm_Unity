@@ -41,6 +41,7 @@ namespace API
     {
         public string runId;
         public JobDto[] jobs;
+        public string layoutId;
     }
     
     [Serializable]

@@ -85,18 +85,10 @@ namespace Editor
             EditorGUILayout.LabelField("⚙️ Runtime Controls", EditorStyles.boldLabel);
             EditorGUILayout.Space(5);
 
-            EditorGUILayout.BeginHorizontal();
+            EditorGUILayout.HelpBox("UI에서 작업을 입력하고 실행하세요.", MessageType.Info);
+            EditorGUILayout.Space(5);
 
-            GUI.backgroundColor = new Color(0.3f, 0.8f, 0.3f);
-            if (GUILayout.Button("▶ Start Test", buttonStyle))
-            {
-                var jobs = GetTestJobs();
-                if (jobs != null && jobs.Count > 0)
-                {
-                    manager.StartSimulationWithJobs(jobs);
-                    Debug.Log($"Started simulation with {jobs.Count} test jobs");
-                }
-            }
+            EditorGUILayout.BeginHorizontal();
 
             GUI.backgroundColor = new Color(1f, 0.8f, 0.2f);
             if (GUILayout.Button("⏸ Pause/Resume", buttonStyle))
@@ -178,17 +170,5 @@ namespace Editor
             EditorGUILayout.EndHorizontal();
         }
 
-        private System.Collections.Generic.List<Data.Job> GetTestJobs()
-        {
-            var method = typeof(SimulationManager).GetMethod("GetTestJobs",
-                BindingFlags.NonPublic | BindingFlags.Instance);
-
-            if (method != null)
-            {
-                return method.Invoke(manager, null) as System.Collections.Generic.List<Data.Job>;
-            }
-
-            return null;
-        }
     }
 }

@@ -134,45 +134,6 @@ namespace Editor
             }
         }
 
-        [MenuItem("Tools/ShelfSim/Generate Test Jobs")]
-        public static void GenerateTestJobs()
-        {
-            var manager = Object.FindObjectOfType<SimulationManager>();
-            if (manager == null)
-            {
-                EditorUtility.DisplayDialog("Error", "SimulationManager not found in scene!", "OK");
-                return;
-            }
-
-            if (!Application.isPlaying)
-            {
-                EditorUtility.DisplayDialog("Error", "Enter Play Mode first!", "OK");
-                return;
-            }
-
-            var method = typeof(SimulationManager).GetMethod("GetTestJobs",
-                BindingFlags.NonPublic | BindingFlags.Instance);
-
-            if (method != null)
-            {
-                var jobs = method.Invoke(manager, null) as List<Job>;
-                if (jobs != null)
-                {
-                    Debug.Log($"Generated {jobs.Count} test jobs:");
-                    foreach (var job in jobs)
-                    {
-                        Debug.Log($"  Job {job.JobId}: {job.BookId} - {job.Code}");
-                    }
-                }
-            }
-        }
-
-        [MenuItem("Tools/ShelfSim/Generate Test Jobs", true)]
-        public static bool ValidateGenerateTestJobs()
-        {
-            return Application.isPlaying;
-        }
-
         [MenuItem("Tools/ShelfSim/Documentation/Open GitHub")]
         public static void OpenGitHub()
         {

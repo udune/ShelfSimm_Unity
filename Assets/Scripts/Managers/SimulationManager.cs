@@ -69,16 +69,14 @@ namespace Managers
                 apiClient = ApiClient.Instance;
             }
 
+            InitializeSimulation();
+
             if (useApiMode && apiClient != null)
             {
-                StartCoroutine(InitializeWithAPI());
+                StartCoroutine(InitializeAPI());
             }
-            else
-            {
-                Debug.Log("로컬 모드로 시뮬레이션을 시작합니다.");
-                InitializeSimulation();
-                StartSimulationWithJobs(GetTestJobs());
-            }
+
+            Debug.Log("시뮬레이션 준비 완료. UI에서 작업을 입력하고 실행하세요.");
         }
 
         private void Update()
@@ -101,9 +99,9 @@ namespace Managers
         #endregion
 
         #region Initialization
-        private IEnumerator InitializeWithAPI()
+        private IEnumerator InitializeAPI()
         {
-            Debug.Log("API 모드로 시뮬레이션 초기화를 시작합니다...");
+            Debug.Log("API 모드 초기화 중...");
 
             bool booksLoaded = false;
             List<BookDto> loadedBookDtos = null;
@@ -126,38 +124,58 @@ namespace Managers
             {
                 bookRegistry.LoadBooksFromApi(loadedBookDtos);
             }
+
+            Debug.Log("API 초기화 완료. 책 정보 로드 완료.");
+        }
+
+        public void PrepareSimulation(List<Job> jobs)
+        {
+            if (useApiMode && apiClient != null)
+            {
+                StartCoroutine(PrepareSimulationWithAPI(jobs));
+            }
             else
             {
-                Debug.LogWarning("[SimulationManager] BookRegistry를 찾을 수 없거나 책 데이터가 없습니다.");
+                StartSimulationWithJobs(jobs);
+            }
+        }
+
+        private IEnumerator PrepareSimulationWithAPI(List<Job> jobs)
+        {
+            if (string.IsNullOrEmpty(_currentRunId))
+            {
+                var createRunReq = new CreateRunRequest
+                {
+                    randomSeed = config.randomSeed,
+                    handleTimeSec = config.handleTime,
+                    robotSpeedCellsPerSec = config.robotSpeed,
+                    topN = config.topN
+                };
+                bool runCreated = false;
+                yield return apiClient.CreateRun(createRunReq,
+                    onSuccess: response => { _currentRunId = response.id; runCreated = true; },
+                    onError: error => Debug.LogError($"Run 생성 실패: {error}")
+                );
+                if (!runCreated)
+                {
+                    Debug.LogError("Run 생성 실패");
+                    yield break;
+                }
             }
 
-            var createRunReq = new CreateRunRequest
-            {
-                randomSeed = config.randomSeed,
-                handleTimeSec = config.handleTime,
-                robotSpeedCellsPerSec = config.robotSpeed,
-                topN = config.topN
-            };
-            bool runCreated = false;
-            yield return apiClient.CreateRun(createRunReq,
-                onSuccess: response => { _currentRunId = response.id; runCreated = true; },
-                onError: error => Debug.LogError($"Run 생성 실패: {error}")
-            );
-            if (!runCreated)
-            {
-                HandleApiInitializationFailure("API 초기화 실패: Run을 생성할 수 없습니다.");
-                yield break;
-            }
-
-            var localJobs = GetTestJobs();
-            var jobDtos = localJobs.Select(job => new JobDto
+            var jobDtos = jobs.Select(job => new JobDto
             {
                 action = job.Action.ToString(),
                 cellCode = job.CellCode,
                 bookTitle = job.BookTitle,
                 quantity = job.Quantity
             }).ToArray();
-            var createJobsReq = new CreateJobsBatchRequest { runId = _currentRunId, jobs = jobDtos };
+            var createJobsReq = new CreateJobsBatchRequest
+            {
+                runId = _currentRunId,
+                jobs = jobDtos,
+                layoutId = cellsLayout != null ? cellsLayout.layout_hash : ""
+            };
 
             bool jobsBatched = false;
             yield return apiClient.CreateJobsBatch(createJobsReq,
@@ -166,7 +184,7 @@ namespace Managers
             );
             if (!jobsBatched)
             {
-                HandleApiInitializationFailure("API 초기화 실패: Jobs를 생성할 수 없습니다.");
+                Debug.LogError("Jobs 생성 실패");
                 yield break;
             }
 
@@ -180,16 +198,12 @@ namespace Managers
                         j => j.id
                     );
 
-                    foreach (var localJob in localJobs)
+                    foreach (var localJob in jobs)
                     {
                         var key = (localJob.CellCode, localJob.BookTitle, localJob.Action.ToString());
                         if (serverJobs.TryGetValue(key, out string jobId))
                         {
                             localJob.JobId = jobId;
-                        }
-                        else
-                        {
-                            Debug.LogWarning($"서버에서 해당 Job의 ID를 찾을 수 없습니다: {key}");
                         }
                     }
                     idsMapped = true;
@@ -198,12 +212,11 @@ namespace Managers
             );
             if (!idsMapped)
             {
-                HandleApiInitializationFailure("API 초기화 실패: Job ID를 매핑할 수 없습니다.");
+                Debug.LogError("Job ID 매핑 실패");
                 yield break;
             }
 
-            InitializeSimulation();
-            StartSimulationWithJobs(localJobs);
+            StartSimulationWithJobs(jobs);
         }
 
         private void InitializeSimulation()
@@ -214,17 +227,25 @@ namespace Managers
 
             _summary = new Summary();
             _jobQueue = new Queue<Job>();
-            _isRunning = true;
+            _isRunning = false;
             _isPaused = false;
             ElapsedTime = 0f;
 
             if (allBooks == null || allBooks.Count == 0)
             {
-                allBooks = new List<Book> { new Book("Test Book A", 30, 100), new Book("Test Book B", 25, 130) };
+                allBooks = new List<Book>();
             }
             if (allCells == null || allCells.Count == 0)
             {
-                allCells = new List<Cell> { new Cell("A01", 100, 120), new Cell("B02", 80, 150) };
+                allCells = new List<Cell>();
+            }
+
+            if (cellsLayout != null && cellsLayout.cells != null)
+            {
+                foreach (var cellDef in cellsLayout.cells)
+                {
+                    allCells.Add(new Cell(cellDef.code, cellDef.width, cellDef.height));
+                }
             }
         }
         #endregion
@@ -243,6 +264,11 @@ namespace Managers
                 Debug.LogWarning("시작할 작업이 없습니다.");
                 return;
             }
+
+            _isRunning = true;
+            _isPaused = false;
+            ElapsedTime = 0f;
+            Time.timeScale = 1f;
 
             SetTotalTargets(jobs.Count);
             foreach (var job in jobs)
@@ -423,16 +449,6 @@ namespace Managers
         private Book FindBookByTitle(string title)
         {
             return allBooks.Find(b => b.Title == title);
-        }
-
-        private List<Job> GetTestJobs()
-        {
-            return new List<Job>
-            {
-                new Job(JobAction.PUT, "A01", "Test Book A", 2),
-                new Job(JobAction.PUT, "B02", "Test Book B", 3),
-                new Job(JobAction.PICK, "A01", "Test Book A", 1)
-            };
         }
 
         private int CalculatePathLength(string cellCode)
