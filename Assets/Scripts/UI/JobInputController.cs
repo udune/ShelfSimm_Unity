@@ -381,14 +381,5 @@ namespace UI
 
             UpdateUI();
         }
-
-        [System.Diagnostics.Conditional("UNITY_EDITOR")]
-        public void RunTests()
-        {
-            Debug.Log("=== JobInputController 테스트 시작 ===");
-            InputValidator.TestHelper.TestQuantityCorrection();
-            InputValidator.TestHelper.TestInputValidation();
-            Debug.Log("=== JobInputController 테스트 종료 ===");
-        }
     }
 }
