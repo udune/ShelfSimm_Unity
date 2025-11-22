@@ -88,22 +88,28 @@ namespace Editor
 
         private static void LoadFonts()
         {
-            boldFont = Resources.Load<TMP_FontAsset>("Fonts/NotoSansKR-Bold SDF");
-            regularFont = Resources.Load<TMP_FontAsset>("Fonts/Pretendard-Regular SDF");
-
-            if (boldFont == null)
+            string[] fontGuids = AssetDatabase.FindAssets("NotoSansKR-Bold t:TMP_FontAsset");
+            if (fontGuids.Length > 0)
             {
-                Debug.LogWarning("NotoSansKR-Bold SDF 폰트를 찾을 수 없습니다. Resources/Fonts/ 폴더에 폰트를 추가하세요.");
+                string path = AssetDatabase.GUIDToAssetPath(fontGuids[0]);
+                boldFont = AssetDatabase.LoadAssetAtPath<TMP_FontAsset>(path);
+                Debug.Log($"Bold 폰트 로드 성공: {path}");
+            }
+            else
+            {
+                Debug.LogWarning("NotoSansKR-Bold 폰트를 찾을 수 없습니다. 기본 폰트를 사용합니다.");
             }
 
-            if (regularFont == null)
+            fontGuids = AssetDatabase.FindAssets("Pretendard-Regular t:TMP_FontAsset");
+            if (fontGuids.Length > 0)
             {
-                Debug.LogWarning("Pretendard-Regular SDF 폰트를 찾을 수 없습니다. Resources/Fonts/ 폴더에 폰트를 추가하세요.");
+                string path = AssetDatabase.GUIDToAssetPath(fontGuids[0]);
+                regularFont = AssetDatabase.LoadAssetAtPath<TMP_FontAsset>(path);
+                Debug.Log($"Regular 폰트 로드 성공: {path}");
             }
-
-            if (boldFont == null && regularFont == null)
+            else
             {
-                Debug.LogWarning("폰트가 설정되지 않았습니다. TextMeshPro 기본 폰트를 사용합니다.");
+                Debug.LogWarning("Pretendard-Regular 폰트를 찾을 수 없습니다. 기본 폰트를 사용합니다.");
             }
         }
 
@@ -115,11 +121,15 @@ namespace Editor
             RectTransform rect = panel.AddComponent<RectTransform>();
             rect.anchorMin = new Vector2(0, 0);
             rect.anchorMax = new Vector2(1, 1);
-            rect.offsetMin = new Vector2(20, 20);
-            rect.offsetMax = new Vector2(-20, -20);
+            rect.offsetMin = new Vector2(40, 40);
+            rect.offsetMax = new Vector2(-40, -40);
 
             Image bg = panel.AddComponent<Image>();
-            bg.color = new Color(0.1f, 0.1f, 0.1f, 0.95f);
+            bg.color = new Color(0.08f, 0.08f, 0.12f, 0.98f);
+
+            UnityEngine.UI.Shadow shadow = panel.AddComponent<UnityEngine.UI.Shadow>();
+            shadow.effectColor = new Color(0, 0, 0, 0.5f);
+            shadow.effectDistance = new Vector2(4, -4);
 
             return panel;
         }
@@ -132,13 +142,17 @@ namespace Editor
             RectTransform rect = panel.AddComponent<RectTransform>();
             rect.anchorMin = new Vector2(0, 0.5f);
             rect.anchorMax = new Vector2(0.5f, 1);
-            rect.offsetMin = new Vector2(10, 10);
-            rect.offsetMax = new Vector2(-5, -10);
+            rect.offsetMin = new Vector2(15, 15);
+            rect.offsetMax = new Vector2(-10, -15);
 
             Image bg = panel.AddComponent<Image>();
-            bg.color = new Color(0.2f, 0.2f, 0.2f, 1f);
+            bg.color = new Color(0.15f, 0.15f, 0.20f, 1f);
 
-            GameObject title = CreateText(panel.transform, "Title", "작업 입력", 24, TextAlignmentOptions.Center, true);
+            UnityEngine.UI.Shadow shadow = panel.AddComponent<UnityEngine.UI.Shadow>();
+            shadow.effectColor = new Color(0, 0, 0, 0.3f);
+            shadow.effectDistance = new Vector2(2, -2);
+
+            GameObject title = CreateText(panel.transform, "Title", "📝 작업 입력", 26, TextAlignmentOptions.Center, true);
             RectTransform titleRect = title.GetComponent<RectTransform>();
             titleRect.anchorMin = new Vector2(0, 0.9f);
             titleRect.anchorMax = new Vector2(1, 1);
@@ -163,7 +177,7 @@ namespace Editor
             CreateLabel(panel.transform, "QuantityLabel", "수량", yStart + 0.05f);
             yStart -= spacing + 0.05f;
 
-            GameObject addButton = CreateButton(panel.transform, "AddJobButton", "작업 추가", yStart, new Color(0.3f, 0.7f, 0.3f));
+            GameObject addButton = CreateButton(panel.transform, "AddJobButton", "➕ 작업 추가", yStart, new Color(0.25f, 0.75f, 0.35f));
 
             GameObject errorPanel = CreateErrorPanel(panel.transform);
 
@@ -215,13 +229,17 @@ namespace Editor
             RectTransform rect = panel.AddComponent<RectTransform>();
             rect.anchorMin = new Vector2(0.5f, 0.5f);
             rect.anchorMax = new Vector2(1, 1);
-            rect.offsetMin = new Vector2(5, 10);
-            rect.offsetMax = new Vector2(-10, -10);
+            rect.offsetMin = new Vector2(10, 15);
+            rect.offsetMax = new Vector2(-15, -15);
 
             Image bg = panel.AddComponent<Image>();
-            bg.color = new Color(0.2f, 0.2f, 0.2f, 1f);
+            bg.color = new Color(0.15f, 0.15f, 0.20f, 1f);
 
-            GameObject jobCountText = CreateText(panel.transform, "JobCountText", "작업 목록 (0개)", 22, TextAlignmentOptions.Left, true);
+            UnityEngine.UI.Shadow shadow = panel.AddComponent<UnityEngine.UI.Shadow>();
+            shadow.effectColor = new Color(0, 0, 0, 0.3f);
+            shadow.effectDistance = new Vector2(2, -2);
+
+            GameObject jobCountText = CreateText(panel.transform, "JobCountText", "📋 작업 목록 (0개)", 24, TextAlignmentOptions.Left, true);
             RectTransform countRect = jobCountText.GetComponent<RectTransform>();
             countRect.anchorMin = new Vector2(0, 0.9f);
             countRect.anchorMax = new Vector2(0.7f, 1);
@@ -237,15 +255,19 @@ namespace Editor
 
             Transform content = scrollView.transform.Find("Viewport/Content");
 
-            GameObject clearButton = CreateButton(panel.transform, "ClearAllButton", "전체 삭제", 0.12f, new Color(0.7f, 0.3f, 0.3f));
+            GameObject clearButton = CreateButton(panel.transform, "ClearAllButton", "🗑️ 전체 삭제", 0.12f, new Color(0.85f, 0.25f, 0.25f));
             RectTransform clearRect = clearButton.GetComponent<RectTransform>();
             clearRect.anchorMin = new Vector2(0, 0.05f);
             clearRect.anchorMax = new Vector2(0.48f, 0.15f);
+            clearRect.offsetMin = new Vector2(10, 10);
+            clearRect.offsetMax = new Vector2(-5, -10);
 
-            GameObject startButton = CreateButton(panel.transform, "StartSimulationButton", "시뮬레이션 시작", 0.12f, new Color(0.3f, 0.6f, 0.9f));
+            GameObject startButton = CreateButton(panel.transform, "StartSimulationButton", "▶️ 시뮬레이션 시작", 0.12f, new Color(0.2f, 0.6f, 1.0f));
             RectTransform startRect = startButton.GetComponent<RectTransform>();
             startRect.anchorMin = new Vector2(0.52f, 0.05f);
             startRect.anchorMax = new Vector2(1, 0.15f);
+            startRect.offsetMin = new Vector2(5, 10);
+            startRect.offsetMax = new Vector2(-10, -10);
 
             GameObject jobItemPrefab = CreateJobItemPrefab();
 
@@ -289,18 +311,29 @@ namespace Editor
             RectTransform rect = panel.AddComponent<RectTransform>();
             rect.anchorMin = new Vector2(0, 0);
             rect.anchorMax = new Vector2(1, 0.48f);
-            rect.offsetMin = new Vector2(10, 10);
-            rect.offsetMax = new Vector2(-10, -5);
+            rect.offsetMin = new Vector2(15, 15);
+            rect.offsetMax = new Vector2(-15, -10);
 
             Image bg = panel.AddComponent<Image>();
-            bg.color = new Color(0.15f, 0.15f, 0.15f, 1f);
+            bg.color = new Color(0.12f, 0.12f, 0.16f, 1f);
 
-            GameObject statusText = CreateText(panel.transform, "StatusText", "", 16, TextAlignmentOptions.TopLeft);
+            UnityEngine.UI.Shadow shadow = panel.AddComponent<UnityEngine.UI.Shadow>();
+            shadow.effectColor = new Color(0, 0, 0, 0.3f);
+            shadow.effectDistance = new Vector2(2, -2);
+
+            GameObject titleObj = CreateText(panel.transform, "Title", "📊 시뮬레이션 상태", 20, TextAlignmentOptions.Left, true);
+            RectTransform titleRect = titleObj.GetComponent<RectTransform>();
+            titleRect.anchorMin = new Vector2(0, 0.95f);
+            titleRect.anchorMax = new Vector2(1, 1);
+            titleRect.offsetMin = new Vector2(20, 0);
+            titleRect.offsetMax = new Vector2(-20, -5);
+
+            GameObject statusText = CreateText(panel.transform, "StatusText", "", 15, TextAlignmentOptions.TopLeft);
             RectTransform statusRect = statusText.GetComponent<RectTransform>();
             statusRect.anchorMin = new Vector2(0, 0);
-            statusRect.anchorMax = new Vector2(1, 1);
-            statusRect.offsetMin = new Vector2(15, 15);
-            statusRect.offsetMax = new Vector2(-15, -15);
+            statusRect.anchorMax = new Vector2(1, 0.92f);
+            statusRect.offsetMin = new Vector2(20, 15);
+            statusRect.offsetMax = new Vector2(-20, -5);
 
             return panel;
         }
@@ -356,7 +389,11 @@ namespace Editor
             rect.anchorMax = new Vector2(0.95f, yPos);
 
             Image bg = obj.AddComponent<Image>();
-            bg.color = new Color(0.3f, 0.3f, 0.3f, 1f);
+            bg.color = new Color(0.2f, 0.2f, 0.25f, 1f);
+
+            UnityEngine.UI.Outline outline = obj.AddComponent<UnityEngine.UI.Outline>();
+            outline.effectColor = new Color(0.4f, 0.4f, 0.5f, 0.5f);
+            outline.effectDistance = new Vector2(1, -1);
 
             GameObject textArea = new GameObject("TextArea");
             textArea.transform.SetParent(obj.transform, false);
@@ -405,7 +442,11 @@ namespace Editor
             rect.anchorMax = new Vector2(0.95f, yPos);
 
             Image bg = obj.AddComponent<Image>();
-            bg.color = new Color(0.3f, 0.3f, 0.3f, 1f);
+            bg.color = new Color(0.2f, 0.2f, 0.25f, 1f);
+
+            UnityEngine.UI.Outline outline = obj.AddComponent<UnityEngine.UI.Outline>();
+            outline.effectColor = new Color(0.4f, 0.4f, 0.5f, 0.5f);
+            outline.effectDistance = new Vector2(1, -1);
 
             GameObject label = new GameObject("Label");
             label.transform.SetParent(obj.transform, false);
@@ -505,13 +546,18 @@ namespace Editor
             Image bg = obj.AddComponent<Image>();
             bg.color = color;
 
+            UnityEngine.UI.Shadow shadow = obj.AddComponent<UnityEngine.UI.Shadow>();
+            shadow.effectColor = new Color(0, 0, 0, 0.4f);
+            shadow.effectDistance = new Vector2(0, -3);
+
             GameObject textObj = new GameObject("Text");
             textObj.transform.SetParent(obj.transform, false);
             TextMeshProUGUI tmp = textObj.AddComponent<TextMeshProUGUI>();
             tmp.text = text;
-            tmp.fontSize = 16;
+            tmp.fontSize = 18;
             tmp.alignment = TextAlignmentOptions.Center;
             tmp.color = Color.white;
+            tmp.fontStyle = FontStyles.Bold;
             if (regularFont != null) tmp.font = regularFont;
             RectTransform textRect = textObj.GetComponent<RectTransform>();
             textRect.anchorMin = Vector2.zero;
@@ -519,6 +565,15 @@ namespace Editor
 
             Button button = obj.AddComponent<Button>();
             button.targetGraphic = bg;
+
+            ColorBlock colors = button.colors;
+            colors.normalColor = Color.white;
+            colors.highlightedColor = new Color(1.2f, 1.2f, 1.2f, 1f);
+            colors.pressedColor = new Color(0.8f, 0.8f, 0.8f, 1f);
+            colors.selectedColor = new Color(1.1f, 1.1f, 1.1f, 1f);
+            colors.disabledColor = new Color(0.5f, 0.5f, 0.5f, 0.5f);
+            colors.colorMultiplier = 1f;
+            button.colors = colors;
 
             return obj;
         }
@@ -529,7 +584,7 @@ namespace Editor
             scrollView.transform.SetParent(parent, false);
 
             Image scrollBg = scrollView.AddComponent<Image>();
-            scrollBg.color = new Color(0.15f, 0.15f, 0.15f, 1f);
+            scrollBg.color = new Color(0.1f, 0.1f, 0.14f, 1f);
 
             GameObject viewport = new GameObject("Viewport");
             viewport.transform.SetParent(scrollView.transform, false);
@@ -538,7 +593,7 @@ namespace Editor
             viewportRect.anchorMax = Vector2.one;
             viewportRect.offsetMin = Vector2.zero;
             viewportRect.offsetMax = Vector2.zero;
-            viewport.AddComponent<Image>().color = new Color(0.15f, 0.15f, 0.15f, 1f);
+            viewport.AddComponent<Image>().color = new Color(0.1f, 0.1f, 0.14f, 1f);
             viewport.AddComponent<Mask>().showMaskGraphic = false;
 
             GameObject content = new GameObject("Content");
@@ -597,10 +652,14 @@ namespace Editor
             GameObject prefab = new GameObject("JobItemPrefab");
 
             RectTransform rect = prefab.AddComponent<RectTransform>();
-            rect.sizeDelta = new Vector2(0, 30);
+            rect.sizeDelta = new Vector2(0, 36);
 
             Image bg = prefab.AddComponent<Image>();
-            bg.color = new Color(0.25f, 0.25f, 0.25f, 1f);
+            bg.color = new Color(0.18f, 0.18f, 0.22f, 1f);
+
+            UnityEngine.UI.Outline outline = prefab.AddComponent<UnityEngine.UI.Outline>();
+            outline.effectColor = new Color(0.3f, 0.3f, 0.4f, 0.3f);
+            outline.effectDistance = new Vector2(0, -1);
 
             HorizontalLayoutGroup layout = prefab.AddComponent<HorizontalLayoutGroup>();
             layout.padding = new RectOffset(10, 10, 5, 5);
@@ -623,11 +682,23 @@ namespace Editor
             GameObject deleteButton = new GameObject("DeleteButton");
             deleteButton.transform.SetParent(prefab.transform, false);
             RectTransform btnRect = deleteButton.AddComponent<RectTransform>();
-            btnRect.sizeDelta = new Vector2(60, 25);
+            btnRect.sizeDelta = new Vector2(70, 26);
             Image btnBg = deleteButton.AddComponent<Image>();
-            btnBg.color = new Color(0.7f, 0.3f, 0.3f, 1f);
+            btnBg.color = new Color(0.85f, 0.3f, 0.3f, 1f);
+
+            UnityEngine.UI.Shadow btnShadow = deleteButton.AddComponent<UnityEngine.UI.Shadow>();
+            btnShadow.effectColor = new Color(0, 0, 0, 0.3f);
+            btnShadow.effectDistance = new Vector2(0, -2);
+
             Button btn = deleteButton.AddComponent<Button>();
             btn.targetGraphic = btnBg;
+
+            ColorBlock btnColors = btn.colors;
+            btnColors.normalColor = Color.white;
+            btnColors.highlightedColor = new Color(1.15f, 1.15f, 1.15f, 1f);
+            btnColors.pressedColor = new Color(0.85f, 0.85f, 0.85f, 1f);
+            btnColors.colorMultiplier = 1f;
+            btn.colors = btnColors;
 
             GameObject btnText = new GameObject("Text");
             btnText.transform.SetParent(deleteButton.transform, false);
@@ -642,8 +713,8 @@ namespace Editor
             btnTextRect.anchorMax = Vector2.one;
 
             LayoutElement btnLayout = deleteButton.AddComponent<LayoutElement>();
-            btnLayout.minWidth = 60;
-            btnLayout.preferredWidth = 60;
+            btnLayout.minWidth = 70;
+            btnLayout.preferredWidth = 70;
 
             return prefab;
         }
