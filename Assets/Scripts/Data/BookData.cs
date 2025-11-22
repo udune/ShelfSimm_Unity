@@ -8,7 +8,7 @@ namespace Data
     {
         [Header("기본 정보")]
         [SerializeField] private string id;
-        [SerializeField] private string title;
+        [SerializeField] public string title;
         [SerializeField] private string author;
         [SerializeField] private string isbn;
 
