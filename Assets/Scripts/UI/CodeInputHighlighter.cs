@@ -8,210 +8,190 @@ using UnityEngine.UI;
 
 namespace UI
 {
-    // 코드 입력 필드의 하이라이팅 및 오류 메시지 처리 클래스
     public class CodeInputHighlighter : MonoBehaviour
     {
         [Header("UI")]
-        [SerializeField] private TMP_InputField codeInputField; // 입력 필드
-        [SerializeField] private TextMeshProUGUI errorMessageText; // 오류 메시지 텍스트
-        [SerializeField] private Transform codeContainer; // 코드 아이템 컨테이너
-        [SerializeField] private GameObject itemPrefab; // 코드 아이템 프리팹
-        
+        [SerializeField] private TMP_InputField codeInputField;
+        [SerializeField] private TextMeshProUGUI errorMessageText;
+        [SerializeField] private Transform codeContainer;
+        [SerializeField] private GameObject itemPrefab;
+
         [Header("Colors")]
-        [SerializeField] private Color validColor = Color.green; // 유효한 코드 색상
-        [SerializeField] private Color invalidColor = Color.red; // 유효하지 않은 코드 색상
-        [SerializeField] private Color normalColor = Color.white; // 일반 코드 색상
-        
+        [SerializeField] private Color validColor = Color.green;
+        [SerializeField] private Color invalidColor = Color.red;
+        [SerializeField] private Color normalColor = Color.white;
+
         [Header("References")]
-        [SerializeField] private CodeValidator codeValidator; // 코드 검증기 참조 (인스펙터에서 수동 할당 가능)
-        [SerializeField] private BookDropdownController bookDropdownController; // 도서 드롭다운 컨트롤러 참조 (인스펙터에서 수동 할당 가능)
-        
-        private List<GameObject> currentCodeItems = new List<GameObject>(); // 현재 표시된 코드 아이템들 리스트
+        [SerializeField] private CodeValidator codeValidator;
+        [SerializeField] private BookDropdownController bookDropdownController;
+
+        private List<GameObject> currentCodeItems = new List<GameObject>();
 
         private void Start()
         {
-            if (codeValidator == null) // 수동 할당이 안 되었을 때
+            if (codeValidator == null)
             {
-                codeValidator = FindObjectOfType<CodeValidator>(); // 씬에서 CodeValidator 컴포넌트 탐색
+                codeValidator = FindObjectOfType<CodeValidator>();
             }
 
-            if (codeInputField != null) // 입력 필드가 있을 때
+            if (codeInputField != null)
             {
-                codeInputField.onValueChanged.AddListener(OnInputChanged); // 값 변경 이벤트에 리스너 추가
+                codeInputField.onValueChanged.AddListener(OnInputChanged);
             }
 
-            if (bookDropdownController == null) // 수동 할당이 안 되었을 때
+            if (bookDropdownController == null)
             {
-                bookDropdownController = FindObjectOfType<BookDropdownController>(); // 씬에서 BookDropdownController 컴포넌트 탐색
+                bookDropdownController = FindObjectOfType<BookDropdownController>();
             }
         }
 
-        // 입력 필드 값 변경 시 호출되는 메서드
         private void OnInputChanged(string value)
         {
-            if (string.IsNullOrWhiteSpace(value)) // 빈 문자열 검사
+            if (string.IsNullOrWhiteSpace(value))
             {
-                ClearCodeList(); // 코드 리스트 초기화
-                ClearErrorMessage(); // 오류 메시지 초기화
+                ClearCodeList();
+                ClearErrorMessage();
                 return;
             }
 
-            string[] codes = ParseCodes(value); // 쉼표, 공백, 탭으로 분리
-            ValidateAndHighlight(codes); // 코드 검증 및 하이라이트 처리
-        }
-        
-        // 입력 문자열을 쉼표, 공백, 탭으로 분리하여 코드 배열로 반환
-        private string[] ParseCodes(string value)
-        {
-            if (string.IsNullOrWhiteSpace(value)) // 빈 문자열 검사
-            {
-                return Array.Empty<string>(); // 빈 배열 반환
-            }
-            
-            string[] separators = new string[] { ",", " ", "\t" }; // 구분자 배열
-            string[] rawCodes = value.Split(separators, StringSplitOptions.RemoveEmptyEntries); // 구분자로 분리
-            
-            return rawCodes; // 분리된 코드 배열 반환
+            string[] codes = ParseCodes(value);
+            ValidateAndHighlight(codes);
         }
 
-        // 코드 배열을 검증하고 UI에 반영하는 메서드
+        private string[] ParseCodes(string value)
+        {
+            if (string.IsNullOrWhiteSpace(value))
+            {
+                return Array.Empty<string>();
+            }
+
+            string[] separators = new string[] { ",", " ", "\t" };
+            string[] rawCodes = value.Split(separators, StringSplitOptions.RemoveEmptyEntries);
+
+            return rawCodes;
+        }
+
         public void ValidateAndHighlight(string[] codes)
         {
-            if (codeValidator == null) // 코드 검증기가 없을 때
+            if (codeValidator == null)
             {
                 Debug.LogError("[CodeInputHighlighter] CodeValidator가 없습니다!");
                 return;
             }
-            
-            ClearCodeList(); // 기존 코드 리스트 초기화
-            ClearErrorMessage(); // 기존 오류 메시지 초기화
 
-            CodeValidationResult[] results = codeValidator.ValidateCodes(codes); // 코드 검증
+            ClearCodeList();
+            ClearErrorMessage();
 
-            UpdateCodeListUI(results); // 코드 리스트 UI 업데이트
-            UpdateErrorMessage(results); // 오류 메시지 업데이트
+            CodeValidationResult[] results = codeValidator.ValidateCodes(codes);
+
+            UpdateCodeListUI(results);
+            UpdateErrorMessage(results);
         }
 
-        // 현재 표시된 코드 아이템들을 모두 제거하는 메서드
         private void ClearCodeList()
         {
-            foreach (GameObject item in currentCodeItems) // 현재 아이템들 순회
+            foreach (GameObject item in currentCodeItems)
             {
-                if (item != null) // null 체크
+                if (item != null)
                 {
-                    DestroyImmediate(item); // 즉시 제거
+                    DestroyImmediate(item);
                 }
             }
-            
-            currentCodeItems.Clear(); // 리스트 초기화
+
+            currentCodeItems.Clear();
         }
 
-        private void ClearErrorMessage() // 오류 메시지 초기화 메서드
+        private void ClearErrorMessage()
         {
-            if (errorMessageText != null) // 오류 메시지 텍스트가 있을 때
+            if (errorMessageText != null)
             {
-                errorMessageText.text = ""; // 텍스트 초기화
+                errorMessageText.text = "";
             }
         }
 
-        // 코드 리스트 UI 업데이트 메서드
         private void UpdateCodeListUI(CodeValidationResult[] results)
         {
-            if (codeContainer == null || itemPrefab == null) // 컨테이너나 프리팹이 없을 때
+            if (codeContainer == null || itemPrefab == null)
             {
-                return; // 아무것도 하지 않음
+                return;
             }
 
-            foreach (CodeValidationResult result in results) // 각 검증 결과 순회
-            {
-                GameObject item = Instantiate(itemPrefab, codeContainer); // 프리팹 인스턴스화
-                currentCodeItems.Add(item); // 현재 아이템 리스트에 추가
-
-                TextMeshProUGUI codeText = item.GetComponentInChildren<TextMeshProUGUI>(); // 자식 텍스트 컴포넌트 가져오기
-                if (codeText != null) // 텍스트 컴포넌트가 있을 때
-                {
-                    codeText.text = result.OriginalCode; // 원본 코드 설정
-
-                    if (result.IsValid) // 유효한 경우
-                    {
-                        codeText.color = validColor; // 초록색
-                    }
-                    else // 유효하지 않은 경우
-                    {
-                        codeText.color = invalidColor; // 빨간색
-                    }
-                }
-                
-                Image background = item.GetComponent<Image>(); // 배경 이미지 컴포넌트 가져오기
-                if (background != null && !result.IsValid) // 배경 이미지가 있고 유효하지 않은 경우
-                {
-                    Color backgroundColor = invalidColor; // 빨간색
-                    backgroundColor.a = 0.3f; // 반투명
-                    background.color = backgroundColor; // 배경 색상 설정
-                }
-            }
-            
-            Debug.Log($"[CodeInputHighlighter] {results.Length}개 코드 UI 업데이트 완료");
-        }
-
-        // 오류 메시지 업데이트 메서드
-        private void UpdateErrorMessage(CodeValidationResult[] results)
-        {
-            if (errorMessageText == null) // 오류 메시지 텍스트가 없을 때
-            {
-                return; // 아무것도 하지 않음
-            }
-            
-            List<string> errorMessages = new List<string>(); // 오류 메시지 리스트 초기화
-            
-            // 유효하지 않은 코드들의 오류 메시지 수집
             foreach (CodeValidationResult result in results)
             {
-                if (!result.IsValid) // 유효하지 않은 경우
+                GameObject item = Instantiate(itemPrefab, codeContainer);
+                currentCodeItems.Add(item);
+
+                TextMeshProUGUI codeText = item.GetComponentInChildren<TextMeshProUGUI>();
+                if (codeText != null)
                 {
-                    errorMessages.Add(result.ErrorMessage); // 오류 메시지 추가
+                    codeText.text = result.OriginalCode;
+                    codeText.color = result.IsValid ? validColor : invalidColor;
+                }
+
+                Image background = item.GetComponent<Image>();
+                if (background != null && !result.IsValid)
+                {
+                    Color backgroundColor = invalidColor;
+                    backgroundColor.a = 0.3f;
+                    background.color = backgroundColor;
+                }
+            }
+        }
+
+        private void UpdateErrorMessage(CodeValidationResult[] results)
+        {
+            if (errorMessageText == null)
+            {
+                return;
+            }
+
+            List<string> errorMessages = new List<string>();
+
+            foreach (CodeValidationResult result in results)
+            {
+                if (!result.IsValid)
+                {
+                    errorMessages.Add(result.ErrorMessage);
                 }
             }
 
-            // 오류 메시지 표시
             if (errorMessages.Count > 0)
             {
-                errorMessageText.text = string.Join("\n", errorMessages); // 줄바꿈으로 연결
-                errorMessageText.color = invalidColor; // 빨간색
+                errorMessageText.text = string.Join("\n", errorMessages);
+                errorMessageText.color = invalidColor;
             }
             else
             {
-                errorMessageText.text = ""; // 오류 메시지 초기화
+                errorMessageText.text = "";
             }
         }
 
-        // 외부에서 강제로 검증 트리거 (예: 버튼 클릭 시)
         public void TriggerValidation()
         {
-            if (codeInputField != null) // 입력 필드가 있을 때
+            if (codeInputField != null)
             {
-                OnInputChanged(codeInputField.text); // 현재 텍스트로 검증 트리거
+                OnInputChanged(codeInputField.text);
             }
         }
-        
-        public BookData GetSelectedBook() // 선택된 도서 반환 메서드
+
+        public BookData GetSelectedBook()
         {
-            if (bookDropdownController == null) // 도서 드롭다운 컨트롤러가 없을 때
+            if (bookDropdownController == null)
             {
-                return null; // null 반환
+                return null;
             }
 
-            return bookDropdownController.GetSelectedBook(); // 선택된 도서 반환
+            return bookDropdownController.GetSelectedBook();
         }
 
-        public bool HasSelectedBook() // 도서 선택 여부 확인 메서드
+        public bool HasSelectedBook()
         {
-            if (bookDropdownController == null) // 도서 드롭다운 컨트롤러가 없을 때
+            if (bookDropdownController == null)
             {
-                return false; // false 반환
+                return false;
             }
-            
-            return bookDropdownController.HasSelectedBook(); // 도서가 선택되었는지 여부 반환
+
+            return bookDropdownController.HasSelectedBook();
         }
     }
 }

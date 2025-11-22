@@ -12,19 +12,16 @@ namespace Managers
     public class SimulationManager : MonoBehaviour
     {
         #region Singleton
-        
         public static SimulationManager Instance { get; private set; }
-        
         #endregion
 
-        #region Serialized Fields
-        
+        #region Fields & Properties
         [Header("핵심 설정")]
         [SerializeField] private SimulationConfig config;
 
         [Header("API 연동 설정")]
         [SerializeField] private bool useApiMode = true;
-        
+
         [Header("내부 컴포넌트 참조")]
         [SerializeField] private RobotController robotController;
         [SerializeField] private ApiClient apiClient;
@@ -34,41 +31,17 @@ namespace Managers
         [Header("임시 데이터")]
         [SerializeField] private List<Cell> allCells;
         [SerializeField] private List<Book> allBooks;
-        
-        #endregion
 
-        #region Public Properties
-        
         public float ElapsedTime { get; private set; }
+        public float AverageTaskTime => _summary != null && _summary.success > 0 ? ElapsedTime / _summary.success : 0;
 
-        public float AverageTaskTime
-        {
-            get
-            {
-                if (_summary != null && _summary.success > 0)
-                {
-                    return ElapsedTime / _summary.success;
-                }
-                return 0;
-            }
-        }
-        
-        #endregion
-
-        #region Private Fields
-        
         private Queue<Job> _jobQueue;
         private Summary _summary;
         private bool _isRunning;
         private bool _isPaused;
         private string _currentRunId;
-        
-        #endregion
 
-        #region Constants
-
-        private const float API_JOB_PROCESSING_DELAY = 0.5f; // 서버가 Jobs를 처리할 시간 (초)
-
+        private const float API_JOB_PROCESSING_DELAY = 0.5f;
         #endregion
 
         #region Unity Lifecycle Methods
@@ -96,16 +69,14 @@ namespace Managers
                 apiClient = ApiClient.Instance;
             }
 
+            InitializeSimulation();
+
             if (useApiMode && apiClient != null)
             {
-                StartCoroutine(InitializeWithAPI());
+                StartCoroutine(InitializeAPI());
             }
-            else
-            {
-                Debug.Log("로컬 모드로 시뮬레이션을 시작합니다.");
-                InitializeSimulation();
-                StartSimulationWithJobs(GetTestJobs());
-            }
+
+            Debug.Log("시뮬레이션 준비 완료. UI에서 작업을 입력하고 실행하세요.");
         }
 
         private void Update()
@@ -128,12 +99,10 @@ namespace Managers
         #endregion
 
         #region Initialization
-
-        private IEnumerator InitializeWithAPI()
+        private IEnumerator InitializeAPI()
         {
-            Debug.Log("API 모드로 시뮬레이션 초기화를 시작합니다...");
+            Debug.Log("API 모드 초기화 중...");
 
-            // 1. 책 정보 로드
             bool booksLoaded = false;
             List<BookDto> loadedBookDtos = null;
             yield return apiClient.GetAllBooks(
@@ -150,47 +119,63 @@ namespace Managers
                 yield break;
             }
 
-            // 1.1. BookRegistry 업데이트 (UI용)
             var bookRegistry = FindObjectOfType<BookRegistry>();
             if (bookRegistry != null && loadedBookDtos != null)
             {
                 bookRegistry.LoadBooksFromApi(loadedBookDtos);
-                Debug.Log("[SimulationManager] BookRegistry가 API 데이터로 업데이트되었습니다.");
+            }
+
+            Debug.Log("API 초기화 완료. 책 정보 로드 완료.");
+        }
+
+        public void PrepareSimulation(List<Job> jobs)
+        {
+            if (useApiMode && apiClient != null)
+            {
+                StartCoroutine(PrepareSimulationWithAPI(jobs));
             }
             else
             {
-                Debug.LogWarning("[SimulationManager] BookRegistry를 찾을 수 없거나 책 데이터가 없습니다.");
+                StartSimulationWithJobs(jobs);
+            }
+        }
+
+        private IEnumerator PrepareSimulationWithAPI(List<Job> jobs)
+        {
+            if (string.IsNullOrEmpty(_currentRunId))
+            {
+                var createRunReq = new CreateRunRequest
+                {
+                    randomSeed = config.randomSeed,
+                    handleTimeSec = config.handleTime,
+                    robotSpeedCellsPerSec = config.robotSpeed,
+                    topN = config.topN
+                };
+                bool runCreated = false;
+                yield return apiClient.CreateRun(createRunReq,
+                    onSuccess: response => { _currentRunId = response.id; runCreated = true; },
+                    onError: error => Debug.LogError($"Run 생성 실패: {error}")
+                );
+                if (!runCreated)
+                {
+                    Debug.LogError("Run 생성 실패");
+                    yield break;
+                }
             }
 
-            // 2. Run 생성
-            var createRunReq = new CreateRunRequest
-            {
-                randomSeed = config.randomSeed,
-                handleTimeSec = config.handleTime,
-                robotSpeedCellsPerSec = config.robotSpeed,
-                topN = config.topN
-            };
-            bool runCreated = false;
-            yield return apiClient.CreateRun(createRunReq,
-                onSuccess: response => { _currentRunId = response.id; runCreated = true; },
-                onError: error => Debug.LogError($"Run 생성 실패: {error}")
-            );
-            if (!runCreated)
-            {
-                HandleApiInitializationFailure("API 초기화 실패: Run을 생성할 수 없습니다.");
-                yield break;
-            }
-
-            // 3. Job 일괄 생성
-            var localJobs = GetTestJobs();
-            var jobDtos = localJobs.Select(job => new JobDto
+            var jobDtos = jobs.Select(job => new JobDto
             {
                 action = job.Action.ToString(),
                 cellCode = job.CellCode,
                 bookTitle = job.BookTitle,
                 quantity = job.Quantity
             }).ToArray();
-            var createJobsReq = new CreateJobsBatchRequest { runId = _currentRunId, jobs = jobDtos };
+            var createJobsReq = new CreateJobsBatchRequest
+            {
+                runId = _currentRunId,
+                jobs = jobDtos,
+                layoutId = cellsLayout != null ? cellsLayout.layout_hash : ""
+            };
 
             bool jobsBatched = false;
             yield return apiClient.CreateJobsBatch(createJobsReq,
@@ -199,80 +184,75 @@ namespace Managers
             );
             if (!jobsBatched)
             {
-                HandleApiInitializationFailure("API 초기화 실패: Jobs를 생성할 수 없습니다.");
+                Debug.LogError("Jobs 생성 실패");
                 yield break;
             }
 
-            // [오류 수정 2] 서버가 Jobs를 처리할 시간을 주기 위해 짧은 대기시간 추가
             yield return new WaitForSeconds(API_JOB_PROCESSING_DELAY);
 
-            // 4. Job ID 매핑을 위해 Run 상세 정보 다시 요청
             bool idsMapped = false;
             yield return apiClient.GetRunDetails(_currentRunId,
                 onSuccess: runDetails => {
                     var serverJobs = runDetails.jobs.ToDictionary(
-                        j => (j.cellCode, j.bookTitle, j.action), 
+                        j => (j.cellCode, j.bookTitle, j.action),
                         j => j.id
                     );
 
-                    foreach (var localJob in localJobs)
+                    foreach (var localJob in jobs)
                     {
                         var key = (localJob.CellCode, localJob.BookTitle, localJob.Action.ToString());
                         if (serverJobs.TryGetValue(key, out string jobId))
                         {
                             localJob.JobId = jobId;
                         }
-                        else
-                        {
-                            Debug.LogWarning($"서버에서 해당 Job의 ID를 찾을 수 없습니다: {key}");
-                        }
                     }
                     idsMapped = true;
-                    Debug.Log("Job ID 매핑 완료.");
                 },
                 onError: error => Debug.LogError($"Run 상세 정보 조회 실패: {error}")
             );
             if (!idsMapped)
             {
-                HandleApiInitializationFailure("API 초기화 실패: Job ID를 매핑할 수 없습니다.");
+                Debug.LogError("Job ID 매핑 실패");
                 yield break;
             }
 
-            // 5. 모든 API 통신이 성공하면, 로컬 시뮬레이션을 시작합니다.
-            InitializeSimulation();
-            StartSimulationWithJobs(localJobs);
+            StartSimulationWithJobs(jobs);
         }
-        
+
         private void InitializeSimulation()
         {
             Time.timeScale = 1f;
             Time.fixedDeltaTime = 0.02f;
             Random.InitState(config.randomSeed);
-            
+
             _summary = new Summary();
             _jobQueue = new Queue<Job>();
-            _isRunning = true;
+            _isRunning = false;
             _isPaused = false;
             ElapsedTime = 0f;
-            
-            // API 모드가 아닐 경우를 대비해 임시 데이터 초기화
+
             if (allBooks == null || allBooks.Count == 0)
             {
-                allBooks = new List<Book> { new Book("Test Book A", 30, 100), new Book("Test Book B", 25, 130) };
+                allBooks = new List<Book>();
             }
             if (allCells == null || allCells.Count == 0)
             {
-                allCells = new List<Cell> { new Cell("A01", 100, 120), new Cell("B02", 80, 150) };
+                allCells = new List<Cell>();
+            }
+
+            if (cellsLayout != null && cellsLayout.cells != null)
+            {
+                foreach (var cellDef in cellsLayout.cells)
+                {
+                    allCells.Add(new Cell(cellDef.code, cellDef.width, cellDef.height));
+                }
             }
         }
-        
         #endregion
 
-        #region Job & Simulation Flow
-
+        #region Simulation Control
         public void StartSimulationWithJobs(List<Job> jobs)
         {
-            // [오류 수정 1] 시뮬레이션이 초기화되지 않은 상태에서 호출될 경우를 대비한 안전장치
             if (_jobQueue == null || _summary == null)
             {
                 Debug.LogWarning("시뮬레이션이 초기화되지 않았습니다. 지금 초기화를 진행합니다.");
@@ -285,12 +265,17 @@ namespace Managers
                 return;
             }
 
+            _isRunning = true;
+            _isPaused = false;
+            ElapsedTime = 0f;
+            Time.timeScale = 1f;
+
             SetTotalTargets(jobs.Count);
             foreach (var job in jobs)
             {
                 _jobQueue.Enqueue(job);
             }
-            
+
             TryProcessNextJob();
         }
 
@@ -316,7 +301,6 @@ namespace Managers
             }
             else
             {
-                Debug.Log("모든 작업이 큐에서 처리되었습니다.");
                 CheckSimulationComplete();
             }
         }
@@ -331,26 +315,22 @@ namespace Managers
             {
                 RecordFailure(resultCode);
             }
-            
+
             TryProcessNextJob();
         }
-        
+
         private void CheckSimulationComplete()
         {
             if (_summary == null)
             {
                 return;
             }
-            
-            if (_summary.totalTargets > 0 && _summary.attempted >= _summary.totalTargets)
+
+            if (_summary.total > 0 && _summary.attempt >= _summary.total)
             {
                 StopSimulation();
             }
         }
-
-        #endregion
-
-        #region Simulation Control
 
         public void StopSimulation()
         {
@@ -360,8 +340,7 @@ namespace Managers
             }
 
             _isRunning = false;
-            _isPaused = false; // 일시정지 상태 초기화
-            Debug.Log("시뮬레이션을 중지합니다.");
+            _isPaused = false;
 
             if (robotController != null)
             {
@@ -385,9 +364,6 @@ namespace Managers
                 UIManager.Instance.ShowSummary(_summary);
             }
 
-            // 주의: Time.timeScale은 전역 설정으로 모든 시간 기반 작업에 영향을 줍니다
-            // (UI 애니메이션, 파티클 시스템, 모든 Update/FixedUpdate 등)
-            // WebGL 환경에서는 브라우저 탭 전환 시 예상치 못한 동작을 할 수 있습니다
             Time.timeScale = 0f;
         }
 
@@ -400,8 +376,6 @@ namespace Managers
             }
 
             _isPaused = !_isPaused;
-
-            // 주의: Time.timeScale은 전역 설정으로 모든 시간 기반 작업에 영향을 줍니다
             Time.timeScale = _isPaused ? 0f : 1f;
 
             if (robotController != null)
@@ -418,19 +392,17 @@ namespace Managers
 
             Debug.Log(_isPaused ? "시뮬레이션 일시정지됨." : "시뮬레이션 재개됨.");
         }
-        
         #endregion
 
-        #region Data & Summary Management
-
+        #region Summary & UI
         public void SetTotalTargets(int count)
         {
             if (_summary != null)
             {
-                _summary.totalTargets = count;
+                _summary.total = count;
             }
         }
-        
+
         public void RecordSuccess()
         {
             if (_summary != null)
@@ -453,10 +425,6 @@ namespace Managers
         {
             return _summary;
         }
-        
-        #endregion
-
-        #region UI & Event Handlers
 
         private void UpdateDashboard()
         {
@@ -470,11 +438,9 @@ namespace Managers
         {
             Debug.Log($"[SimulationManager] HandleTime이 {newHandleTime}으로 변경됨을 감지했습니다.");
         }
-        
         #endregion
 
-        #region Helper & Test Methods
-        
+        #region Helper Methods
         private Cell FindCellByCode(string code)
         {
             return allCells.Find(c => c.CellCode == code);
@@ -483,16 +449,6 @@ namespace Managers
         private Book FindBookByTitle(string title)
         {
             return allBooks.Find(b => b.Title == title);
-        }
-
-        private List<Job> GetTestJobs()
-        {
-            return new List<Job>
-            {
-                new Job(JobAction.PUT, "A01", "Test Book A", 2),
-                new Job(JobAction.PUT, "B02", "Test Book B", 3),
-                new Job(JobAction.PICK, "A01", "Test Book A", 1)
-            };
         }
 
         private int CalculatePathLength(string cellCode)
@@ -526,7 +482,6 @@ namespace Managers
 
             _isRunning = false;
         }
-
         #endregion
     }
 }
