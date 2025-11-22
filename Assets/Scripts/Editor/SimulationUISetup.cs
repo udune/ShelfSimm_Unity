@@ -46,7 +46,7 @@ namespace Editor
             Selection.activeGameObject = canvas.gameObject;
             EditorGUIUtility.PingObject(canvas.gameObject);
 
-            Debug.Log("✅ UI 자동 설정 완료!");
+            Debug.Log("UI 자동 설정 완료!");
             EditorUtility.DisplayDialog("완료",
                 "시뮬레이션 UI가 성공적으로 생성되었습니다!\n\n" +
                 "좌측 60%: Grid View (로봇 시뮬레이션)\n" +
@@ -174,15 +174,15 @@ namespace Editor
             shadow.effectColor = new Color(0, 0, 0, 0.3f);
             shadow.effectDistance = new Vector2(2, -2);
 
-            GameObject title = CreateText(panel.transform, "Title", "📝 작업 입력", 26, TextAlignmentOptions.Center, true);
+            GameObject title = CreateText(panel.transform, "Title", "작업 입력", 26, TextAlignmentOptions.Center, true);
             RectTransform titleRect = title.GetComponent<RectTransform>();
             titleRect.anchorMin = new Vector2(0, 0.9f);
             titleRect.anchorMax = new Vector2(1, 1);
             titleRect.offsetMin = new Vector2(10, 0);
             titleRect.offsetMax = new Vector2(-10, -10);
 
-            float yStart = 0.85f;
-            float spacing = 0.12f;
+            float yStart = 0.83f;
+            float spacing = 0.15f;
 
             GameObject cellCodesInput = CreateInputField(panel.transform, "CellCodesInput", "셀 코드 (예: A01, A02-A05)", yStart);
             yStart -= spacing;
@@ -199,7 +199,7 @@ namespace Editor
             CreateLabel(panel.transform, "QuantityLabel", "수량", yStart + 0.05f);
             yStart -= spacing + 0.05f;
 
-            GameObject addButton = CreateButton(panel.transform, "AddJobButton", "➕ 작업 추가", yStart, new Color(0.25f, 0.75f, 0.35f));
+            GameObject addButton = CreateButton(panel.transform, "AddJobButton", "작업 추가", yStart, new Color(0.25f, 0.75f, 0.35f));
 
             GameObject errorPanel = CreateErrorPanel(panel.transform);
 
@@ -261,7 +261,7 @@ namespace Editor
             shadow.effectColor = new Color(0, 0, 0, 0.3f);
             shadow.effectDistance = new Vector2(2, -2);
 
-            GameObject jobCountText = CreateText(panel.transform, "JobCountText", "📋 작업 목록 (0개)", 24, TextAlignmentOptions.Left, true);
+            GameObject jobCountText = CreateText(panel.transform, "JobCountText", "작업 목록 (0개)", 24, TextAlignmentOptions.Left, true);
             RectTransform countRect = jobCountText.GetComponent<RectTransform>();
             countRect.anchorMin = new Vector2(0, 0.9f);
             countRect.anchorMax = new Vector2(0.7f, 1);
@@ -277,14 +277,14 @@ namespace Editor
 
             Transform content = scrollView.transform.Find("Viewport/Content");
 
-            GameObject clearButton = CreateButton(panel.transform, "ClearAllButton", "🗑️ 전체 삭제", 0.12f, new Color(0.85f, 0.25f, 0.25f));
+            GameObject clearButton = CreateButton(panel.transform, "ClearAllButton", "전체 삭제", 0.12f, new Color(0.85f, 0.25f, 0.25f));
             RectTransform clearRect = clearButton.GetComponent<RectTransform>();
             clearRect.anchorMin = new Vector2(0, 0.05f);
             clearRect.anchorMax = new Vector2(0.48f, 0.15f);
             clearRect.offsetMin = new Vector2(10, 10);
             clearRect.offsetMax = new Vector2(-5, -10);
 
-            GameObject startButton = CreateButton(panel.transform, "StartSimulationButton", "▶️ 시뮬레이션 시작", 0.12f, new Color(0.2f, 0.6f, 1.0f));
+            GameObject startButton = CreateButton(panel.transform, "StartSimulationButton", "시뮬레이션 시작", 0.12f, new Color(0.2f, 0.6f, 1.0f));
             RectTransform startRect = startButton.GetComponent<RectTransform>();
             startRect.anchorMin = new Vector2(0.52f, 0.05f);
             startRect.anchorMax = new Vector2(1, 0.15f);
@@ -343,7 +343,7 @@ namespace Editor
             shadow.effectColor = new Color(0, 0, 0, 0.3f);
             shadow.effectDistance = new Vector2(2, -2);
 
-            GameObject titleObj = CreateText(panel.transform, "Title", "📊 시뮬레이션 상태", 20, TextAlignmentOptions.Left, true);
+            GameObject titleObj = CreateText(panel.transform, "Title", "시뮬레이션 상태", 20, TextAlignmentOptions.Left, true);
             RectTransform titleRect = titleObj.GetComponent<RectTransform>();
             titleRect.anchorMin = new Vector2(0, 0.95f);
             titleRect.anchorMax = new Vector2(1, 1);
@@ -407,7 +407,7 @@ namespace Editor
             obj.transform.SetParent(parent, false);
 
             RectTransform rect = obj.AddComponent<RectTransform>();
-            rect.anchorMin = new Vector2(0.05f, yPos - 0.06f);
+            rect.anchorMin = new Vector2(0.05f, yPos - 0.08f);
             rect.anchorMax = new Vector2(0.95f, yPos);
 
             Image bg = obj.AddComponent<Image>();
@@ -460,7 +460,7 @@ namespace Editor
             obj.transform.SetParent(parent, false);
 
             RectTransform rect = obj.AddComponent<RectTransform>();
-            rect.anchorMin = new Vector2(0.05f, yPos - 0.06f);
+            rect.anchorMin = new Vector2(0.05f, yPos - 0.08f);
             rect.anchorMax = new Vector2(0.95f, yPos);
 
             Image bg = obj.AddComponent<Image>();
@@ -562,7 +562,7 @@ namespace Editor
             obj.transform.SetParent(parent, false);
 
             RectTransform rect = obj.AddComponent<RectTransform>();
-            rect.anchorMin = new Vector2(0.05f, yPos - 0.08f);
+            rect.anchorMin = new Vector2(0.05f, yPos - 0.11f);
             rect.anchorMax = new Vector2(0.95f, yPos);
 
             Image bg = obj.AddComponent<Image>();
@@ -759,7 +759,7 @@ namespace Editor
             shadow.effectColor = new Color(0, 0, 0, 0.3f);
             shadow.effectDistance = new Vector2(2, -2);
 
-            GameObject title = CreateText(panel.transform, "Title", "📍 셀 정보", 18, TextAlignmentOptions.Left, true);
+            GameObject title = CreateText(panel.transform, "Title", "셀 정보", 18, TextAlignmentOptions.Left, true);
             RectTransform titleRect = title.GetComponent<RectTransform>();
             titleRect.anchorMin = new Vector2(0, 0.8f);
             titleRect.anchorMax = new Vector2(1, 1);
@@ -846,21 +846,21 @@ namespace Editor
             Image bg = panel.AddComponent<Image>();
             bg.color = new Color(0.12f, 0.12f, 0.16f, 0.95f);
 
-            GameObject pauseButton = CreateButton(panel.transform, "PauseResumeButton", "⏸ 일시정지", 0.5f, new Color(0.9f, 0.6f, 0.2f));
+            GameObject pauseButton = CreateButton(panel.transform, "PauseResumeButton", "일시정지", 0.5f, new Color(0.9f, 0.6f, 0.2f));
             RectTransform pauseRect = pauseButton.GetComponent<RectTransform>();
             pauseRect.anchorMin = new Vector2(0.02f, 0.15f);
             pauseRect.anchorMax = new Vector2(0.22f, 0.85f);
             pauseRect.offsetMin = Vector2.zero;
             pauseRect.offsetMax = Vector2.zero;
 
-            GameObject stopButton = CreateButton(panel.transform, "StopButton", "⏹ 정지", 0.5f, new Color(0.85f, 0.25f, 0.25f));
+            GameObject stopButton = CreateButton(panel.transform, "StopButton", "정지", 0.5f, new Color(0.85f, 0.25f, 0.25f));
             RectTransform stopRect = stopButton.GetComponent<RectTransform>();
             stopRect.anchorMin = new Vector2(0.24f, 0.15f);
             stopRect.anchorMax = new Vector2(0.40f, 0.85f);
             stopRect.offsetMin = Vector2.zero;
             stopRect.offsetMax = Vector2.zero;
 
-            GameObject timeText = CreateText(panel.transform, "ElapsedTimeText", "⏱ 경과 시간: 0.0s", 14, TextAlignmentOptions.Left, true);
+            GameObject timeText = CreateText(panel.transform, "ElapsedTimeText", "경과 시간: 0.0s", 14, TextAlignmentOptions.Left, true);
             RectTransform timeRect = timeText.GetComponent<RectTransform>();
             timeRect.anchorMin = new Vector2(0.45f, 0);
             timeRect.anchorMax = new Vector2(1, 1);
