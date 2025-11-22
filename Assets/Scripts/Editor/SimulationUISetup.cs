@@ -10,6 +10,9 @@ namespace Editor
 {
     public static class SimulationUISetup
     {
+        private static TMP_FontAsset boldFont;
+        private static TMP_FontAsset regularFont;
+
         [MenuItem("Tools/ShelfSim/Setup UI (Auto) ⚡", false, 20)]
         public static void SetupCompleteUI()
         {
@@ -20,6 +23,8 @@ namespace Editor
             {
                 return;
             }
+
+            LoadFonts();
 
             Canvas canvas = FindOrCreateCanvas();
 
@@ -54,11 +59,52 @@ namespace Editor
                 GameObject canvasObj = new GameObject("Canvas");
                 canvas = canvasObj.AddComponent<Canvas>();
                 canvas.renderMode = RenderMode.ScreenSpaceOverlay;
-                canvasObj.AddComponent<CanvasScaler>();
+
+                CanvasScaler scaler = canvasObj.AddComponent<CanvasScaler>();
+                scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
+                scaler.referenceResolution = new Vector2(1920, 1080);
+                scaler.screenMatchMode = CanvasScaler.ScreenMatchMode.MatchWidthOrHeight;
+                scaler.matchWidthOrHeight = 0.5f;
+                scaler.referencePixelsPerUnit = 100;
+
                 canvasObj.AddComponent<GraphicRaycaster>();
-                Debug.Log("Canvas 생성됨");
+                Debug.Log("Canvas 생성됨 (1920x1080 반응형)");
+            }
+            else
+            {
+                CanvasScaler scaler = canvas.GetComponent<CanvasScaler>();
+                if (scaler != null)
+                {
+                    scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
+                    scaler.referenceResolution = new Vector2(1920, 1080);
+                    scaler.screenMatchMode = CanvasScaler.ScreenMatchMode.MatchWidthOrHeight;
+                    scaler.matchWidthOrHeight = 0.5f;
+                    scaler.referencePixelsPerUnit = 100;
+                    Debug.Log("기존 Canvas를 1920x1080 반응형으로 설정");
+                }
             }
             return canvas;
+        }
+
+        private static void LoadFonts()
+        {
+            boldFont = Resources.Load<TMP_FontAsset>("Fonts/NotoSansKR-Bold SDF");
+            regularFont = Resources.Load<TMP_FontAsset>("Fonts/Pretendard-Regular SDF");
+
+            if (boldFont == null)
+            {
+                Debug.LogWarning("NotoSansKR-Bold SDF 폰트를 찾을 수 없습니다. Resources/Fonts/ 폴더에 폰트를 추가하세요.");
+            }
+
+            if (regularFont == null)
+            {
+                Debug.LogWarning("Pretendard-Regular SDF 폰트를 찾을 수 없습니다. Resources/Fonts/ 폴더에 폰트를 추가하세요.");
+            }
+
+            if (boldFont == null && regularFont == null)
+            {
+                Debug.LogWarning("폰트가 설정되지 않았습니다. TextMeshPro 기본 폰트를 사용합니다.");
+            }
         }
 
         private static GameObject CreateSimulationPanel(Canvas canvas)
@@ -92,7 +138,7 @@ namespace Editor
             Image bg = panel.AddComponent<Image>();
             bg.color = new Color(0.2f, 0.2f, 0.2f, 1f);
 
-            GameObject title = CreateText(panel.transform, "Title", "작업 입력", 20, TextAlignmentOptions.Center);
+            GameObject title = CreateText(panel.transform, "Title", "작업 입력", 24, TextAlignmentOptions.Center, true);
             RectTransform titleRect = title.GetComponent<RectTransform>();
             titleRect.anchorMin = new Vector2(0, 0.9f);
             titleRect.anchorMax = new Vector2(1, 1);
@@ -175,7 +221,7 @@ namespace Editor
             Image bg = panel.AddComponent<Image>();
             bg.color = new Color(0.2f, 0.2f, 0.2f, 1f);
 
-            GameObject jobCountText = CreateText(panel.transform, "JobCountText", "작업 목록 (0개)", 18, TextAlignmentOptions.Left);
+            GameObject jobCountText = CreateText(panel.transform, "JobCountText", "작업 목록 (0개)", 22, TextAlignmentOptions.Left, true);
             RectTransform countRect = jobCountText.GetComponent<RectTransform>();
             countRect.anchorMin = new Vector2(0, 0.9f);
             countRect.anchorMax = new Vector2(0.7f, 1);
@@ -268,7 +314,7 @@ namespace Editor
             EditorUtility.SetDirty(uiController);
         }
 
-        private static GameObject CreateText(Transform parent, string name, string text, int fontSize, TextAlignmentOptions alignment)
+        private static GameObject CreateText(Transform parent, string name, string text, int fontSize, TextAlignmentOptions alignment, bool isBold = false)
         {
             GameObject obj = new GameObject(name);
             obj.transform.SetParent(parent, false);
@@ -278,6 +324,15 @@ namespace Editor
             tmp.fontSize = fontSize;
             tmp.alignment = alignment;
             tmp.color = Color.white;
+
+            if (isBold && boldFont != null)
+            {
+                tmp.font = boldFont;
+            }
+            else if (!isBold && regularFont != null)
+            {
+                tmp.font = regularFont;
+            }
 
             return obj;
         }
@@ -315,6 +370,7 @@ namespace Editor
             textObj.transform.SetParent(textArea.transform, false);
             TextMeshProUGUI textComponent = textObj.AddComponent<TextMeshProUGUI>();
             textComponent.fontSize = 14;
+            if (regularFont != null) textComponent.font = regularFont;
             RectTransform textRect = textObj.GetComponent<RectTransform>();
             textRect.anchorMin = Vector2.zero;
             textRect.anchorMax = Vector2.one;
@@ -326,6 +382,7 @@ namespace Editor
             placeholderComponent.fontSize = 14;
             placeholderComponent.fontStyle = FontStyles.Italic;
             placeholderComponent.color = new Color(0.5f, 0.5f, 0.5f, 1f);
+            if (regularFont != null) placeholderComponent.font = regularFont;
             RectTransform placeholderRect = placeholderObj.GetComponent<RectTransform>();
             placeholderRect.anchorMin = Vector2.zero;
             placeholderRect.anchorMax = Vector2.one;
@@ -355,6 +412,7 @@ namespace Editor
             TextMeshProUGUI labelText = label.AddComponent<TextMeshProUGUI>();
             labelText.text = options[0];
             labelText.fontSize = 14;
+            if (regularFont != null) labelText.font = regularFont;
             RectTransform labelRect = label.GetComponent<RectTransform>();
             labelRect.anchorMin = new Vector2(0, 0);
             labelRect.anchorMax = new Vector2(1, 1);
@@ -367,6 +425,7 @@ namespace Editor
             arrowText.text = "▼";
             arrowText.fontSize = 12;
             arrowText.alignment = TextAlignmentOptions.Center;
+            if (regularFont != null) arrowText.font = regularFont;
             RectTransform arrowRect = arrow.GetComponent<RectTransform>();
             arrowRect.anchorMin = new Vector2(1, 0);
             arrowRect.anchorMax = new Vector2(1, 1);
@@ -413,6 +472,7 @@ namespace Editor
             itemLabel.transform.SetParent(item.transform, false);
             TextMeshProUGUI itemLabelText = itemLabel.AddComponent<TextMeshProUGUI>();
             itemLabelText.fontSize = 14;
+            if (regularFont != null) itemLabelText.font = regularFont;
             RectTransform itemLabelRect = itemLabel.GetComponent<RectTransform>();
             itemLabelRect.anchorMin = Vector2.zero;
             itemLabelRect.anchorMax = Vector2.one;
@@ -452,6 +512,7 @@ namespace Editor
             tmp.fontSize = 16;
             tmp.alignment = TextAlignmentOptions.Center;
             tmp.color = Color.white;
+            if (regularFont != null) tmp.font = regularFont;
             RectTransform textRect = textObj.GetComponent<RectTransform>();
             textRect.anchorMin = Vector2.zero;
             textRect.anchorMax = Vector2.one;
@@ -555,6 +616,7 @@ namespace Editor
             tmp.fontSize = 14;
             tmp.alignment = TextAlignmentOptions.Left;
             tmp.color = Color.white;
+            if (regularFont != null) tmp.font = regularFont;
             LayoutElement textLayout = text.AddComponent<LayoutElement>();
             textLayout.flexibleWidth = 1;
 
@@ -574,6 +636,7 @@ namespace Editor
             btnTmp.fontSize = 12;
             btnTmp.alignment = TextAlignmentOptions.Center;
             btnTmp.color = Color.white;
+            if (regularFont != null) btnTmp.font = regularFont;
             RectTransform btnTextRect = btnText.GetComponent<RectTransform>();
             btnTextRect.anchorMin = Vector2.zero;
             btnTextRect.anchorMax = Vector2.one;
