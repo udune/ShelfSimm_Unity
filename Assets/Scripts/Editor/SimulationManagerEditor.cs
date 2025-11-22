@@ -136,7 +136,7 @@ namespace Editor
                     EditorGUILayout.Space(5);
                     EditorGUILayout.LabelField("Error Breakdown:", EditorStyles.miniBoldLabel);
 
-                    foreach (var error in summary.error_counts)
+                    foreach (var error in summary.reasons)
                     {
                         if (error.Value > 0)
                         {

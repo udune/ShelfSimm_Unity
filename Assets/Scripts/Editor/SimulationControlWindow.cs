@@ -260,12 +260,12 @@ namespace Editor
 
                 DrawStatRow("Avg Task Time", $"{manager.AverageTaskTime:F2}s", Color.yellow);
 
-                if (summary.fail > 0 && summary.error_counts != null)
+                if (summary.fail > 0 && summary.reasons != null)
                 {
                     EditorGUILayout.Space(5);
                     EditorGUILayout.LabelField("Error Breakdown:", EditorStyles.miniBoldLabel);
 
-                    foreach (var error in summary.error_counts.OrderByDescending(x => x.Value))
+                    foreach (var error in summary.reasons.OrderByDescending(x => x.Value))
                     {
                         if (error.Value > 0)
                         {
@@ -334,11 +334,11 @@ namespace Editor
 
             EditorGUILayout.EndHorizontal();
 
-            if (robot.lastError != Data.ErrorCode.INVALID_VALUE)
+            if (robot.errorCode != Data.ErrorCode.INVALID_VALUE)
             {
                 var errorStyle = new GUIStyle(EditorStyles.miniLabel);
                 errorStyle.normal.textColor = Color.red;
-                EditorGUILayout.LabelField($"⚠ Error: {robot.lastError}", errorStyle);
+                EditorGUILayout.LabelField($"⚠ Error: {robot.errorCode}", errorStyle);
             }
 
             EditorGUILayout.EndVertical();

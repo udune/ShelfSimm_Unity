@@ -1,3 +1,6 @@
+using System.Collections.Generic;
+using System.Reflection;
+using API;
 using UnityEditor;
 using UnityEngine;
 using Managers;
@@ -148,11 +151,11 @@ namespace Editor
             }
 
             var method = typeof(SimulationManager).GetMethod("GetTestJobs",
-                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+                BindingFlags.NonPublic | BindingFlags.Instance);
 
             if (method != null)
             {
-                var jobs = method.Invoke(manager, null) as System.Collections.Generic.List<Job>;
+                var jobs = method.Invoke(manager, null) as List<Job>;
                 if (jobs != null)
                 {
                     Debug.Log($"Generated {jobs.Count} test jobs:");

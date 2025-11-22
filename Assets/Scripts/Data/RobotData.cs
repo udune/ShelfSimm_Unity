@@ -19,6 +19,7 @@ namespace Data
         public float moveTimeoutSec;
 
         public ErrorCode? errorCode;
+        public string targetCode;
 
         public RobotData(string id, string name, Vector2Int position, float timeout = 30f)
         {

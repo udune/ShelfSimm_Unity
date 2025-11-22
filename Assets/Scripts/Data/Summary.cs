@@ -5,31 +5,31 @@ namespace Data
 {
     public class Summary
     {
-        public int totalTargets;
-        public int attempted;
+        public int total;
+        public int attempt;
         public int success;
-        public int failed;
+        public int fail;
         public Dictionary<ErrorCode, int> reasons;
 
         public Summary()
         {
-            totalTargets = 0;
-            attempted = 0;
+            total = 0;
+            attempt = 0;
             success = 0;
-            failed = 0;
+            fail = 0;
             reasons = new Dictionary<ErrorCode, int>();
         }
 
         public void RecordSuccess()
         {
-            attempted++;
+            attempt++;
             success++;
         }
 
         public void RecordFailure(ErrorCode errorCode)
         {
-            attempted++;
-            failed++;
+            attempt++;
+            fail++;
 
             if (reasons.ContainsKey(errorCode))
             {
@@ -54,10 +54,10 @@ namespace Data
             }
             
             return $"summary:\n" +
-                   $"- total_targets: {totalTargets}\n" +
-                   $"- attempted: {attempted}\n" +
+                   $"- total_targets: {total}\n" +
+                   $"- attempted: {attempt}\n" +
                    $"- success: {success}\n" +
-                   $"- failed: {failed}\n" +
+                   $"- failed: {fail}\n" +
                    $"- reasons: {{{reasonStr}}}";
         }
     }

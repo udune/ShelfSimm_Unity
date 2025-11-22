@@ -300,7 +300,7 @@ namespace Managers
                 return;
             }
 
-            if (_summary.totalTargets > 0 && _summary.attempted >= _summary.totalTargets)
+            if (_summary.total > 0 && _summary.attempt >= _summary.total)
             {
                 StopSimulation();
             }
@@ -373,7 +373,7 @@ namespace Managers
         {
             if (_summary != null)
             {
-                _summary.totalTargets = count;
+                _summary.total = count;
             }
         }
 
