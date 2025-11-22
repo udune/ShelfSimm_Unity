@@ -1,0 +1,588 @@
+using UnityEngine;
+using UnityEngine.UI;
+using UnityEditor;
+using TMPro;
+using UI;
+using Managers;
+using Core;
+
+namespace Editor
+{
+    public static class SimulationUISetup
+    {
+        [MenuItem("Tools/ShelfSim/Setup UI (Auto) ⚡", false, 20)]
+        public static void SetupCompleteUI()
+        {
+            if (!EditorUtility.DisplayDialog("UI 자동 설정",
+                "현재 Scene에 완전한 시뮬레이션 UI를 자동으로 생성합니다.\n" +
+                "기존 UI가 있다면 덮어쓰여질 수 있습니다.\n\n계속하시겠습니까?",
+                "예", "아니오"))
+            {
+                return;
+            }
+
+            Canvas canvas = FindOrCreateCanvas();
+
+            GameObject simulationPanel = CreateSimulationPanel(canvas);
+
+            GameObject jobInputPanel = CreateJobInputPanel(simulationPanel.transform);
+            GameObject jobListPanel = CreateJobListPanel(simulationPanel.transform);
+            GameObject statusPanel = CreateStatusPanel(simulationPanel.transform);
+
+            JobInputController jobInputController = jobInputPanel.GetComponent<JobInputController>();
+            SimulationUIController uiController = jobListPanel.GetComponent<SimulationUIController>();
+
+            ConnectReferences(jobInputController, uiController);
+
+            Selection.activeGameObject = simulationPanel;
+            EditorGUIUtility.PingObject(simulationPanel);
+
+            Debug.Log("✅ UI 자동 설정 완료!");
+            EditorUtility.DisplayDialog("완료",
+                "시뮬레이션 UI가 성공적으로 생성되었습니다!\n\n" +
+                "- JobInputController: 작업 입력\n" +
+                "- SimulationUIController: 작업 목록 및 실행\n" +
+                "- 모든 참조가 자동 연결되었습니다.",
+                "확인");
+        }
+
+        private static Canvas FindOrCreateCanvas()
+        {
+            Canvas canvas = Object.FindObjectOfType<Canvas>();
+            if (canvas == null)
+            {
+                GameObject canvasObj = new GameObject("Canvas");
+                canvas = canvasObj.AddComponent<Canvas>();
+                canvas.renderMode = RenderMode.ScreenSpaceOverlay;
+                canvasObj.AddComponent<CanvasScaler>();
+                canvasObj.AddComponent<GraphicRaycaster>();
+                Debug.Log("Canvas 생성됨");
+            }
+            return canvas;
+        }
+
+        private static GameObject CreateSimulationPanel(Canvas canvas)
+        {
+            GameObject panel = new GameObject("SimulationPanel");
+            panel.transform.SetParent(canvas.transform, false);
+
+            RectTransform rect = panel.AddComponent<RectTransform>();
+            rect.anchorMin = new Vector2(0, 0);
+            rect.anchorMax = new Vector2(1, 1);
+            rect.offsetMin = new Vector2(20, 20);
+            rect.offsetMax = new Vector2(-20, -20);
+
+            Image bg = panel.AddComponent<Image>();
+            bg.color = new Color(0.1f, 0.1f, 0.1f, 0.95f);
+
+            return panel;
+        }
+
+        private static GameObject CreateJobInputPanel(Transform parent)
+        {
+            GameObject panel = new GameObject("JobInputPanel");
+            panel.transform.SetParent(parent, false);
+
+            RectTransform rect = panel.AddComponent<RectTransform>();
+            rect.anchorMin = new Vector2(0, 0.5f);
+            rect.anchorMax = new Vector2(0.5f, 1);
+            rect.offsetMin = new Vector2(10, 10);
+            rect.offsetMax = new Vector2(-5, -10);
+
+            Image bg = panel.AddComponent<Image>();
+            bg.color = new Color(0.2f, 0.2f, 0.2f, 1f);
+
+            GameObject title = CreateText(panel.transform, "Title", "작업 입력", 20, TextAlignmentOptions.Center);
+            RectTransform titleRect = title.GetComponent<RectTransform>();
+            titleRect.anchorMin = new Vector2(0, 0.9f);
+            titleRect.anchorMax = new Vector2(1, 1);
+            titleRect.offsetMin = new Vector2(10, 0);
+            titleRect.offsetMax = new Vector2(-10, -10);
+
+            float yStart = 0.85f;
+            float spacing = 0.12f;
+
+            GameObject cellCodesInput = CreateInputField(panel.transform, "CellCodesInput", "셀 코드 (예: A01, A02-A05)", yStart);
+            yStart -= spacing;
+
+            GameObject actionDropdown = CreateDropdown(panel.transform, "ActionDropdown", new string[] { "PUT", "PICK" }, yStart);
+            CreateLabel(panel.transform, "ActionLabel", "작업 유형", yStart + 0.05f);
+            yStart -= spacing;
+
+            GameObject bookDropdown = CreateDropdown(panel.transform, "BookDropdown", new string[] { "책 선택" }, yStart);
+            CreateLabel(panel.transform, "BookLabel", "도서 선택", yStart + 0.05f);
+            yStart -= spacing;
+
+            GameObject quantityInput = CreateInputField(panel.transform, "QuantityInput", "수량", yStart);
+            CreateLabel(panel.transform, "QuantityLabel", "수량", yStart + 0.05f);
+            yStart -= spacing + 0.05f;
+
+            GameObject addButton = CreateButton(panel.transform, "AddJobButton", "작업 추가", yStart, new Color(0.3f, 0.7f, 0.3f));
+
+            GameObject errorPanel = CreateErrorPanel(panel.transform);
+
+            JobInputController controller = panel.AddComponent<JobInputController>();
+
+            var cellInput = cellCodesInput.GetComponent<TMP_InputField>();
+            var actionDrop = actionDropdown.GetComponent<TMP_Dropdown>();
+            var bookDrop = bookDropdown.GetComponent<TMP_Dropdown>();
+            var quantityInputField = quantityInput.GetComponent<TMP_InputField>();
+            var executeBtn = addButton.GetComponent<Button>();
+
+            typeof(JobInputController).GetField("cellCodesInput",
+                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)
+                ?.SetValue(controller, cellInput);
+            typeof(JobInputController).GetField("actionTypeDropdown",
+                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)
+                ?.SetValue(controller, actionDrop);
+            typeof(JobInputController).GetField("bookDropdown",
+                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)
+                ?.SetValue(controller, bookDrop);
+            typeof(JobInputController).GetField("quantityInput",
+                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)
+                ?.SetValue(controller, quantityInputField);
+            typeof(JobInputController).GetField("executeButton",
+                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)
+                ?.SetValue(controller, executeBtn);
+            typeof(JobInputController).GetField("errorPanel",
+                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)
+                ?.SetValue(controller, errorPanel);
+
+            var bookRegistry = Object.FindObjectOfType<BookRegistry>();
+            if (bookRegistry != null)
+            {
+                typeof(JobInputController).GetField("bookRegistry",
+                    System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)
+                    ?.SetValue(controller, bookRegistry);
+            }
+
+            EditorUtility.SetDirty(controller);
+
+            return panel;
+        }
+
+        private static GameObject CreateJobListPanel(Transform parent)
+        {
+            GameObject panel = new GameObject("JobListPanel");
+            panel.transform.SetParent(parent, false);
+
+            RectTransform rect = panel.AddComponent<RectTransform>();
+            rect.anchorMin = new Vector2(0.5f, 0.5f);
+            rect.anchorMax = new Vector2(1, 1);
+            rect.offsetMin = new Vector2(5, 10);
+            rect.offsetMax = new Vector2(-10, -10);
+
+            Image bg = panel.AddComponent<Image>();
+            bg.color = new Color(0.2f, 0.2f, 0.2f, 1f);
+
+            GameObject jobCountText = CreateText(panel.transform, "JobCountText", "작업 목록 (0개)", 18, TextAlignmentOptions.Left);
+            RectTransform countRect = jobCountText.GetComponent<RectTransform>();
+            countRect.anchorMin = new Vector2(0, 0.9f);
+            countRect.anchorMax = new Vector2(0.7f, 1);
+            countRect.offsetMin = new Vector2(10, 0);
+            countRect.offsetMax = new Vector2(-10, -10);
+
+            GameObject scrollView = CreateScrollView(panel.transform, "JobListScrollView");
+            RectTransform scrollRect = scrollView.GetComponent<RectTransform>();
+            scrollRect.anchorMin = new Vector2(0, 0.2f);
+            scrollRect.anchorMax = new Vector2(1, 0.88f);
+            scrollRect.offsetMin = new Vector2(10, 10);
+            scrollRect.offsetMax = new Vector2(-10, -10);
+
+            Transform content = scrollView.transform.Find("Viewport/Content");
+
+            GameObject clearButton = CreateButton(panel.transform, "ClearAllButton", "전체 삭제", 0.12f, new Color(0.7f, 0.3f, 0.3f));
+            RectTransform clearRect = clearButton.GetComponent<RectTransform>();
+            clearRect.anchorMin = new Vector2(0, 0.05f);
+            clearRect.anchorMax = new Vector2(0.48f, 0.15f);
+
+            GameObject startButton = CreateButton(panel.transform, "StartSimulationButton", "시뮬레이션 시작", 0.12f, new Color(0.3f, 0.6f, 0.9f));
+            RectTransform startRect = startButton.GetComponent<RectTransform>();
+            startRect.anchorMin = new Vector2(0.52f, 0.05f);
+            startRect.anchorMax = new Vector2(1, 0.15f);
+
+            GameObject jobItemPrefab = CreateJobItemPrefab();
+
+            SimulationUIController controller = panel.AddComponent<SimulationUIController>();
+
+            var simManager = Object.FindObjectOfType<SimulationManager>();
+            var bookRegistry = Object.FindObjectOfType<BookRegistry>();
+
+            typeof(SimulationUIController).GetField("simulationManager",
+                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)
+                ?.SetValue(controller, simManager);
+            typeof(SimulationUIController).GetField("bookRegistry",
+                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)
+                ?.SetValue(controller, bookRegistry);
+            typeof(SimulationUIController).GetField("jobListContainer",
+                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)
+                ?.SetValue(controller, content);
+            typeof(SimulationUIController).GetField("jobItemPrefab",
+                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)
+                ?.SetValue(controller, jobItemPrefab);
+            typeof(SimulationUIController).GetField("jobCountText",
+                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)
+                ?.SetValue(controller, jobCountText.GetComponent<TextMeshProUGUI>());
+            typeof(SimulationUIController).GetField("clearAllButton",
+                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)
+                ?.SetValue(controller, clearButton.GetComponent<Button>());
+            typeof(SimulationUIController).GetField("startSimulationButton",
+                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)
+                ?.SetValue(controller, startButton.GetComponent<Button>());
+
+            EditorUtility.SetDirty(controller);
+
+            return panel;
+        }
+
+        private static GameObject CreateStatusPanel(Transform parent)
+        {
+            GameObject panel = new GameObject("StatusPanel");
+            panel.transform.SetParent(parent, false);
+
+            RectTransform rect = panel.AddComponent<RectTransform>();
+            rect.anchorMin = new Vector2(0, 0);
+            rect.anchorMax = new Vector2(1, 0.48f);
+            rect.offsetMin = new Vector2(10, 10);
+            rect.offsetMax = new Vector2(-10, -5);
+
+            Image bg = panel.AddComponent<Image>();
+            bg.color = new Color(0.15f, 0.15f, 0.15f, 1f);
+
+            GameObject statusText = CreateText(panel.transform, "StatusText", "", 16, TextAlignmentOptions.TopLeft);
+            RectTransform statusRect = statusText.GetComponent<RectTransform>();
+            statusRect.anchorMin = new Vector2(0, 0);
+            statusRect.anchorMax = new Vector2(1, 1);
+            statusRect.offsetMin = new Vector2(15, 15);
+            statusRect.offsetMax = new Vector2(-15, -15);
+
+            return panel;
+        }
+
+        private static void ConnectReferences(JobInputController jobInputController, SimulationUIController uiController)
+        {
+            typeof(SimulationUIController).GetField("jobInputController",
+                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)
+                ?.SetValue(uiController, jobInputController);
+
+            EditorUtility.SetDirty(uiController);
+        }
+
+        private static GameObject CreateText(Transform parent, string name, string text, int fontSize, TextAlignmentOptions alignment)
+        {
+            GameObject obj = new GameObject(name);
+            obj.transform.SetParent(parent, false);
+
+            TextMeshProUGUI tmp = obj.AddComponent<TextMeshProUGUI>();
+            tmp.text = text;
+            tmp.fontSize = fontSize;
+            tmp.alignment = alignment;
+            tmp.color = Color.white;
+
+            return obj;
+        }
+
+        private static GameObject CreateLabel(Transform parent, string name, string text, float yPos)
+        {
+            GameObject label = CreateText(parent, name, text, 14, TextAlignmentOptions.Left);
+            RectTransform rect = label.GetComponent<RectTransform>();
+            rect.anchorMin = new Vector2(0.05f, yPos);
+            rect.anchorMax = new Vector2(0.95f, yPos + 0.04f);
+            return label;
+        }
+
+        private static GameObject CreateInputField(Transform parent, string name, string placeholder, float yPos)
+        {
+            GameObject obj = new GameObject(name);
+            obj.transform.SetParent(parent, false);
+
+            RectTransform rect = obj.AddComponent<RectTransform>();
+            rect.anchorMin = new Vector2(0.05f, yPos - 0.06f);
+            rect.anchorMax = new Vector2(0.95f, yPos);
+
+            Image bg = obj.AddComponent<Image>();
+            bg.color = new Color(0.3f, 0.3f, 0.3f, 1f);
+
+            GameObject textArea = new GameObject("TextArea");
+            textArea.transform.SetParent(obj.transform, false);
+            RectTransform textAreaRect = textArea.AddComponent<RectTransform>();
+            textAreaRect.anchorMin = Vector2.zero;
+            textAreaRect.anchorMax = Vector2.one;
+            textAreaRect.offsetMin = new Vector2(10, 2);
+            textAreaRect.offsetMax = new Vector2(-10, -2);
+
+            GameObject textObj = new GameObject("Text");
+            textObj.transform.SetParent(textArea.transform, false);
+            TextMeshProUGUI textComponent = textObj.AddComponent<TextMeshProUGUI>();
+            textComponent.fontSize = 14;
+            RectTransform textRect = textObj.GetComponent<RectTransform>();
+            textRect.anchorMin = Vector2.zero;
+            textRect.anchorMax = Vector2.one;
+
+            GameObject placeholderObj = new GameObject("Placeholder");
+            placeholderObj.transform.SetParent(textArea.transform, false);
+            TextMeshProUGUI placeholderComponent = placeholderObj.AddComponent<TextMeshProUGUI>();
+            placeholderComponent.text = placeholder;
+            placeholderComponent.fontSize = 14;
+            placeholderComponent.fontStyle = FontStyles.Italic;
+            placeholderComponent.color = new Color(0.5f, 0.5f, 0.5f, 1f);
+            RectTransform placeholderRect = placeholderObj.GetComponent<RectTransform>();
+            placeholderRect.anchorMin = Vector2.zero;
+            placeholderRect.anchorMax = Vector2.one;
+
+            TMP_InputField inputField = obj.AddComponent<TMP_InputField>();
+            inputField.textViewport = textAreaRect;
+            inputField.textComponent = textComponent;
+            inputField.placeholder = placeholderComponent;
+
+            return obj;
+        }
+
+        private static GameObject CreateDropdown(Transform parent, string name, string[] options, float yPos)
+        {
+            GameObject obj = new GameObject(name);
+            obj.transform.SetParent(parent, false);
+
+            RectTransform rect = obj.AddComponent<RectTransform>();
+            rect.anchorMin = new Vector2(0.05f, yPos - 0.06f);
+            rect.anchorMax = new Vector2(0.95f, yPos);
+
+            Image bg = obj.AddComponent<Image>();
+            bg.color = new Color(0.3f, 0.3f, 0.3f, 1f);
+
+            GameObject label = new GameObject("Label");
+            label.transform.SetParent(obj.transform, false);
+            TextMeshProUGUI labelText = label.AddComponent<TextMeshProUGUI>();
+            labelText.text = options[0];
+            labelText.fontSize = 14;
+            RectTransform labelRect = label.GetComponent<RectTransform>();
+            labelRect.anchorMin = new Vector2(0, 0);
+            labelRect.anchorMax = new Vector2(1, 1);
+            labelRect.offsetMin = new Vector2(10, 2);
+            labelRect.offsetMax = new Vector2(-25, -2);
+
+            GameObject arrow = new GameObject("Arrow");
+            arrow.transform.SetParent(obj.transform, false);
+            TextMeshProUGUI arrowText = arrow.AddComponent<TextMeshProUGUI>();
+            arrowText.text = "▼";
+            arrowText.fontSize = 12;
+            arrowText.alignment = TextAlignmentOptions.Center;
+            RectTransform arrowRect = arrow.GetComponent<RectTransform>();
+            arrowRect.anchorMin = new Vector2(1, 0);
+            arrowRect.anchorMax = new Vector2(1, 1);
+            arrowRect.sizeDelta = new Vector2(20, 0);
+            arrowRect.anchoredPosition = new Vector2(-10, 0);
+
+            GameObject template = new GameObject("Template");
+            template.transform.SetParent(obj.transform, false);
+            RectTransform templateRect = template.AddComponent<RectTransform>();
+            templateRect.anchorMin = new Vector2(0, 0);
+            templateRect.anchorMax = new Vector2(1, 0);
+            templateRect.pivot = new Vector2(0.5f, 1);
+            templateRect.sizeDelta = new Vector2(0, 150);
+            templateRect.anchoredPosition = new Vector2(0, 0);
+
+            Image templateBg = template.AddComponent<Image>();
+            templateBg.color = new Color(0.25f, 0.25f, 0.25f, 1f);
+
+            GameObject viewport = new GameObject("Viewport");
+            viewport.transform.SetParent(template.transform, false);
+            RectTransform viewportRect = viewport.AddComponent<RectTransform>();
+            viewportRect.anchorMin = Vector2.zero;
+            viewportRect.anchorMax = Vector2.one;
+
+            GameObject content = new GameObject("Content");
+            content.transform.SetParent(viewport.transform, false);
+            RectTransform contentRect = content.AddComponent<RectTransform>();
+            contentRect.anchorMin = new Vector2(0, 1);
+            contentRect.anchorMax = new Vector2(1, 1);
+            contentRect.pivot = new Vector2(0.5f, 1);
+            contentRect.sizeDelta = new Vector2(0, 28);
+
+            GameObject item = new GameObject("Item");
+            item.transform.SetParent(content.transform, false);
+            RectTransform itemRect = item.AddComponent<RectTransform>();
+            itemRect.anchorMin = new Vector2(0, 0.5f);
+            itemRect.anchorMax = new Vector2(1, 0.5f);
+            itemRect.sizeDelta = new Vector2(0, 20);
+
+            Image itemBg = item.AddComponent<Image>();
+            itemBg.color = new Color(0.3f, 0.3f, 0.3f, 1f);
+
+            GameObject itemLabel = new GameObject("ItemLabel");
+            itemLabel.transform.SetParent(item.transform, false);
+            TextMeshProUGUI itemLabelText = itemLabel.AddComponent<TextMeshProUGUI>();
+            itemLabelText.fontSize = 14;
+            RectTransform itemLabelRect = itemLabel.GetComponent<RectTransform>();
+            itemLabelRect.anchorMin = Vector2.zero;
+            itemLabelRect.anchorMax = Vector2.one;
+            itemLabelRect.offsetMin = new Vector2(10, 2);
+            itemLabelRect.offsetMax = new Vector2(-10, -2);
+
+            item.AddComponent<Toggle>();
+
+            TMP_Dropdown dropdown = obj.AddComponent<TMP_Dropdown>();
+            dropdown.template = templateRect;
+            dropdown.captionText = labelText;
+            dropdown.itemText = itemLabelText;
+            dropdown.ClearOptions();
+            dropdown.AddOptions(new System.Collections.Generic.List<string>(options));
+
+            template.SetActive(false);
+
+            return obj;
+        }
+
+        private static GameObject CreateButton(Transform parent, string name, string text, float yPos, Color color)
+        {
+            GameObject obj = new GameObject(name);
+            obj.transform.SetParent(parent, false);
+
+            RectTransform rect = obj.AddComponent<RectTransform>();
+            rect.anchorMin = new Vector2(0.05f, yPos - 0.08f);
+            rect.anchorMax = new Vector2(0.95f, yPos);
+
+            Image bg = obj.AddComponent<Image>();
+            bg.color = color;
+
+            GameObject textObj = new GameObject("Text");
+            textObj.transform.SetParent(obj.transform, false);
+            TextMeshProUGUI tmp = textObj.AddComponent<TextMeshProUGUI>();
+            tmp.text = text;
+            tmp.fontSize = 16;
+            tmp.alignment = TextAlignmentOptions.Center;
+            tmp.color = Color.white;
+            RectTransform textRect = textObj.GetComponent<RectTransform>();
+            textRect.anchorMin = Vector2.zero;
+            textRect.anchorMax = Vector2.one;
+
+            Button button = obj.AddComponent<Button>();
+            button.targetGraphic = bg;
+
+            return obj;
+        }
+
+        private static GameObject CreateScrollView(Transform parent, string name)
+        {
+            GameObject scrollView = new GameObject(name);
+            scrollView.transform.SetParent(parent, false);
+
+            Image scrollBg = scrollView.AddComponent<Image>();
+            scrollBg.color = new Color(0.15f, 0.15f, 0.15f, 1f);
+
+            GameObject viewport = new GameObject("Viewport");
+            viewport.transform.SetParent(scrollView.transform, false);
+            RectTransform viewportRect = viewport.AddComponent<RectTransform>();
+            viewportRect.anchorMin = Vector2.zero;
+            viewportRect.anchorMax = Vector2.one;
+            viewportRect.offsetMin = Vector2.zero;
+            viewportRect.offsetMax = Vector2.zero;
+            viewport.AddComponent<Image>().color = new Color(0.15f, 0.15f, 0.15f, 1f);
+            viewport.AddComponent<Mask>().showMaskGraphic = false;
+
+            GameObject content = new GameObject("Content");
+            content.transform.SetParent(viewport.transform, false);
+            RectTransform contentRect = content.AddComponent<RectTransform>();
+            contentRect.anchorMin = new Vector2(0, 1);
+            contentRect.anchorMax = new Vector2(1, 1);
+            contentRect.pivot = new Vector2(0.5f, 1);
+            contentRect.sizeDelta = new Vector2(0, 0);
+
+            VerticalLayoutGroup layout = content.AddComponent<VerticalLayoutGroup>();
+            layout.childForceExpandWidth = true;
+            layout.childForceExpandHeight = false;
+            layout.childControlHeight = false;
+            layout.spacing = 5;
+            layout.padding = new RectOffset(5, 5, 5, 5);
+
+            ContentSizeFitter fitter = content.AddComponent<ContentSizeFitter>();
+            fitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
+
+            ScrollRect scrollRect = scrollView.AddComponent<ScrollRect>();
+            scrollRect.content = contentRect;
+            scrollRect.viewport = viewportRect;
+            scrollRect.horizontal = false;
+            scrollRect.vertical = true;
+
+            return scrollView;
+        }
+
+        private static GameObject CreateErrorPanel(Transform parent)
+        {
+            GameObject panel = new GameObject("ErrorPanel");
+            panel.transform.SetParent(parent, false);
+
+            RectTransform rect = panel.AddComponent<RectTransform>();
+            rect.anchorMin = new Vector2(0.05f, 0.02f);
+            rect.anchorMax = new Vector2(0.95f, 0.08f);
+
+            Image bg = panel.AddComponent<Image>();
+            bg.color = new Color(0.8f, 0.2f, 0.2f, 0.9f);
+
+            GameObject errorText = CreateText(panel.transform, "ErrorText", "", 12, TextAlignmentOptions.Left);
+            RectTransform errorRect = errorText.GetComponent<RectTransform>();
+            errorRect.anchorMin = Vector2.zero;
+            errorRect.anchorMax = Vector2.one;
+            errorRect.offsetMin = new Vector2(10, 5);
+            errorRect.offsetMax = new Vector2(-10, -5);
+
+            panel.SetActive(false);
+
+            return panel;
+        }
+
+        private static GameObject CreateJobItemPrefab()
+        {
+            GameObject prefab = new GameObject("JobItemPrefab");
+
+            RectTransform rect = prefab.AddComponent<RectTransform>();
+            rect.sizeDelta = new Vector2(0, 30);
+
+            Image bg = prefab.AddComponent<Image>();
+            bg.color = new Color(0.25f, 0.25f, 0.25f, 1f);
+
+            HorizontalLayoutGroup layout = prefab.AddComponent<HorizontalLayoutGroup>();
+            layout.padding = new RectOffset(10, 10, 5, 5);
+            layout.spacing = 10;
+            layout.childForceExpandWidth = true;
+            layout.childForceExpandHeight = true;
+            layout.childControlWidth = false;
+            layout.childControlHeight = false;
+
+            GameObject text = new GameObject("Text");
+            text.transform.SetParent(prefab.transform, false);
+            TextMeshProUGUI tmp = text.AddComponent<TextMeshProUGUI>();
+            tmp.fontSize = 14;
+            tmp.alignment = TextAlignmentOptions.Left;
+            tmp.color = Color.white;
+            LayoutElement textLayout = text.AddComponent<LayoutElement>();
+            textLayout.flexibleWidth = 1;
+
+            GameObject deleteButton = new GameObject("DeleteButton");
+            deleteButton.transform.SetParent(prefab.transform, false);
+            RectTransform btnRect = deleteButton.AddComponent<RectTransform>();
+            btnRect.sizeDelta = new Vector2(60, 25);
+            Image btnBg = deleteButton.AddComponent<Image>();
+            btnBg.color = new Color(0.7f, 0.3f, 0.3f, 1f);
+            Button btn = deleteButton.AddComponent<Button>();
+            btn.targetGraphic = btnBg;
+
+            GameObject btnText = new GameObject("Text");
+            btnText.transform.SetParent(deleteButton.transform, false);
+            TextMeshProUGUI btnTmp = btnText.AddComponent<TextMeshProUGUI>();
+            btnTmp.text = "삭제";
+            btnTmp.fontSize = 12;
+            btnTmp.alignment = TextAlignmentOptions.Center;
+            btnTmp.color = Color.white;
+            RectTransform btnTextRect = btnText.GetComponent<RectTransform>();
+            btnTextRect.anchorMin = Vector2.zero;
+            btnTextRect.anchorMax = Vector2.one;
+
+            LayoutElement btnLayout = deleteButton.AddComponent<LayoutElement>();
+            btnLayout.minWidth = 60;
+            btnLayout.preferredWidth = 60;
+
+            return prefab;
+        }
+    }
+}
