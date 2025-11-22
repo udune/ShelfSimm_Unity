@@ -28,26 +28,34 @@ namespace Editor
 
             Canvas canvas = FindOrCreateCanvas();
 
-            GameObject simulationPanel = CreateSimulationPanel(canvas);
+            GameObject gridViewArea = CreateGridViewArea(canvas);
+            GameObject controlArea = CreateControlArea(canvas);
 
-            GameObject jobInputPanel = CreateJobInputPanel(simulationPanel.transform);
-            GameObject jobListPanel = CreateJobListPanel(simulationPanel.transform);
-            GameObject statusPanel = CreateStatusPanel(simulationPanel.transform);
+            GameObject jobInputPanel = CreateJobInputPanel(controlArea.transform);
+            GameObject jobListPanel = CreateJobListPanel(controlArea.transform);
+            GameObject statusPanel = CreateStatusPanel(controlArea.transform);
+
+            GameObject gridInfoPanel = CreateGridInfoPanel(gridViewArea.transform);
+            GameObject gridControlPanel = CreateGridControlPanel(gridViewArea.transform);
 
             JobInputController jobInputController = jobInputPanel.GetComponent<JobInputController>();
             SimulationUIController uiController = jobListPanel.GetComponent<SimulationUIController>();
 
             ConnectReferences(jobInputController, uiController);
 
-            Selection.activeGameObject = simulationPanel;
-            EditorGUIUtility.PingObject(simulationPanel);
+            Selection.activeGameObject = canvas.gameObject;
+            EditorGUIUtility.PingObject(canvas.gameObject);
 
             Debug.Log("✅ UI 자동 설정 완료!");
             EditorUtility.DisplayDialog("완료",
                 "시뮬레이션 UI가 성공적으로 생성되었습니다!\n\n" +
+                "좌측 60%: Grid View (로봇 시뮬레이션)\n" +
+                "우측 40%: 작업 입력/목록/상태\n\n" +
+                "- CellInfoPanel: 셀 정보 표시\n" +
+                "- GridControlPanel: 시뮬레이션 제어\n" +
                 "- JobInputController: 작업 입력\n" +
-                "- SimulationUIController: 작업 목록 및 실행\n" +
-                "- 모든 참조가 자동 연결되었습니다.",
+                "- SimulationUIController: 작업 목록 및 실행\n\n" +
+                "모든 참조가 자동 연결되었습니다.",
                 "확인");
         }
 
@@ -113,25 +121,39 @@ namespace Editor
             }
         }
 
-        private static GameObject CreateSimulationPanel(Canvas canvas)
+        private static GameObject CreateGridViewArea(Canvas canvas)
         {
-            GameObject panel = new GameObject("SimulationPanel");
-            panel.transform.SetParent(canvas.transform, false);
+            GameObject area = new GameObject("GridViewArea");
+            area.transform.SetParent(canvas.transform, false);
 
-            RectTransform rect = panel.AddComponent<RectTransform>();
+            RectTransform rect = area.AddComponent<RectTransform>();
             rect.anchorMin = new Vector2(0, 0);
-            rect.anchorMax = new Vector2(1, 1);
-            rect.offsetMin = new Vector2(40, 40);
-            rect.offsetMax = new Vector2(-40, -40);
+            rect.anchorMax = new Vector2(0.6f, 1);
+            rect.offsetMin = new Vector2(10, 10);
+            rect.offsetMax = new Vector2(-5, -10);
 
-            Image bg = panel.AddComponent<Image>();
+            return area;
+        }
+
+        private static GameObject CreateControlArea(Canvas canvas)
+        {
+            GameObject area = new GameObject("ControlArea");
+            area.transform.SetParent(canvas.transform, false);
+
+            RectTransform rect = area.AddComponent<RectTransform>();
+            rect.anchorMin = new Vector2(0.6f, 0);
+            rect.anchorMax = new Vector2(1, 1);
+            rect.offsetMin = new Vector2(5, 10);
+            rect.offsetMax = new Vector2(-10, -10);
+
+            Image bg = area.AddComponent<Image>();
             bg.color = new Color(0.08f, 0.08f, 0.12f, 0.98f);
 
-            UnityEngine.UI.Shadow shadow = panel.AddComponent<UnityEngine.UI.Shadow>();
+            UnityEngine.UI.Shadow shadow = area.AddComponent<UnityEngine.UI.Shadow>();
             shadow.effectColor = new Color(0, 0, 0, 0.5f);
             shadow.effectDistance = new Vector2(4, -4);
 
-            return panel;
+            return area;
         }
 
         private static GameObject CreateJobInputPanel(Transform parent)
@@ -140,10 +162,10 @@ namespace Editor
             panel.transform.SetParent(parent, false);
 
             RectTransform rect = panel.AddComponent<RectTransform>();
-            rect.anchorMin = new Vector2(0, 0.5f);
-            rect.anchorMax = new Vector2(0.5f, 1);
-            rect.offsetMin = new Vector2(15, 15);
-            rect.offsetMax = new Vector2(-10, -15);
+            rect.anchorMin = new Vector2(0, 0.67f);
+            rect.anchorMax = new Vector2(1, 1);
+            rect.offsetMin = new Vector2(15, 10);
+            rect.offsetMax = new Vector2(-15, -15);
 
             Image bg = panel.AddComponent<Image>();
             bg.color = new Color(0.15f, 0.15f, 0.20f, 1f);
@@ -227,10 +249,10 @@ namespace Editor
             panel.transform.SetParent(parent, false);
 
             RectTransform rect = panel.AddComponent<RectTransform>();
-            rect.anchorMin = new Vector2(0.5f, 0.5f);
-            rect.anchorMax = new Vector2(1, 1);
-            rect.offsetMin = new Vector2(10, 15);
-            rect.offsetMax = new Vector2(-15, -15);
+            rect.anchorMin = new Vector2(0, 0.33f);
+            rect.anchorMax = new Vector2(1, 0.66f);
+            rect.offsetMin = new Vector2(15, 5);
+            rect.offsetMax = new Vector2(-15, -5);
 
             Image bg = panel.AddComponent<Image>();
             bg.color = new Color(0.15f, 0.15f, 0.20f, 1f);
@@ -310,9 +332,9 @@ namespace Editor
 
             RectTransform rect = panel.AddComponent<RectTransform>();
             rect.anchorMin = new Vector2(0, 0);
-            rect.anchorMax = new Vector2(1, 0.48f);
+            rect.anchorMax = new Vector2(1, 0.32f);
             rect.offsetMin = new Vector2(15, 15);
-            rect.offsetMax = new Vector2(-15, -10);
+            rect.offsetMax = new Vector2(-15, -5);
 
             Image bg = panel.AddComponent<Image>();
             bg.color = new Color(0.12f, 0.12f, 0.16f, 1f);
@@ -717,6 +739,154 @@ namespace Editor
             btnLayout.preferredWidth = 70;
 
             return prefab;
+        }
+
+        private static GameObject CreateGridInfoPanel(Transform parent)
+        {
+            GameObject panel = new GameObject("CellInfoPanel");
+            panel.transform.SetParent(parent, false);
+
+            RectTransform rect = panel.AddComponent<RectTransform>();
+            rect.anchorMin = new Vector2(0, 0.75f);
+            rect.anchorMax = new Vector2(1, 0.95f);
+            rect.offsetMin = new Vector2(10, 10);
+            rect.offsetMax = new Vector2(-10, -10);
+
+            Image bg = panel.AddComponent<Image>();
+            bg.color = new Color(0.15f, 0.15f, 0.20f, 0.95f);
+
+            UnityEngine.UI.Shadow shadow = panel.AddComponent<UnityEngine.UI.Shadow>();
+            shadow.effectColor = new Color(0, 0, 0, 0.3f);
+            shadow.effectDistance = new Vector2(2, -2);
+
+            GameObject title = CreateText(panel.transform, "Title", "📍 셀 정보", 18, TextAlignmentOptions.Left, true);
+            RectTransform titleRect = title.GetComponent<RectTransform>();
+            titleRect.anchorMin = new Vector2(0, 0.8f);
+            titleRect.anchorMax = new Vector2(1, 1);
+            titleRect.offsetMin = new Vector2(15, 0);
+            titleRect.offsetMax = new Vector2(-15, -5);
+
+            float yPos = 0.65f;
+            GameObject cellCodeText = CreateText(panel.transform, "CellCodeText", "셀: -", 14, TextAlignmentOptions.Left);
+            RectTransform codeRect = cellCodeText.GetComponent<RectTransform>();
+            codeRect.anchorMin = new Vector2(0, yPos);
+            codeRect.anchorMax = new Vector2(1, yPos + 0.12f);
+            codeRect.offsetMin = new Vector2(15, 0);
+            codeRect.offsetMax = new Vector2(-15, 0);
+
+            yPos -= 0.15f;
+            GameObject accessText = CreateText(panel.transform, "AccessibilityText", "접근 가능", 13, TextAlignmentOptions.Left);
+            RectTransform accessRect = accessText.GetComponent<RectTransform>();
+            accessRect.anchorMin = new Vector2(0, yPos);
+            accessRect.anchorMax = new Vector2(0.5f, yPos + 0.1f);
+            accessRect.offsetMin = new Vector2(15, 0);
+            accessRect.offsetMax = new Vector2(-5, 0);
+
+            GameObject dimensionsText = CreateText(panel.transform, "DimensionsText", "치수: -", 13, TextAlignmentOptions.Left);
+            RectTransform dimRect = dimensionsText.GetComponent<RectTransform>();
+            dimRect.anchorMin = new Vector2(0.5f, yPos);
+            dimRect.anchorMax = new Vector2(1, yPos + 0.1f);
+            dimRect.offsetMin = new Vector2(5, 0);
+            dimRect.offsetMax = new Vector2(-15, 0);
+
+            yPos -= 0.15f;
+            GameObject capacityText = CreateText(panel.transform, "CapacityText", "용량: -", 13, TextAlignmentOptions.Left);
+            RectTransform capRect = capacityText.GetComponent<RectTransform>();
+            capRect.anchorMin = new Vector2(0, yPos);
+            capRect.anchorMax = new Vector2(1, yPos + 0.1f);
+            capRect.offsetMin = new Vector2(15, 0);
+            capRect.offsetMax = new Vector2(-15, 0);
+
+            yPos -= 0.15f;
+            GameObject bookInfoText = CreateText(panel.transform, "BookInfoText", "보관 도서: 없음", 13, TextAlignmentOptions.Left);
+            RectTransform bookRect = bookInfoText.GetComponent<RectTransform>();
+            bookRect.anchorMin = new Vector2(0, yPos);
+            bookRect.anchorMax = new Vector2(1, yPos + 0.1f);
+            bookRect.offsetMin = new Vector2(15, 0);
+            bookRect.offsetMax = new Vector2(-15, 0);
+
+            CellInfoPanel infoPanel = panel.AddComponent<CellInfoPanel>();
+            typeof(CellInfoPanel).GetField("cellCodeText",
+                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)
+                ?.SetValue(infoPanel, cellCodeText.GetComponent<TextMeshProUGUI>());
+            typeof(CellInfoPanel).GetField("accessibilityText",
+                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)
+                ?.SetValue(infoPanel, accessText.GetComponent<TextMeshProUGUI>());
+            typeof(CellInfoPanel).GetField("dimensionsText",
+                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)
+                ?.SetValue(infoPanel, dimensionsText.GetComponent<TextMeshProUGUI>());
+            typeof(CellInfoPanel).GetField("capacityText",
+                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)
+                ?.SetValue(infoPanel, capacityText.GetComponent<TextMeshProUGUI>());
+            typeof(CellInfoPanel).GetField("bookInfoText",
+                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)
+                ?.SetValue(infoPanel, bookInfoText.GetComponent<TextMeshProUGUI>());
+            typeof(CellInfoPanel).GetField("panelObject",
+                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)
+                ?.SetValue(infoPanel, panel);
+
+            EditorUtility.SetDirty(infoPanel);
+
+            panel.SetActive(false);
+
+            return panel;
+        }
+
+        private static GameObject CreateGridControlPanel(Transform parent)
+        {
+            GameObject panel = new GameObject("GridControlPanel");
+            panel.transform.SetParent(parent, false);
+
+            RectTransform rect = panel.AddComponent<RectTransform>();
+            rect.anchorMin = new Vector2(0, 0);
+            rect.anchorMax = new Vector2(1, 0.08f);
+            rect.offsetMin = new Vector2(10, 10);
+            rect.offsetMax = new Vector2(-10, -10);
+
+            Image bg = panel.AddComponent<Image>();
+            bg.color = new Color(0.12f, 0.12f, 0.16f, 0.95f);
+
+            GameObject pauseButton = CreateButton(panel.transform, "PauseResumeButton", "⏸ 일시정지", 0.5f, new Color(0.9f, 0.6f, 0.2f));
+            RectTransform pauseRect = pauseButton.GetComponent<RectTransform>();
+            pauseRect.anchorMin = new Vector2(0.02f, 0.15f);
+            pauseRect.anchorMax = new Vector2(0.22f, 0.85f);
+            pauseRect.offsetMin = Vector2.zero;
+            pauseRect.offsetMax = Vector2.zero;
+
+            GameObject stopButton = CreateButton(panel.transform, "StopButton", "⏹ 정지", 0.5f, new Color(0.85f, 0.25f, 0.25f));
+            RectTransform stopRect = stopButton.GetComponent<RectTransform>();
+            stopRect.anchorMin = new Vector2(0.24f, 0.15f);
+            stopRect.anchorMax = new Vector2(0.40f, 0.85f);
+            stopRect.offsetMin = Vector2.zero;
+            stopRect.offsetMax = Vector2.zero;
+
+            GameObject timeText = CreateText(panel.transform, "ElapsedTimeText", "⏱ 경과 시간: 0.0s", 14, TextAlignmentOptions.Left, true);
+            RectTransform timeRect = timeText.GetComponent<RectTransform>();
+            timeRect.anchorMin = new Vector2(0.45f, 0);
+            timeRect.anchorMax = new Vector2(1, 1);
+            timeRect.offsetMin = new Vector2(10, 0);
+            timeRect.offsetMax = new Vector2(-10, 0);
+
+            DashboardUI dashboard = panel.AddComponent<DashboardUI>();
+            typeof(DashboardUI).GetField("pauseResumeButton",
+                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)
+                ?.SetValue(dashboard, pauseButton.GetComponent<Button>());
+
+            var pauseButtonText = pauseButton.transform.Find("Text");
+            if (pauseButtonText != null)
+            {
+                typeof(DashboardUI).GetField("pauseResumeButtonText",
+                    System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)
+                    ?.SetValue(dashboard, pauseButtonText.GetComponent<TextMeshProUGUI>());
+            }
+
+            typeof(DashboardUI).GetField("stopButton",
+                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)
+                ?.SetValue(dashboard, stopButton.GetComponent<Button>());
+
+            EditorUtility.SetDirty(dashboard);
+
+            return panel;
         }
     }
 }
