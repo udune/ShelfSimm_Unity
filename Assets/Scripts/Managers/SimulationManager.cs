@@ -123,6 +123,14 @@ namespace Managers
             if (bookRegistry != null && loadedBookDtos != null)
             {
                 bookRegistry.LoadBooksFromApi(loadedBookDtos);
+
+                // JobInputController의 book dropdown 업데이트
+                var jobInputController = FindObjectOfType<UI.JobInputController>();
+                if (jobInputController != null)
+                {
+                    jobInputController.RefreshBookDropdown();
+                    Debug.Log("JobInputController book dropdown 업데이트 완료");
+                }
             }
 
             Debug.Log("API 초기화 완료. 책 정보 로드 완료.");

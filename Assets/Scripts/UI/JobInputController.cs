@@ -103,6 +103,39 @@ namespace UI
             }
         }
 
+        public void RefreshBookDropdown()
+        {
+            if (bookDropdown == null)
+            {
+                Debug.LogWarning("[JobInputController] bookDropdown is null");
+                return;
+            }
+
+            if (bookRegistry == null)
+            {
+                bookRegistry = FindObjectOfType<BookRegistry>();
+            }
+
+            if (bookRegistry == null)
+            {
+                Debug.LogWarning("[JobInputController] BookRegistry not found");
+                return;
+            }
+
+            // 기존 옵션 초기화
+            bookDropdown.ClearOptions();
+
+            // 새로운 책 목록 로드
+            var books = bookRegistry.GetAllAvailableBooks();
+            var options = new List<string> { "도서를 선택하세요" };
+            options.AddRange(books.Select(book => book.DisplayText));
+
+            bookDropdown.AddOptions(options);
+            bookDropdown.value = 0;
+
+            Debug.Log($"[JobInputController] Book dropdown refreshed with {books.Count} books");
+        }
+
         private void OnCellCodesChanged(string input)
         {
             if (!isInitialized)
