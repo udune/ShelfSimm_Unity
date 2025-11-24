@@ -7,9 +7,7 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace UI
-{
-    public class JobInputController : MonoBehaviour
+public class JobInputController : MonoBehaviour
     {
         [Header("UI")]
         [SerializeField] private TMP_InputField cellCodesInput;
@@ -17,12 +15,6 @@ namespace UI
         [SerializeField] private TMP_Dropdown bookDropdown;
         [SerializeField] private TMP_InputField quantityInput;
         [SerializeField] private Button executeButton;
-        [SerializeField] private TextMeshProUGUI statusText;
-        [SerializeField] private Slider completenessSlider;
-
-        [Header("Error")]
-        [SerializeField] private GameObject errorPanel;
-        [SerializeField] private TextMeshProUGUI errorText;
 
         [Header("Setting")]
         [SerializeField] private Color validColor = Color.white;
@@ -69,7 +61,6 @@ namespace UI
             if (bookDropdown != null)
             {
                 bookDropdown.onValueChanged.AddListener(OnBookChanged);
-                LoadDummyBooks();
             }
 
             if (executeButton != null)
@@ -82,26 +73,6 @@ namespace UI
             UpdateUI();
         }
 
-        private void LoadDummyBooks()
-        {
-            if (bookDropdown == null)
-            {
-                return;
-            }
-
-            if (bookRegistry == null)
-            {
-                bookRegistry = FindObjectOfType<BookRegistry>();
-            }
-
-            if (bookRegistry != null)
-            {
-                var books = bookRegistry.GetAllAvailableBooks();
-                var options = new List<string> { "도서를 선택하세요" };
-                options.AddRange(books.Select(book => book.DisplayText));
-                bookDropdown.AddOptions(options);
-            }
-        }
 
         public void RefreshBookDropdown()
         {
@@ -132,8 +103,6 @@ namespace UI
 
             bookDropdown.AddOptions(options);
             bookDropdown.value = 0;
-
-            Debug.Log($"[JobInputController] Book dropdown refreshed with {books.Count} books");
         }
 
         private void OnCellCodesChanged(string input)
@@ -241,7 +210,6 @@ namespace UI
             {
                 currentJobInput.quantity = correctedQuantity;
                 quantityInput.text = correctedQuantity.ToString();
-                ShowTemporaryStatus($"수량이 {correctedQuantity}로 보정되었습니다.", 2f);
             }
 
             UpdateUI();
@@ -282,27 +250,6 @@ namespace UI
                 executeButton.colors = colors;
             }
 
-            if (statusText != null)
-            {
-                if (validation.IsValid)
-                {
-                    statusText.text = "모든 입력이 유효합니다.";
-                    statusText.color = validColor;
-                }
-                else
-                {
-                    statusText.text = "입력에 오류가 있습니다.";
-                    statusText.color = invalidColor;
-                }
-            }
-
-            if (completenessSlider != null)
-            {
-                completenessSlider.value = completeness;
-            }
-
-            UpdateErrorDisplay(validation.ErrorMessages);
-
             if (cellCodesInput != null)
             {
                 var image = cellCodesInput.GetComponent<Image>();
@@ -322,32 +269,6 @@ namespace UI
             if (validation.IsValid)
             {
                 OnValidInputChanged?.Invoke(currentJobInput);
-            }
-        }
-
-        private void UpdateErrorDisplay(List<string> errors)
-        {
-            bool hasErrors = errors != null && errors.Count > 0;
-
-            if (errorPanel != null)
-            {
-                errorPanel.SetActive(hasErrors);
-            }
-
-            if (errorText != null && hasErrors)
-            {
-                errorText.text = string.Join("\n", errors);
-                errorText.color = invalidColor;
-            }
-        }
-
-        private void ShowTemporaryStatus(string message, float duration)
-        {
-            if (statusText != null)
-            {
-                statusText.text = message;
-                statusText.color = Color.yellow;
-                Invoke(nameof(RestoreStatusText), duration);
             }
         }
 
@@ -415,4 +336,3 @@ namespace UI
             UpdateUI();
         }
     }
-}

@@ -194,7 +194,7 @@ namespace Core
             foreach (var dto in bookDtos)
             {
                 var bookData = new BookData(
-                    id: dto.id ?? $"BOOK_{System.Guid.NewGuid().ToString().Substring(0, 8)}",
+                    id: dto.id ?? $"BOOK_{Guid.NewGuid().ToString().Substring(0, 8)}",
                     title: dto.title ?? "Unknown Title",
                     author: "Unknown",
                     thickness: dto.thicknessMm,

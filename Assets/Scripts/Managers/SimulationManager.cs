@@ -27,6 +27,8 @@ namespace Managers
         [SerializeField] private ApiClient apiClient;
         [SerializeField] private SimpleAStarPathFinder pathFinder;
         [SerializeField] private CellsLayoutSO cellsLayout;
+        [SerializeField] private BookRegistry bookRegistry;
+        [SerializeField] private JobInputController jobInputController;
 
         [Header("임시 데이터")]
         [SerializeField] private List<Cell> allCells;
@@ -119,17 +121,12 @@ namespace Managers
                 yield break;
             }
 
-            var bookRegistry = FindObjectOfType<BookRegistry>();
             if (bookRegistry != null && loadedBookDtos != null)
             {
                 bookRegistry.LoadBooksFromApi(loadedBookDtos);
-
-                // JobInputController의 book dropdown 업데이트
-                var jobInputController = FindObjectOfType<UI.JobInputController>();
                 if (jobInputController != null)
                 {
                     jobInputController.RefreshBookDropdown();
-                    Debug.Log("JobInputController book dropdown 업데이트 완료");
                 }
             }
 
