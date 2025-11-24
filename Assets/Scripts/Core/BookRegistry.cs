@@ -23,51 +23,6 @@ namespace Core
         private Dictionary<string, BookData> bookDatabase;
         private List<BookData> availableBooks;
 
-        public void Awake()
-        {
-            InitDummyData();
-            BuildDatabase();
-        }
-
-        private void InitDummyData()
-        {
-            if (dummyBooks == null || dummyBooks.Length == 0)
-            {
-                dummyBooks = CreateDefaultDummyBooks();
-            }
-        }
-        
-        private BookData[] CreateDefaultDummyBooks()
-        {
-            return new BookData[]
-            {
-                new BookData("BOOK001", "C# 프로그래밍 입문", "홍길동", 30, 210, 148, "프로그래밍", "978-89-12345-67-8"),
-                new BookData("BOOK002", "유니티 게임 개발", "김철수", 25, 200, 130, "게임 개발", "978-89-12345-68-5"),
-                new BookData("BOOK003", "데이터 구조와 알고리즘", "이영희", 40, 220, 160, "컴퓨터 과학", "978-89-12345-69-2"),
-                new BookData("BOOK004", "머신러닝 기초", "박민수", 35, 215, 155, "인공지능", "978-89-12345-70-8"),
-                new BookData("BOOK005", "웹 개발 입문", "최지은", 28, 205, 140, "웹 개발", "978-89-12345-71-5")
-            };
-        }
-
-        private void BuildDatabase()
-        {
-            bookDatabase = new Dictionary<string, BookData>();
-            availableBooks = new List<BookData>();
-
-            foreach (BookData book in dummyBooks)
-            {
-                if (book != null && !string.IsNullOrEmpty(book.Id))
-                {
-                    bookDatabase[book.Id] = book;
-
-                    if (book.IsAvailable)
-                    {
-                        availableBooks.Add(book);
-                    }
-                }
-            }
-        }
-
         public BookData GetBookById(string bookId)
         {
             if (string.IsNullOrEmpty(bookId))
@@ -81,7 +36,7 @@ namespace Core
 
         public BookData[] GetAllAvailableBooks()
         {
-            return availableBooks.ToArray();
+            return availableBooks?.ToArray();
         }
 
         public BookData[] GetBooksByCategory(string category)
@@ -207,12 +162,6 @@ namespace Core
                 bookDatabase[bookData.Id] = bookData;
                 availableBooks.Add(bookData);
             }
-        }
-
-        public void ResetToDummyData()
-        {
-            InitDummyData();
-            BuildDatabase();
         }
     }
 }

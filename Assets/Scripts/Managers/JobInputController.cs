@@ -17,7 +17,7 @@ public class JobInputController : MonoBehaviour
         [SerializeField] private Button executeButton;
 
         [Header("Setting")]
-        [SerializeField] private Color validColor = Color.white;
+        [SerializeField] private Color validColor = new Color(0.2f, 0.2f, 0.25f, 1);
         [SerializeField] private Color invalidColor = Color.red;
 
         [Header("References")]
