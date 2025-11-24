@@ -22,7 +22,8 @@ namespace Managers
         [Header("API 연동 설정")]
         [SerializeField] private bool useApiMode = true;
 
-        [Header("내부 컴포넌트 참조")]
+        [Header("내부 컴포넌트 참조")] 
+        // [SerializeField] private GridRenderer gridRenderer;
         [SerializeField] private RobotController robotController;
         [SerializeField] private ApiClient apiClient;
         [SerializeField] private SimpleAStarPathFinder pathFinder;

@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
@@ -18,6 +19,11 @@ namespace UI
 
         public int Width => width;
         public int Height => height;
+
+        private void Start()
+        {
+            Init(50, 50);
+        }
 
         public void Init(int gridWidth, int gridHeight)
         {
