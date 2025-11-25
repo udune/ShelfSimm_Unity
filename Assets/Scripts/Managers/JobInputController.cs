@@ -99,7 +99,11 @@ public class JobInputController : MonoBehaviour
             // 새로운 책 목록 로드
             var books = bookRegistry.GetAllAvailableBooks();
             var options = new List<string> { "도서를 선택하세요" };
-            options.AddRange(books.Select(book => book.DisplayText));
+            
+            if (books != null && books.Length > 0)
+            {
+                options.AddRange(books.Select(book => book.DisplayText));
+            }
 
             bookDropdown.AddOptions(options);
             bookDropdown.value = 0;

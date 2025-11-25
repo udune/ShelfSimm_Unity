@@ -14,10 +14,5 @@ namespace Data
             ThicknessMm = thicknessMm;
             HeightMm = heightMm;
         }
-
-        public Book(string title, int thicknessMm, int heightMm)
-            : this(title, title, thicknessMm, heightMm)
-        {
-        }
     }
 }

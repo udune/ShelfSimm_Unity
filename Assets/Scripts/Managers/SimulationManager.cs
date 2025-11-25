@@ -108,8 +108,8 @@ namespace Managers
             bool booksLoaded = false;
             List<BookDto> loadedBookDtos = null;
             yield return apiClient.GetAllBooks(
-                onSuccess: bookDtos => {
-                    allBooks = bookDtos.Select(dto => new Book(dto.title, dto.thicknessMm, dto.heightMm)).ToList();
+                bookDtos => {
+                    allBooks = bookDtos.Select(dto => new Book($"BOOK_{dto.id}", dto.title, dto.thicknessMn, dto.heightMm)).ToList();
                     loadedBookDtos = bookDtos;
                     booksLoaded = true;
                 },

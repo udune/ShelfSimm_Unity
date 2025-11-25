@@ -76,16 +76,13 @@ namespace API
     [Serializable]
     public class BookDto
     {
-        public string id;
+        public int id;
         public string title;
-        public int thicknessMm;
+        public string author;
+        public int thicknessMn;
         public int heightMm;
-    }
-
-    [Serializable]
-    public class BookListDto
-    {
-        public List<BookDto> items;
+        public string sku;
+        public string createdAt;
     }
 
     [Serializable]
@@ -104,6 +101,12 @@ namespace API
         public string id;
         public string status;
         public List<JobDetailsDto> jobs;
+    }
+
+    [Serializable]
+    public class BookListDto
+    {
+        public BookDto[] items;
     }
 
     #endregion
@@ -279,9 +282,15 @@ namespace API
 
                 if (www.result == UnityWebRequest.Result.Success)
                 {
-                    string jsonResponse = WrapJsonArrayIfNeeded(www.downloadHandler.text, "items");
-                    BookListDto bookList = JsonUtility.FromJson<BookListDto>(jsonResponse);
-                    onSuccess?.Invoke(bookList.items);
+                    string jsonResponse = www.downloadHandler.text;
+                    if (logRequests) Debug.Log($"[API] Books response: {jsonResponse}");
+
+                    string dtoJson = $"{{\"items\":{jsonResponse}}}";
+                    BookListDto dto = JsonUtility.FromJson<BookListDto>(dtoJson);
+                    List<BookDto> bookList = new List<BookDto>(dto.items);
+
+                    if (logRequests) Debug.Log($"[API] Loaded {bookList.Count} books");
+                    onSuccess?.Invoke(bookList);
                 }
                 else
                 {
@@ -317,18 +326,6 @@ namespace API
         public string GetCurrentRunId()
         {
             return currentRunId;
-        }
-
-        private string WrapJsonArrayIfNeeded(string json, string wrapperKey = "items")
-        {
-            if (string.IsNullOrEmpty(json)) return json;
-
-            string trimmed = json.TrimStart();
-            if (trimmed.StartsWith("["))
-            {
-                return $"{{\"{wrapperKey}\":{json}}}";
-            }
-            return json;
         }
 
         private void ConfigureCertificateHandler(UnityWebRequest request)

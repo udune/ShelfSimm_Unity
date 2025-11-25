@@ -10,18 +10,8 @@ namespace Core
     // 도서 데이터를 관리하는 클래스
     public class BookRegistry : MonoBehaviour
     {
-        [Header("더미 도서 데이터")]
-        [SerializeField] private BookData[] dummyBooks =
-        {
-            new BookData("BOOK001", "C# 프로그래밍 입문", "홍길동", 30, 210, 148, "프로그래밍", "978-89-12345-67-8"),
-            new BookData("BOOK002", "유니티 게임 개발", "김철수", 25, 200, 130, "게임 개발", "978-89-12345-68-5"),
-            new BookData("BOOK003", "데이터 구조와 알고리즘", "이영희", 40, 220, 160, "컴퓨터 과학", "978-89-12345-69-2"),
-            new BookData("BOOK004", "머신러닝 기초", "박민수", 35, 215, 155, "인공지능", "978-89-12345-70-8"),
-            new BookData("BOOK005", "웹 개발 입문", "최지은", 28, 205, 140, "웹 개발", "978-89-12345-71-5")
-        };
-
-        private Dictionary<string, BookData> bookDatabase;
-        private List<BookData> availableBooks;
+        private Dictionary<string, BookData> bookDatabase = new Dictionary<string, BookData>();
+        private List<BookData> availableBooks = new List<BookData>();
 
         public BookData GetBookById(string bookId)
         {
@@ -149,18 +139,25 @@ namespace Core
             foreach (var dto in bookDtos)
             {
                 var bookData = new BookData(
-                    id: dto.id ?? $"BOOK_{Guid.NewGuid().ToString().Substring(0, 8)}",
-                    title: dto.title ?? "Unknown Title",
-                    author: "Unknown",
-                    thickness: dto.thicknessMm,
+                    id: $"BOOK_{dto.id}",
+                    title: dto.title,
+                    author: dto.author,
+                    thickness: dto.thicknessMn,
                     height: dto.heightMm,
                     width: 150,
                     category: "일반",
-                    isbn: ""
+                    isbn: dto.sku
                 );
 
-                bookDatabase[bookData.Id] = bookData;
-                availableBooks.Add(bookData);
+                if (bookDatabase != null)
+                {
+                    bookDatabase[bookData.Id] = bookData;
+                }
+
+                if (availableBooks != null)
+                {
+                    availableBooks.Add(bookData);
+                }
             }
         }
     }
