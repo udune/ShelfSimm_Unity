@@ -63,11 +63,6 @@ public class JobInputController : MonoBehaviour
                 bookDropdown.onValueChanged.AddListener(OnBookChanged);
             }
 
-            if (executeButton != null)
-            {
-                executeButton.onClick.AddListener(OnExecuteClicked);
-            }
-
             currentJobInput.quantity = 1;
             isInitialized = true;
             UpdateUI();
@@ -172,7 +167,7 @@ public class JobInputController : MonoBehaviour
 
             if (value > 0 && bookDropdown != null)
             {
-                currentJobInput.bookId = $"book_{value}";
+                currentJobInput.bookId = $"BOOK_{value}";
             }
             else
             {
@@ -219,21 +214,6 @@ public class JobInputController : MonoBehaviour
             UpdateUI();
         }
 
-        private void OnExecuteClicked()
-        {
-            var validation = InputValidator.ValidateJobInput(currentJobInput);
-
-            if (validation.IsValid)
-            {
-                currentJobInput.quantity = validation.CorrectedQuantity;
-                OnExecuteRequested?.Invoke(currentJobInput);
-            }
-            else
-            {
-                Debug.LogWarning($"[JobInputController] 입력 검증 실패: {string.Join(", ", validation.ErrorMessages)}");
-            }
-        }
-
         private void UpdateUI()
         {
             if (!isInitialized)
@@ -242,7 +222,6 @@ public class JobInputController : MonoBehaviour
             }
 
             var validation = InputValidator.ValidateJobInput(currentJobInput);
-            float completeness = InputValidator.GetInputCompleteness(currentJobInput);
 
             if (executeButton != null)
             {
@@ -274,38 +253,6 @@ public class JobInputController : MonoBehaviour
             {
                 OnValidInputChanged?.Invoke(currentJobInput);
             }
-        }
-
-        private void RestoreStatusText()
-        {
-            UpdateUI();
-        }
-
-        public void SetJobInput(JobInputData jobInput)
-        {
-            if (jobInput == null)
-            {
-                return;
-            }
-
-            currentJobInput = jobInput;
-
-            if (cellCodesInput != null)
-            {
-                cellCodesInput.text = jobInput.cellCodesText;
-            }
-
-            if (actionTypeDropdown != null)
-            {
-                actionTypeDropdown.value = (int)jobInput.actionType;
-            }
-
-            if (quantityInput != null)
-            {
-                quantityInput.text = jobInput.quantity.ToString();
-            }
-
-            UpdateUI();
         }
 
         public JobInputData GetCurrentJobInput()

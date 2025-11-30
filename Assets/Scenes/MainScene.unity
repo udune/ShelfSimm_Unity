@@ -217,7 +217,7 @@ GameObject:
   - component: {fileID: 13261747}
   - component: {fileID: 13261746}
   m_Layer: 0
-  m_Name: Row
+  m_Name: JobType
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1073,7 +1073,7 @@ GameObject:
   - component: {fileID: 189602253}
   - component: {fileID: 189602252}
   m_Layer: 0
-  m_Name: Row
+  m_Name: BookCount
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1158,8 +1158,9 @@ GameObject:
   - component: {fileID: 269941939}
   - component: {fileID: 269941938}
   - component: {fileID: 269941937}
+  - component: {fileID: 269941941}
   m_Layer: 0
-  m_Name: Canvas
+  m_Name: UI
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1250,6 +1251,28 @@ RectTransform:
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0, y: 0}
+--- !u!114 &269941941
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 269941936}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7a350997d4513e344855ca4a359ba47c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::UI.SimulationUIController
+  simulationManager: {fileID: 1620486178}
+  jobInputController: {fileID: 997574945}
+  bookRegistry: {fileID: 2005697073}
+  jobListContainer: {fileID: 1776974500}
+  jobItemPrefab: {fileID: 7000947179972474867, guid: fbc5a0fc21a646c4da5ead991f6f74fa, type: 3}
+  jobCountText: {fileID: 1839442734}
+  addJobButton: {fileID: 1198670426}
+  clearAllButton: {fileID: 821776849}
+  startSimulationButton: {fileID: 1356199852}
+  statusText: {fileID: 32321139}
 --- !u!1 &357217765
 GameObject:
   m_ObjectHideFlags: 0
@@ -1498,7 +1521,7 @@ GameObject:
   - component: {fileID: 377335677}
   - component: {fileID: 377335676}
   m_Layer: 0
-  m_Name: Row
+  m_Name: ButtonList
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -3427,7 +3450,7 @@ GameObject:
   - component: {fileID: 821776849}
   - component: {fileID: 821776848}
   m_Layer: 0
-  m_Name: Button
+  m_Name: ClearAllButton
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -4998,7 +5021,7 @@ GameObject:
   - component: {fileID: 1198670426}
   - component: {fileID: 1198670425}
   m_Layer: 0
-  m_Name: Button
+  m_Name: JobAddButton
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -5595,7 +5618,7 @@ GameObject:
   - component: {fileID: 1356199852}
   - component: {fileID: 1356199851}
   m_Layer: 0
-  m_Name: Button
+  m_Name: SimulationStartButton
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -5853,7 +5876,7 @@ GameObject:
   - component: {fileID: 1389164095}
   - component: {fileID: 1389164094}
   m_Layer: 0
-  m_Name: Row
+  m_Name: CellCodeInput
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -7744,7 +7767,7 @@ GameObject:
   - component: {fileID: 1738212633}
   - component: {fileID: 1738212632}
   m_Layer: 0
-  m_Name: Row
+  m_Name: BookSelect
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -8000,7 +8023,7 @@ MonoBehaviour:
   m_Spacing: 5
   m_ChildForceExpandWidth: 1
   m_ChildForceExpandHeight: 0
-  m_ChildControlWidth: 0
+  m_ChildControlWidth: 1
   m_ChildControlHeight: 0
   m_ChildScaleWidth: 0
   m_ChildScaleHeight: 0
@@ -8760,52 +8783,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4b18a09b8b813874686ac3b76f7c8625, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Core::Core.BookRegistry
-  dummyBooks:
-  - id: BOOK001
-    title: "C# \uD504\uB85C\uADF8\uB798\uBC0D \uC785\uBB38"
-    author: "\uD64D\uAE38\uB3D9"
-    isbn: 978-89-12345-67-8
-    thickness: 30
-    height: 210
-    width: 148
-    category: "\uD504\uB85C\uADF8\uB798\uBC0D"
-    isAvailable: 1
-  - id: BOOK002
-    title: "\uC720\uB2C8\uD2F0 \uAC8C\uC784 \uAC1C\uBC1C"
-    author: "\uAE40\uCCA0\uC218"
-    isbn: 978-89-12345-68-5
-    thickness: 25
-    height: 200
-    width: 130
-    category: "\uAC8C\uC784 \uAC1C\uBC1C"
-    isAvailable: 1
-  - id: BOOK003
-    title: "\uB370\uC774\uD130 \uAD6C\uC870\uC640 \uC54C\uACE0\uB9AC\uC998"
-    author: "\uC774\uC601\uD76C"
-    isbn: 978-89-12345-69-2
-    thickness: 40
-    height: 220
-    width: 160
-    category: "\uCEF4\uD4E8\uD130 \uACFC\uD559"
-    isAvailable: 1
-  - id: BOOK004
-    title: "\uBA38\uC2E0\uB7EC\uB2DD \uAE30\uCD08"
-    author: "\uBC15\uBBFC\uC218"
-    isbn: 978-89-12345-70-8
-    thickness: 35
-    height: 215
-    width: 155
-    category: "\uC778\uACF5\uC9C0\uB2A5"
-    isAvailable: 1
-  - id: BOOK005
-    title: "\uC6F9 \uAC1C\uBC1C \uC785\uBB38"
-    author: "\uCD5C\uC9C0\uC740"
-    isbn: 978-89-12345-71-5
-    thickness: 28
-    height: 205
-    width: 140
-    category: "\uC6F9 \uAC1C\uBC1C"
-    isAvailable: 1
 --- !u!1 &2037070075
 GameObject:
   m_ObjectHideFlags: 0

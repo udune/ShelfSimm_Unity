@@ -71,16 +71,36 @@ namespace UI
             var bookData = bookRegistry != null ? bookRegistry.GetBookById(jobInput.bookId) : null;
             string bookTitle = bookData != null ? bookData.title : "Unknown Book";
 
+            var existingCells = new HashSet<string>(jobList.Select(j => j.CellCode));
+            var duplicates = new List<string>();
+            int addedCount = 0;
+
             foreach (var cellCode in jobInput.parsedCodes)
             {
+                if (existingCells.Contains(cellCode))
+                {
+                    duplicates.Add(cellCode);
+                    continue;
+                }
+
                 var job = new Job(jobInput.actionType, cellCode, bookTitle, jobInput.quantity);
                 jobList.Add(job);
+                existingCells.Add(cellCode);
+                addedCount++;
             }
 
             UpdateJobList();
             jobInputController.ResetInput();
 
-            ShowStatus($"{jobInput.parsedCodes.Count}개의 작업이 추가되었습니다.", Color.green);
+            if (duplicates.Count > 0)
+            {
+                string message = $"{addedCount}개 추가됨. 중복 제외: {string.Join(", ", duplicates)}";
+                ShowStatus(message, new Color(1f, 0.6f, 0f));
+            }
+            else
+            {
+                ShowStatus($"{addedCount}개의 작업이 추가되었습니다.", Color.green);
+            }
         }
 
         private void OnAddJobClicked()
@@ -157,8 +177,7 @@ namespace UI
 
             if (texts.Length >= 1)
             {
-                string actionIcon = job.Action == JobAction.PUT ? "📥" : "📤";
-                texts[0].text = $"{index + 1}. {actionIcon} {job.Action} - {job.CellCode} - {job.BookTitle} x{job.Quantity}";
+                texts[0].text = $"{index + 1}. {job.Action} - {job.CellCode} - {job.BookTitle} x{job.Quantity}";
             }
 
             var deleteButton = item.GetComponentInChildren<Button>();
