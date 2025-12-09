@@ -1,3 +1,4 @@
+using Data;
 using Managers;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -7,11 +8,12 @@ namespace UI
 {
     public class GridClickHandler : MonoBehaviour, IPointerClickHandler
     {
-        [Header("References")] 
+        [Header("References")]
         [SerializeField] private GridRenderer gridRenderer;
         [SerializeField] private RawImage gridImage;
-        [SerializeField] private int cellSize = 10; // 셀 크기 (픽셀 단위)
-    
+        [SerializeField] private int cellSize = 10;
+        [SerializeField] private CellsLayoutSO cellsLayout;
+
         [SerializeField] private CellInfoPanel infoPanel;
 
         [SerializeField] private CellHighlightManager highlightManager;
@@ -65,7 +67,7 @@ namespace UI
             }
 
             string cellType = gridRenderer.GetCellType(gridPos.x, gridPos.y);
-            string cellCode = GetCellCode(gridPos.x, gridPos.y);
+            CellDef cellDef = GetCellDefAtPosition(gridPos.x, gridPos.y);
             bool isAccessible = IsCellAccessible(gridPos.x, gridPos.y, cellType);
 
             if (highlightManager != null)
@@ -74,9 +76,17 @@ namespace UI
                 PositionHighlight(gridPos);
             }
 
-            if (infoPanel != null)
+            if (infoPanel != null && cellDef != null)
             {
-                infoPanel.UpdateCellInfo(cellCode, isAccessible);
+                Cell cell = GetCellData(cellDef.code);
+                if (cell != null)
+                {
+                    infoPanel.UpdateCellInfoDetailed(cell, isAccessible);
+                }
+                else
+                {
+                    infoPanel.UpdateCellInfo(cellDef.code, isAccessible);
+                }
             }
         }
 
@@ -110,9 +120,24 @@ namespace UI
             return new Vector2Int(gridX, gridY);
         }
     
-        private string GetCellCode(int x, int y)
+        private CellDef GetCellDefAtPosition(int x, int y)
         {
-            return $"Cell_{x}_{y}";
+            if (cellsLayout == null)
+            {
+                return null;
+            }
+
+            return cellsLayout.GetCellByPosition(x, y);
+        }
+
+        private Cell GetCellData(string cellCode)
+        {
+            if (SimulationManager.Instance == null)
+            {
+                return null;
+            }
+
+            return SimulationManager.Instance.GetCellByCode(cellCode);
         }
 
         private bool IsCellAccessible(int x, int y, string cellType)

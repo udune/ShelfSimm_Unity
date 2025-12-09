@@ -43,7 +43,9 @@ namespace Managers
         private void ShowHighlight(GameObject cell)
         {
             if (highlightBorder == null)
-            { return; }
+            {
+                return;
+            }
 
             highlightBorder.transform.position = cell.transform.position;
             highlightBorder.color = highlightColor;

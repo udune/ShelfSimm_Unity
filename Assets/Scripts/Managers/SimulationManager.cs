@@ -29,6 +29,7 @@ namespace Managers
         [SerializeField] private CellsLayoutSO cellsLayout;
         [SerializeField] private BookRegistry bookRegistry;
         [SerializeField] private JobInputController jobInputController;
+        [SerializeField] private GridRenderer gridRenderer;
 
         [Header("임시 데이터")]
         [SerializeField] private List<Cell> allCells;
@@ -252,6 +253,29 @@ namespace Managers
                     allCells.Add(new Cell(cellDef.code, cellDef.width, cellDef.height));
                 }
             }
+
+            InitializeGrid();
+        }
+
+        private void InitializeGrid()
+        {
+            if (gridRenderer == null || cellsLayout == null)
+            {
+                return;
+            }
+
+            gridRenderer.Init(cellsLayout.grid_size.x, cellsLayout.grid_size.y);
+
+            if (cellsLayout.cells != null)
+            {
+                foreach (var cellDef in cellsLayout.cells)
+                {
+                    gridRenderer.UpdateCell(cellDef.x, cellDef.y, "bookshelf");
+                }
+            }
+
+            gridRenderer.UpdateCell(cellsLayout.warehouse.x, cellsLayout.warehouse.y, "empty");
+            gridRenderer.RenderChanges();
         }
         #endregion
 
@@ -449,6 +473,11 @@ namespace Managers
         private Cell FindCellByCode(string code)
         {
             return allCells.Find(c => c.CellCode == code);
+        }
+
+        public Cell GetCellByCode(string code)
+        {
+            return FindCellByCode(code);
         }
 
         private Book FindBookByTitle(string title)
