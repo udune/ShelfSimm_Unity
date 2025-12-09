@@ -248,13 +248,18 @@ namespace Managers
 
             if (cellsLayout != null && cellsLayout.cells != null)
             {
+                cellsLayout.UpdateCellPositionsFromCodes();
+            }
+
+            InitializeGrid();
+
+            if (cellsLayout != null && cellsLayout.cells != null && gridRenderer != null)
+            {
                 foreach (var cellDef in cellsLayout.cells)
                 {
                     allCells.Add(new Cell(cellDef.code, cellDef.width, cellDef.height));
                 }
             }
-
-            InitializeGrid();
         }
 
         private void InitializeGrid()
@@ -264,13 +269,14 @@ namespace Managers
                 return;
             }
 
-            gridRenderer.Init(cellsLayout.grid_size.x, cellsLayout.grid_size.y);
+            gridRenderer.Init();
 
             if (cellsLayout.cells != null)
             {
                 foreach (var cellDef in cellsLayout.cells)
                 {
-                    gridRenderer.UpdateCell(cellDef.x, cellDef.y, "bookshelf");
+                    Debug.Log($"Initializing cell {cellDef.code} at grid position ({cellDef.X}, {cellDef.Y})");
+                    gridRenderer.UpdateCell(cellDef.X, cellDef.Y, "bookshelf");
                 }
             }
 
@@ -499,7 +505,7 @@ namespace Managers
             }
 
             Vector2Int start = cellsLayout.warehouse;
-            Vector2Int goal = new Vector2Int(cellDef.x, cellDef.y);
+            Vector2Int goal = new Vector2Int(cellDef.X, cellDef.Y);
 
             List<Vector2Int> path = pathFinder.FindPath(start, goal);
             return path != null ? path.Count : 0;

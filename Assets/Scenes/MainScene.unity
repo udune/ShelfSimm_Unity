@@ -1062,7 +1062,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::UI.GridRenderer
   gridImage: {fileID: 178436921}
-  cellSize: 5
+  cellSize: 10
 --- !u!114 &178436924
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1077,7 +1077,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::UI.GridClickHandler
   gridRenderer: {fileID: 178436923}
   gridImage: {fileID: 178436921}
-  cellSize: 5
+  cellSize: 10
   cellsLayout: {fileID: 11400000, guid: ca37c83da2181f84098b76f464509f3b, type: 2}
   infoPanel: {fileID: 1357545168}
   highlightManager: {fileID: 630751316}

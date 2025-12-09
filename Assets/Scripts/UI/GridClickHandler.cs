@@ -17,10 +17,9 @@ namespace UI
         [SerializeField] private CellInfoPanel infoPanel;
 
         [SerializeField] private CellHighlightManager highlightManager;
-        private int gridWidth;
-        private int gridHeight;
 
-        private const int DEFAULT_GRID_SIZE = 50; // 기본 그리드 크기 (fallback)
+        private const int TOTAL_COLUMNS = 15;
+        private const int TOTAL_ROWS = 15;
 
         private void Start()
         {
@@ -37,18 +36,6 @@ namespace UI
             if (highlightManager == null)
             {
                 highlightManager = FindObjectOfType<CellHighlightManager>();
-            }
-
-            if (gridRenderer != null && gridRenderer.Width > 0 && gridRenderer.Height > 0)
-            {
-                gridWidth = gridRenderer.Width;
-                gridHeight = gridRenderer.Height;
-            }
-            else
-            {
-                gridWidth = DEFAULT_GRID_SIZE;
-                gridHeight = DEFAULT_GRID_SIZE;
-                Debug.LogWarning($"[GridClickHandler] Using default grid size: {DEFAULT_GRID_SIZE}x{DEFAULT_GRID_SIZE}");
             }
         }
 
@@ -69,6 +56,8 @@ namespace UI
             string cellType = gridRenderer.GetCellType(gridPos.x, gridPos.y);
             CellDef cellDef = GetCellDefAtPosition(gridPos.x, gridPos.y);
             bool isAccessible = IsCellAccessible(gridPos.x, gridPos.y, cellType);
+
+            Debug.Log($"Clicked grid position ({gridPos.x}, {gridPos.y}), cellType: {cellType}, cellDef: {cellDef?.code}, isAccessible: {isAccessible}");
 
             if (highlightManager != null)
             {
@@ -93,30 +82,32 @@ namespace UI
         private Vector2Int GetGridPosition(PointerEventData eventData)
         {
             RectTransform rectTransform = gridImage.rectTransform;
-        
+
             Vector2 localPoint;
             if (!RectTransformUtility.ScreenPointToLocalPointInRectangle(
-                    rectTransform, 
-                    eventData.position, 
-                    eventData.pressEventCamera, 
+                    rectTransform,
+                    eventData.position,
+                    eventData.pressEventCamera,
                     out localPoint))
             {
                 return new Vector2Int(-1, -1);
             }
-        
+
             Rect rect = rectTransform.rect;
-        
+
             float normalizedX = (localPoint.x - rect.x) / rect.width;
             float normalizedY = (localPoint.y - rect.y) / rect.height;
-        
-            int gridX = Mathf.FloorToInt(normalizedX * gridWidth);
-            int gridY = Mathf.FloorToInt(normalizedY * gridHeight);
-        
-            if (gridX < 0 || gridX >= gridWidth || gridY < 0 || gridY >= gridHeight)
+
+            int gridX = Mathf.FloorToInt(normalizedX * TOTAL_COLUMNS);
+            int gridY = Mathf.FloorToInt(normalizedY * TOTAL_ROWS);
+
+            if (gridX < 0 || gridX >= TOTAL_COLUMNS || gridY < 0 || gridY >= TOTAL_ROWS)
             {
                 return new Vector2Int(-1, -1);
             }
-            
+
+            gridY = TOTAL_ROWS - 1 - gridY;
+
             return new Vector2Int(gridX, gridY);
         }
     
@@ -160,11 +151,13 @@ namespace UI
             RectTransform rectTransform = gridImage.rectTransform;
             Rect rect = rectTransform.rect;
 
-            float cellWidth = rect.width / gridWidth;
-            float cellHeight = rect.height / gridHeight;
+            float cellWidth = rect.width / TOTAL_COLUMNS;
+            float cellHeight = rect.height / TOTAL_ROWS;
+
+            int displayY = TOTAL_ROWS - 1 - gridPos.y;
 
             float localX = rect.x + (gridPos.x + 0.5f) * cellWidth;
-            float localY = rect.y + (gridPos.y + 0.5f) * cellHeight;
+            float localY = rect.y + (displayY + 0.5f) * cellHeight;
 
             Vector3 worldPos = rectTransform.TransformPoint(new Vector2(localX, localY));
 
@@ -173,12 +166,6 @@ namespace UI
             {
                 highlightTransform.position = worldPos;
             }
-        }
-
-        public void SetGridSize(int width, int height)
-        {
-            gridWidth = width;
-            gridHeight = height;
         }
     }
 }

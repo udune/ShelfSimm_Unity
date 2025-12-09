@@ -42,18 +42,15 @@ namespace Managers
         private string ComputeLayoutHash(CellsLayoutSO layout)
         {
             StringBuilder sb = new StringBuilder();
-            sb.Append($"{layout.schema_version}");
-            sb.Append($"{layout.grid_size.x},{layout.grid_size.y};");
-            sb.Append($"{layout.warehouse.x},{layout.warehouse.y};");
 
             var sortedCells = new List<CellDef>(layout.cells);
             sortedCells.Sort((a, b) => string.Compare(a.code, b.code, System.StringComparison.Ordinal));
 
             foreach (var cell in sortedCells)
             {
-                sb.Append($"{cell.code},{cell.x},{cell.y};");
+                sb.Append($"{cell.code},{cell.X},{cell.Y};");
                 sb.Append($"{cell.width},{cell.height};");
-                sb.Append($"{cell.orientation},{cell.blocked};");
+                sb.Append($"{cell.orientation};");
             }
 
             using (SHA256 sha256 = SHA256.Create())

@@ -62,7 +62,7 @@ namespace Core
 
             foreach (var cell in targetCells)
             {
-                var cellPos = new Vector2Int(cell.x, cell.y);
+                var cellPos = new Vector2Int(cell.X, cell.Y);
                 var distance = CalculateDistance(robotPos, cellPos);
 
                 candidates.Add(new CellDistanceInfo()
@@ -95,7 +95,7 @@ namespace Core
 
             foreach (var candidate in candidates)
             {
-                var cellPos = new Vector2Int(candidate.cell.x, candidate.cell.y);
+                var cellPos = new Vector2Int(candidate.cell.X, candidate.cell.Y);
                 var path = pathFinder.FindPath(robotPos, cellPos);
 
                 var updated = candidate;

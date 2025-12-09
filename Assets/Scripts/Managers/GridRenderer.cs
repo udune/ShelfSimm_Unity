@@ -4,30 +4,42 @@ using UnityEngine.UI;
 
 public class GridRenderer : MonoBehaviour
 {
-    [Header("그리드 설정")] 
-    [SerializeField] 
+    [Header("그리드 설정")]
+    [SerializeField]
     private RawImage gridImage;
 
-    [SerializeField] 
-    private int cellSize = 10; // 픽셀 단위
+    [SerializeField]
+    private int totalColumns = 15;
+
+    [SerializeField]
+    private int totalRows = 15;
+
     private readonly Dictionary<Vector2Int, string> cellStates = new();
     private readonly HashSet<Vector2Int> dirtyPixels = new();
 
     private Texture2D gridTexture;
+    private int cellWidth;
+    private int cellHeight;
 
     public int Width { get; private set; }
 
     public int Height { get; private set; }
 
-    public void Init(int gridWidth, int gridHeight)
+    public void Init()
     {
-        Width = gridWidth;
-        Height = gridHeight;
+        if (gridImage != null)
+        {
+            var rect = gridImage.rectTransform.rect;
+            Width = Mathf.RoundToInt(rect.width);
+            Height = Mathf.RoundToInt(rect.height);
+        }
 
-        var texWidth = gridWidth * cellSize;
-        var texHeight = gridHeight * cellSize;
+        cellWidth = Width / totalColumns;
+        cellHeight = Height / totalRows;
 
-        gridTexture = new Texture2D(texWidth, texHeight);
+        Debug.Log($"GridRenderer initialized: {Width}x{Height} pixels, grid {totalColumns}x{totalRows}, cell size {cellWidth}x{cellHeight}");
+
+        gridTexture = new Texture2D(Width, Height);
         gridTexture.filterMode = FilterMode.Point;
 
         if (gridImage != null)
@@ -52,7 +64,7 @@ public class GridRenderer : MonoBehaviour
 
     public void UpdateCell(int x, int y, string type)
     {
-        if (x < 0 || x >= Width || y < 0 || y >= Height)
+        if (x < 0 || x >= totalColumns || y < 0 || y >= totalRows)
         {
             return;
         }
@@ -82,13 +94,12 @@ public class GridRenderer : MonoBehaviour
     {
         var color = GetColor(type);
 
-        // 셀 영역 채우기
-        var startX = x * cellSize;
-        var startY = y * cellSize;
+        var startX = x * cellWidth;
+        var startY = (totalRows - 1 - y) * cellHeight;
 
-        for (var py = 0; py < cellSize; py++)
+        for (var py = 0; py < cellHeight; py++)
         {
-            for (var px = 0; px < cellSize; px++)
+            for (var px = 0; px < cellWidth; px++)
             {
                 gridTexture.SetPixel(startX + px, startY + py, color);
             }

@@ -12,39 +12,18 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4eed809b1f74bc04baa9ed830969f298, type: 3}
   m_Name: CellsLayoutSO
   m_EditorClassIdentifier: 
-  schema_version: 1.0
-  type: cells_layout
-  grid_size: {x: 50, y: 50}
   warehouse: {x: 0, y: 0}
   cells:
-  - code: D20
-    x: 1
-    y: 2
+  - code: A01
     width: 90
     height: 200
-    tile_w: 0
-    tile_h: 0
-    orientation: 
-    approach_priority: []
-    blocked: 0
-  - code: A15
-    x: 3
-    y: 3
+    orientation: N
+  - code: A10
     width: 90
     height: 200
-    tile_w: 0
-    tile_h: 0
-    orientation: 
-    approach_priority: []
-    blocked: 0
-  - code: C05
-    x: 2
-    y: 1
+    orientation: S
+  - code: A11
     width: 90
     height: 200
-    tile_w: 0
-    tile_h: 0
-    orientation: 
-    approach_priority: []
-    blocked: 0
+    orientation: W
   layout_hash: 
