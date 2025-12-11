@@ -30,7 +30,7 @@ namespace Data
 
         public CellDef GetCellByCode(string code)
         {
-            return cells.Find(c => c.code == code);
+            return cells.Find(cell => cell.code == code);
         }
 
         public CellDef GetCellByPosition(int x, int y)

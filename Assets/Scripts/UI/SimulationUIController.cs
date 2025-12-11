@@ -15,6 +15,7 @@ namespace UI
         [SerializeField] private SimulationManager simulationManager;
         [SerializeField] private JobInputController jobInputController;
         [SerializeField] private BookRegistry bookRegistry;
+        [SerializeField] private CellsLayoutSO cellsLayout;
 
         [Header("Job List UI")]
         [SerializeField] private Transform jobListContainer;
@@ -33,11 +34,6 @@ namespace UI
 
         private void Start()
         {
-            if (simulationManager == null)
-            {
-                simulationManager = SimulationManager.Instance;
-            }
-
             if (jobInputController != null)
             {
                 jobInputController.OnExecuteRequested += OnJobAdded;
@@ -73,6 +69,7 @@ namespace UI
 
             var existingCells = new HashSet<string>(jobList.Select(j => j.CellCode));
             var duplicates = new List<string>();
+            var invalidCells = new List<string>();
             int addedCount = 0;
 
             foreach (var cellCode in jobInput.parsedCodes)
@@ -80,6 +77,12 @@ namespace UI
                 if (existingCells.Contains(cellCode))
                 {
                     duplicates.Add(cellCode);
+                    continue;
+                }
+
+                if (!IsValidBookshelfCell(cellCode))
+                {
+                    invalidCells.Add(cellCode);
                     continue;
                 }
 
@@ -92,15 +95,34 @@ namespace UI
             UpdateJobList();
             jobInputController.ResetInput();
 
-            if (duplicates.Count > 0)
+            if (invalidCells.Count > 0 && duplicates.Count > 0)
+            {
+                string message = $"{addedCount}개 추가됨. 중복: {string.Join(", ", duplicates)}, 미등록 셀: {string.Join(", ", invalidCells)}";
+                ShowStatus(message, Color.red);
+            }
+            else if (invalidCells.Count > 0)
+            {
+                string message = $"{addedCount}개 추가됨. 책장에 등록되지 않은 셀: {string.Join(", ", invalidCells)}";
+                ShowStatus(message, Color.red);
+            }
+            else if (duplicates.Count > 0)
             {
                 string message = $"{addedCount}개 추가됨. 중복 제외: {string.Join(", ", duplicates)}";
                 ShowStatus(message, new Color(1f, 0.6f, 0f));
             }
-            else
+            else if (addedCount > 0)
             {
                 ShowStatus($"{addedCount}개의 작업이 추가되었습니다.", Color.green);
             }
+            else
+            {
+                ShowStatus("추가할 수 있는 작업이 없습니다.", Color.red);
+            }
+        }
+
+        private bool IsValidBookshelfCell(string cellCode)
+        {
+            return cellsLayout.GetCellByCode(cellCode) != null;
         }
 
         private void OnAddJobClicked()

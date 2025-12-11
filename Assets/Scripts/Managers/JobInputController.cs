@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Core;
 using Data;
+using Managers;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -22,6 +23,7 @@ public class JobInputController : MonoBehaviour
 
         [Header("References")]
         [SerializeField] private BookRegistry bookRegistry;
+        [SerializeField] private CellsLayoutSO cellsLayout;
 
         private JobInputData currentJobInput = new JobInputData();
         private bool isInitialized = false;
@@ -138,13 +140,25 @@ public class JobInputController : MonoBehaviour
 
                 if (CodeNormalizer.TryNormalizeCode(trimmed, out string normalized))
                 {
-                    currentJobInput.parsedCodes.Add(normalized);
+                    if (IsValidBookshelfCell(normalized))
+                    {
+                        currentJobInput.parsedCodes.Add(normalized);
+                    }
+                    else
+                    {
+                        currentJobInput.invalidCodes.Add(trimmed);
+                    }
                 }
                 else
                 {
                     currentJobInput.invalidCodes.Add(trimmed);
                 }
             }
+        }
+
+        private bool IsValidBookshelfCell(string cellCode)
+        {
+            return cellsLayout.GetCellByCode(cellCode) != null;
         }
 
         private void OnActionTypeChanged(int value)

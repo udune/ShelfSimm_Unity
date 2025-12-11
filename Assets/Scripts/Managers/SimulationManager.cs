@@ -486,6 +486,11 @@ namespace Managers
             return FindCellByCode(code);
         }
 
+        public CellsLayoutSO GetCellsLayout()
+        {
+            return cellsLayout;
+        }
+
         private Book FindBookByTitle(string title)
         {
             return allBooks.Find(b => b.Title == title);

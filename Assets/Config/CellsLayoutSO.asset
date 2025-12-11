@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   warehouse: {x: 0, y: 0}
   cells:
-  - code: A01
+  - code: B01
     width: 90
     height: 200
     orientation: N
