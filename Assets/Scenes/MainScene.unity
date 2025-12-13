@@ -1081,6 +1081,7 @@ MonoBehaviour:
   gridImage: {fileID: 178436921}
   cellSize: 10
   cellsLayout: {fileID: 11400000, guid: ca37c83da2181f84098b76f464509f3b, type: 2}
+  highlightBorder: {fileID: 1334605684}
   infoPanel: {fileID: 1357545168}
   highlightManager: {fileID: 630751316}
 --- !u!1 &189602250
@@ -1285,7 +1286,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7a350997d4513e344855ca4a359ba47c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::UI.SimulationUIController
-  simulationManager: {fileID: 1620486178}
   jobInputController: {fileID: 997574945}
   bookRegistry: {fileID: 2005697073}
   cellsLayout: {fileID: 11400000, guid: ca37c83da2181f84098b76f464509f3b, type: 2}
@@ -4555,70 +4555,6 @@ MonoBehaviour:
   invalidColor: {r: 1, g: 0, b: 0, a: 1}
   bookRegistry: {fileID: 2005697073}
   cellsLayout: {fileID: 11400000, guid: ca37c83da2181f84098b76f464509f3b, type: 2}
---- !u!1 &1034909762
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 1034909763}
-  - component: {fileID: 1034909765}
-  - component: {fileID: 1034909764}
-  m_Layer: 0
-  m_Name: CodeManager
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &1034909763
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1034909762}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 2059306465}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &1034909764
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1034909762}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: f283f9aa3cef496ca769435060b1ab51, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Core::Core.CodeRegistry
-  registeredCodes:
-  - D20
-  - A15
-  - B03
-  - C10
-  - E05
---- !u!114 &1034909765
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1034909762}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 258122f347054405a33645c71b1d4936, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Core::Core.CodeValidator
-  codeRegistry: {fileID: 1034909764}
 --- !u!1 &1050247501
 GameObject:
   m_ObjectHideFlags: 0
@@ -5310,6 +5246,56 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1214399270}
   m_CullTransparentMesh: 1
+--- !u!1 &1243948840
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1243948841}
+  - component: {fileID: 1243948842}
+  m_Layer: 0
+  m_Name: RobotController
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1243948841
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1243948840}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 2059306465}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1243948842
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1243948840}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2b4ab43604e149bf8328bdd8898cd31b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Core::Core.RobotController
+  reportToApi: 1
+  config: {fileID: 11400000, guid: ebb46b30fffcbc246a120d21b036c7d2, type: 2}
+  pathFinder: {fileID: 770401732}
+  cellsLayout: {fileID: 11400000, guid: ca37c83da2181f84098b76f464509f3b, type: 2}
+  robotTransform: {fileID: 3121842750099007506}
+  visualCellSize: 50
 --- !u!1 &1316753154
 GameObject:
   m_ObjectHideFlags: 0
@@ -5491,7 +5477,7 @@ RectTransform:
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 70, y: 70}
+  m_SizeDelta: {x: 75, y: 75}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!1 &1344840398
 GameObject:
@@ -7211,8 +7197,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Managers::Managers.SimulationManager
   config: {fileID: 11400000, guid: ebb46b30fffcbc246a120d21b036c7d2, type: 2}
   useApiMode: 1
-  robotController: {fileID: 3215963422953575073, guid: 628bb9714dbc18e4ca4dd62fd358e690, type: 3}
-  apiClient: {fileID: 1149895736}
+  robotController: {fileID: 0}
   pathFinder: {fileID: 770401732}
   cellsLayout: {fileID: 11400000, guid: ca37c83da2181f84098b76f464509f3b, type: 2}
   bookRegistry: {fileID: 2005697073}
@@ -8878,7 +8863,7 @@ Transform:
   - {fileID: 1664319948}
   - {fileID: 730300744}
   - {fileID: 1149895735}
-  - {fileID: 1034909763}
+  - {fileID: 1243948841}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &2084670338
@@ -9586,21 +9571,6 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2125453919}
   m_CullTransparentMesh: 1
---- !u!114 &1905382320452128221
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8149707620123347580}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 2b4ab43604e149bf8328bdd8898cd31b, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  apiClient: {fileID: 1149895736}
-  reportToApi: 1
-  config: {fileID: 11400000, guid: ebb46b30fffcbc246a120d21b036c7d2, type: 2}
 --- !u!224 &3121842750099007506
 RectTransform:
   m_ObjectHideFlags: 0
@@ -9669,7 +9639,7 @@ GameObject:
   - component: {fileID: 3121842750099007506}
   - component: {fileID: 8090742067802220512}
   - component: {fileID: 5937542912387940032}
-  - component: {fileID: 1905382320452128221}
+  - component: {fileID: 8149707620123347581}
   m_Layer: 5
   m_Name: Robot_Alpha
   m_TagString: Untagged
@@ -9677,6 +9647,20 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
+--- !u!114 &8149707620123347581
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8149707620123347580}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b04ed412198ee2a45b667890a3445247, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::UI.RobotVisual
+  robotImage: {fileID: 5937542912387940032}
+  robotColor: {r: 0, g: 0.5019608, b: 1, a: 1}
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0

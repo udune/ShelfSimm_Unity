@@ -24,7 +24,6 @@ namespace Managers
 
         [Header("내부 컴포넌트 참조")]
         [SerializeField] private RobotController robotController;
-        [SerializeField] private ApiClient apiClient;
         [SerializeField] private SimpleAStarPathFinder pathFinder;
         [SerializeField] private CellsLayoutSO cellsLayout;
         [SerializeField] private BookRegistry bookRegistry;
@@ -67,14 +66,9 @@ namespace Managers
 
         private void Start()
         {
-            if (apiClient == null)
-            {
-                apiClient = ApiClient.Instance;
-            }
-
             InitializeSimulation();
 
-            if (useApiMode && apiClient != null)
+            if (useApiMode)
             {
                 StartCoroutine(InitializeAPI());
             }
@@ -108,13 +102,13 @@ namespace Managers
 
             bool booksLoaded = false;
             List<BookDto> loadedBookDtos = null;
-            yield return apiClient.GetAllBooks(
+            yield return ApiClient.Instance.GetAllBooks(
                 bookDtos => {
                     allBooks = bookDtos.Select(dto => new Book($"BOOK_{dto.id}", dto.title, dto.thicknessMn, dto.heightMm)).ToList();
                     loadedBookDtos = bookDtos;
                     booksLoaded = true;
                 },
-                onError: error => Debug.LogError($"책 정보 로드 실패: {error}")
+                error => Debug.LogError($"책 정보 로드 실패: {error}")
             );
             if (!booksLoaded)
             {
@@ -136,7 +130,7 @@ namespace Managers
 
         public void PrepareSimulation(List<Job> jobs)
         {
-            if (useApiMode && apiClient != null)
+            if (useApiMode)
             {
                 StartCoroutine(PrepareSimulationWithAPI(jobs));
             }
@@ -158,9 +152,9 @@ namespace Managers
                     topN = config.topN
                 };
                 bool runCreated = false;
-                yield return apiClient.CreateRun(createRunReq,
-                    onSuccess: response => { _currentRunId = response.id; runCreated = true; },
-                    onError: error => Debug.LogError($"Run 생성 실패: {error}")
+                yield return ApiClient.Instance.CreateRun(createRunReq,
+                    response => { _currentRunId = response.id; runCreated = true; },
+                    error => Debug.LogError($"Run 생성 실패: {error}")
                 );
                 if (!runCreated)
                 {
@@ -184,9 +178,9 @@ namespace Managers
             };
 
             bool jobsBatched = false;
-            yield return apiClient.CreateJobsBatch(createJobsReq,
-                onSuccess: response => { jobsBatched = true; },
-                onError: error => Debug.LogError($"Jobs 생성 실패: {error}")
+            yield return ApiClient.Instance.CreateJobsBatch(createJobsReq,
+                success =>{ jobsBatched = true; },
+                error => Debug.LogError($"Jobs 생성 실패: {error}")
             );
             if (!jobsBatched)
             {
@@ -197,8 +191,8 @@ namespace Managers
             yield return new WaitForSeconds(API_JOB_PROCESSING_DELAY);
 
             bool idsMapped = false;
-            yield return apiClient.GetRunDetails(_currentRunId,
-                onSuccess: runDetails => {
+            yield return ApiClient.Instance.GetRunDetails(_currentRunId,
+                runDetails => {
                     var serverJobs = runDetails.jobs.ToDictionary(
                         j => (j.cellCode, j.bookTitle, j.action),
                         j => j.id
@@ -214,7 +208,7 @@ namespace Managers
                     }
                     idsMapped = true;
                 },
-                onError: error => Debug.LogError($"Run 상세 정보 조회 실패: {error}")
+                error => Debug.LogError($"Run 상세 정보 조회 실패: {error}")
             );
             if (!idsMapped)
             {
@@ -264,19 +258,18 @@ namespace Managers
 
         private void InitializeGrid()
         {
-            if (gridRenderer == null || cellsLayout == null)
-            {
-                return;
-            }
-
             gridRenderer.Init();
 
             if (cellsLayout.cells != null)
             {
                 foreach (var cellDef in cellsLayout.cells)
                 {
-                    Debug.Log($"Initializing cell {cellDef.code} at grid position ({cellDef.X}, {cellDef.Y})");
                     gridRenderer.UpdateCell(cellDef.X, cellDef.Y, "bookshelf");
+
+                    if (pathFinder != null)
+                    {
+                        pathFinder.AddObstacle(new Vector2Int(cellDef.X, cellDef.Y));
+                    }
                 }
             }
 
@@ -387,10 +380,10 @@ namespace Managers
                 OnJobFinished(_jobQueue.Dequeue(), ErrorCode.CANCELLED_BY_STOP);
             }
 
-            if (useApiMode && apiClient != null && !string.IsNullOrEmpty(_currentRunId))
+            if (useApiMode && !string.IsNullOrEmpty(_currentRunId))
             {
                 var statusReq = new UpdateRunStatusRequest { status = "COMPLETED" };
-                StartCoroutine(apiClient.UpdateRunStatus(_currentRunId, statusReq));
+                StartCoroutine(ApiClient.Instance.UpdateRunStatus(_currentRunId, statusReq));
             }
 
             Debug.Log(_summary.ToString());
@@ -519,12 +512,7 @@ namespace Managers
         private void HandleApiInitializationFailure(string errorMessage)
         {
             Debug.LogError(errorMessage);
-
-            if (UIManager.Instance != null)
-            {
-                UIManager.Instance.ShowError(errorMessage);
-            }
-
+            UIManager.Instance.ShowError(errorMessage);
             _isRunning = false;
         }
         #endregion

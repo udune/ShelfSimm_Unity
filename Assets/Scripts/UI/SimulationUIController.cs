@@ -12,7 +12,6 @@ namespace UI
     public class SimulationUIController : MonoBehaviour
     {
         [Header("References")]
-        [SerializeField] private SimulationManager simulationManager;
         [SerializeField] private JobInputController jobInputController;
         [SerializeField] private BookRegistry bookRegistry;
         [SerializeField] private CellsLayoutSO cellsLayout;
@@ -158,15 +157,8 @@ namespace UI
                 return;
             }
 
-            if (simulationManager != null)
-            {
-                simulationManager.PrepareSimulation(new List<Job>(jobList));
-                ShowStatus($"{jobList.Count}개의 작업으로 시뮬레이션을 시작합니다.", Color.green);
-            }
-            else
-            {
-                ShowStatus("SimulationManager를 찾을 수 없습니다.", Color.red);
-            }
+            SimulationManager.Instance.PrepareSimulation(new List<Job>(jobList));
+            ShowStatus($"{jobList.Count}개의 작업으로 시뮬레이션을 시작합니다.", Color.green);
         }
 
         private void UpdateJobList()

@@ -13,6 +13,7 @@ namespace UI
         [SerializeField] private RawImage gridImage;
         [SerializeField] private int cellSize = 10;
         [SerializeField] private CellsLayoutSO cellsLayout;
+        [SerializeField] private Transform highlightBorder;
 
         [SerializeField] private CellInfoPanel infoPanel;
 
@@ -21,31 +22,8 @@ namespace UI
         private const int TOTAL_COLUMNS = 15;
         private const int TOTAL_ROWS = 15;
 
-        private void Start()
-        {
-            if (gridRenderer == null)
-            {
-                gridRenderer = FindObjectOfType<GridRenderer>();
-            }
-
-            if (gridImage == null)
-            {
-                gridImage = GetComponent<RawImage>();
-            }
-
-            if (highlightManager == null)
-            {
-                highlightManager = FindObjectOfType<CellHighlightManager>();
-            }
-        }
-
         public void OnPointerClick(PointerEventData eventData)
         {
-            if (gridImage == null || gridRenderer == null)
-            {
-                return;
-            }
-
             Vector2Int gridPos = GetGridPosition(eventData);
 
             if (gridPos.x < 0 || gridPos.y < 0)
@@ -56,25 +34,30 @@ namespace UI
             string cellType = gridRenderer.GetCellType(gridPos.x, gridPos.y);
             CellDef cellDef = GetCellDefAtPosition(gridPos.x, gridPos.y);
             bool isAccessible = IsCellAccessible(gridPos.x, gridPos.y, cellType);
-
-            Debug.Log($"Clicked grid position ({gridPos.x}, {gridPos.y}), cellType: {cellType}, cellDef: {cellDef?.code}, isAccessible: {isAccessible}");
-
+            
             if (highlightManager != null)
             {
                 highlightManager.SelectCell(gridImage.gameObject, isAccessible);
                 PositionHighlight(gridPos);
             }
 
-            if (infoPanel != null && cellDef != null)
+            if (infoPanel != null)
             {
-                Cell cell = GetCellData(cellDef.code);
-                if (cell != null)
+                if (cellDef != null)
                 {
-                    infoPanel.UpdateCellInfoDetailed(cell, isAccessible);
+                    Cell cell = GetCellData(cellDef.code);
+                    if (cell != null)
+                    {
+                        infoPanel.UpdateCellInfoDetailed(cell, isAccessible);
+                    }
+                    else
+                    {
+                        infoPanel.UpdateCellInfo(cellDef.code, isAccessible);
+                    }
                 }
                 else
                 {
-                    infoPanel.UpdateCellInfo(cellDef.code, isAccessible);
+                    infoPanel.Hide();
                 }
             }
         }
@@ -143,10 +126,11 @@ namespace UI
 
         private void PositionHighlight(Vector2Int gridPos)
         {
-            if (highlightManager == null) return;
-
             GameObject highlight = highlightManager.GetSelectedCell();
-            if (highlight == null) return;
+            if (highlight == null)
+            {
+                return;
+            }
 
             RectTransform rectTransform = gridImage.rectTransform;
             Rect rect = rectTransform.rect;
@@ -161,11 +145,7 @@ namespace UI
 
             Vector3 worldPos = rectTransform.TransformPoint(new Vector2(localX, localY));
 
-            Transform highlightTransform = highlightManager.transform.Find("HighlightBorder");
-            if (highlightTransform != null)
-            {
-                highlightTransform.position = worldPos;
-            }
+            highlightBorder.position = worldPos;
         }
     }
 }

@@ -283,13 +283,19 @@ namespace API
                 if (www.result == UnityWebRequest.Result.Success)
                 {
                     string jsonResponse = www.downloadHandler.text;
-                    if (logRequests) Debug.Log($"[API] Books response: {jsonResponse}");
+                    if (logRequests)
+                    {
+                        Debug.Log($"[API] Books response: {jsonResponse}");
+                    }
 
                     string dtoJson = $"{{\"items\":{jsonResponse}}}";
                     BookListDto dto = JsonUtility.FromJson<BookListDto>(dtoJson);
                     List<BookDto> bookList = new List<BookDto>(dto.items);
 
-                    if (logRequests) Debug.Log($"[API] Loaded {bookList.Count} books");
+                    if (logRequests)
+                    {
+                        Debug.Log($"[API] Loaded {bookList.Count} books");
+                    }
                     onSuccess?.Invoke(bookList);
                 }
                 else

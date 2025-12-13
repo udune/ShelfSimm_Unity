@@ -18,11 +18,11 @@ MonoBehaviour:
     width: 90
     height: 200
     orientation: N
-  - code: A10
+  - code: B10
     width: 90
     height: 200
     orientation: S
-  - code: A11
+  - code: B11
     width: 90
     height: 200
     orientation: W
