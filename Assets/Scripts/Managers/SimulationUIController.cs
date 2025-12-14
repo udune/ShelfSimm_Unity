@@ -33,36 +33,15 @@ namespace UI
 
         private void Start()
         {
-            if (jobInputController != null)
-            {
-                jobInputController.OnExecuteRequested += OnJobAdded;
-            }
-
-            if (addJobButton != null)
-            {
-                addJobButton.onClick.AddListener(OnAddJobClicked);
-            }
-
-            if (clearAllButton != null)
-            {
-                clearAllButton.onClick.AddListener(OnClearAllClicked);
-            }
-
-            if (startSimulationButton != null)
-            {
-                startSimulationButton.onClick.AddListener(OnStartSimulationClicked);
-            }
-
+            jobInputController.OnExecuteRequested += OnJobAdded;
+            addJobButton.onClick.AddListener(OnAddJobClicked);
+            clearAllButton.onClick.AddListener(OnClearAllClicked);
+            startSimulationButton.onClick.AddListener(OnStartSimulationClicked);
             UpdateUI();
         }
 
         private void OnJobAdded(JobInputData jobInput)
         {
-            if (bookRegistry == null)
-            {
-                bookRegistry = FindObjectOfType<BookRegistry>();
-            }
-
             var bookData = bookRegistry != null ? bookRegistry.GetBookById(jobInput.bookId) : null;
             string bookTitle = bookData != null ? bookData.title : "Unknown Book";
 
@@ -126,19 +105,16 @@ namespace UI
 
         private void OnAddJobClicked()
         {
-            if (jobInputController != null)
-            {
-                var currentInput = jobInputController.GetCurrentJobInput();
-                var validation = InputValidator.ValidateJobInput(currentInput);
+            var currentInput = jobInputController.GetCurrentJobInput();
+            var validation = InputValidator.ValidateJobInput(currentInput);
 
-                if (validation.IsValid)
-                {
-                    OnJobAdded(currentInput);
-                }
-                else
-                {
-                    ShowStatus("입력이 유효하지 않습니다.", Color.red);
-                }
+            if (validation.IsValid)
+            {
+                OnJobAdded(currentInput);
+            }
+            else
+            {
+                ShowStatus("입력이 유효하지 않습니다.", Color.red);
             }
         }
 
@@ -163,29 +139,21 @@ namespace UI
 
         private void UpdateJobList()
         {
-            if (jobListContainer != null)
+            foreach (Transform child in jobListContainer)
             {
-                foreach (Transform child in jobListContainer)
-                {
-                    Destroy(child.gameObject);
-                }
-
-                for (int i = 0; i < jobList.Count; i++)
-                {
-                    CreateJobItem(jobList[i], i);
-                }
+                Destroy(child.gameObject);
             }
 
+            for (int i = 0; i < jobList.Count; i++)
+            {
+                CreateJobItem(jobList[i], i);
+            }
+            
             UpdateUI();
         }
 
         private void CreateJobItem(Job job, int index)
         {
-            if (jobItemPrefab == null || jobListContainer == null)
-            {
-                return;
-            }
-
             GameObject item = Instantiate(jobItemPrefab, jobListContainer);
             var texts = item.GetComponentsInChildren<TextMeshProUGUI>();
 
@@ -214,33 +182,20 @@ namespace UI
 
         private void UpdateUI()
         {
-            if (jobCountText != null)
-            {
-                jobCountText.text = $"작업 목록 ({jobList.Count}개)";
-            }
-
-            if (startSimulationButton != null)
-            {
-                startSimulationButton.interactable = jobList.Count > 0;
-            }
+            jobCountText.text = $"작업 목록 ({jobList.Count}개)";
+            startSimulationButton.interactable = jobList.Count > 0;
         }
 
-        private void ShowStatus(string message, Color color)
+        public void ShowStatus(string message, Color color)
         {
-            if (statusText != null)
-            {
-                statusText.text = message;
-                statusText.color = color;
-                Invoke(nameof(ClearStatus), 3f);
-            }
+            statusText.text = message;
+            statusText.color = color;
+            Invoke(nameof(ClearStatus), 3f);
         }
 
         private void ClearStatus()
         {
-            if (statusText != null)
-            {
-                statusText.text = "";
-            }
+            statusText.text = "";
         }
 
         public List<Job> GetJobList()

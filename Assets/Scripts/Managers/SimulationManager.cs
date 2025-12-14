@@ -4,6 +4,7 @@ using System.Linq;
 using API;
 using Core;
 using Data;
+using UI;
 using UnityEngine;
 using Random = UnityEngine.Random;
 
@@ -29,6 +30,7 @@ namespace Managers
         [SerializeField] private BookRegistry bookRegistry;
         [SerializeField] private JobInputController jobInputController;
         [SerializeField] private GridRenderer gridRenderer;
+        [SerializeField] private SimulationUIController simulationUIController;
 
         [Header("임시 데이터")]
         [SerializeField] private List<Cell> allCells;
@@ -87,10 +89,7 @@ namespace Managers
 
         private void OnDestroy()
         {
-            if (config != null)
-            {
-                config.OnHandleTimeChanged -= HandleTimeChanged;
-            }
+            config.OnHandleTimeChanged -= HandleTimeChanged;
         }
         
         #endregion
@@ -119,10 +118,7 @@ namespace Managers
             if (bookRegistry != null && loadedBookDtos != null)
             {
                 bookRegistry.LoadBooksFromApi(loadedBookDtos);
-                if (jobInputController != null)
-                {
-                    jobInputController.RefreshBookDropdown();
-                }
+                jobInputController.RefreshBookDropdown();
             }
 
             Debug.Log("API 초기화 완료. 책 정보 로드 완료.");
@@ -342,9 +338,16 @@ namespace Managers
             else
             {
                 RecordFailure(resultCode);
+                ShowErrorInUI(job, resultCode);
             }
 
             TryProcessNextJob();
+        }
+
+        private void ShowErrorInUI(Job job, ErrorCode errorCode)
+        {
+            string errorMessage = $"작업 실패 [{job.CellCode}]: {errorCode.ToMessage()}";
+            simulationUIController.ShowStatus(errorMessage, Color.red);
         }
 
         private void CheckSimulationComplete()
@@ -449,17 +452,9 @@ namespace Managers
             UpdateDashboard();
         }
 
-        public Summary GetSummary()
-        {
-            return _summary;
-        }
-
         private void UpdateDashboard()
         {
-            if (UIManager.Instance != null)
-            {
-                UIManager.Instance.UpdateDashboard(_summary);
-            }
+            UIManager.Instance.UpdateDashboard(_summary);
         }
 
         private void HandleTimeChanged(float newHandleTime)

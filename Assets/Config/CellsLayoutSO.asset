@@ -15,15 +15,15 @@ MonoBehaviour:
   warehouse: {x: 0, y: 0}
   cells:
   - code: B01
-    width: 90
-    height: 200
+    width: 300
+    height: 300
     orientation: N
   - code: B10
-    width: 90
-    height: 200
+    width: 300
+    height: 300
     orientation: S
   - code: B11
-    width: 90
-    height: 200
+    width: 300
+    height: 300
     orientation: W
   layout_hash: 

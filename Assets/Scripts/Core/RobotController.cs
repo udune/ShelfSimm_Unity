@@ -116,14 +116,11 @@ namespace Core
 
         private void UpdateRobotVisualPosition()
         {
-            if (robotTransform != null)
-            {
-                robotTransform.position = new Vector3(
-                    currentGridPosition.x * visualCellSize,
-                    currentGridPosition.y * visualCellSize,
-                    0
-                );
-            }
+            robotTransform.position = new Vector3(
+                currentGridPosition.x * visualCellSize,
+                currentGridPosition.y * visualCellSize,
+                0
+            );
         }
 
         private void OnPathComplete()
