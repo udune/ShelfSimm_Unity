@@ -8,9 +8,6 @@ namespace Core
 {
     public class RobotController : MonoBehaviour
     {
-        [Header("API 연동")]
-        [SerializeField] private bool reportToApi = true;
-
         [Header("내부 설정")]
         [SerializeField] private SimulationConfig config;
         [SerializeField] private SimpleAStarPathFinder pathFinder;
@@ -28,8 +25,8 @@ namespace Core
 
         private Job currentJob;
         private Cell targetCell;
-        private Book targetBook;
-        private Action<Job, ErrorCode> onJobCompleteCallback;
+        private BookData targetBook;
+        private Action<Job, ErrorCode, JobResult> onJobCompleteCallback;
         private DateTime jobStartTime;
         private int pathLength;
 
@@ -138,11 +135,11 @@ namespace Core
             }
         }
 
-        public void StartJob(Job job, Cell cell, Book book, int calculatedPathLength, Action<Job, ErrorCode> onComplete)
+        public void StartJob(Job job, Cell cell, BookData book, int calculatedPathLength, Action<Job, ErrorCode, JobResult> onComplete)
         {
             if (currentState != RobotState.IDLE)
             {
-                onComplete?.Invoke(job, ErrorCode.ROBOT_BUSY);
+                onComplete?.Invoke(job, ErrorCode.ROBOT_BUSY, null);
                 return;
             }
 
@@ -250,40 +247,38 @@ namespace Core
 
         private void HandleJobCompletion(ErrorCode resultCode)
         {
-            float totalTime = (float)(DateTime.UtcNow - jobStartTime).TotalSeconds;
+            DateTime endTime = DateTime.UtcNow;
+            float totalTime = (float)(endTime - jobStartTime).TotalSeconds;
             Debug.Log($"작업 완료: {currentJob?.CellCode}, 결과: {resultCode}, 소요시간: {totalTime:F2}초");
 
-            ReportJobResult(resultCode, totalTime);
-            onJobCompleteCallback?.Invoke(currentJob, resultCode);
+            JobResult jobResult = CreateJobResult(resultCode, endTime, totalTime);
+            onJobCompleteCallback?.Invoke(currentJob, resultCode, jobResult);
 
             ClearJobData();
             TransitionTo(RobotState.IDLE);
         }
 
-        private void ReportJobResult(ErrorCode resultCode, float totalTime)
+        private JobResult CreateJobResult(ErrorCode resultCode, DateTime endTime, float totalTime)
         {
-            if (!reportToApi || config == null || string.IsNullOrEmpty(currentJob?.JobId))
+            if (config == null || currentJob == null)
             {
-                return;
+                return null;
             }
 
             float travelTimeSec = (config.robotSpeed > 0) ? (pathLength / config.robotSpeed) : 0f;
             float calculatedTotalTime = travelTimeSec + config.handleTime;
 
-            var request = new UpdateJobResultRequest
-            {
-                startTs = jobStartTime.ToString("o"),
-                endTs = DateTime.UtcNow.ToString("o"),
-                travelTimeSec = travelTimeSec,
-                handleTimeSec = config.handleTime,
-                totalTimeSec = calculatedTotalTime,
-                pathLengthCells = pathLength,
-                result = (resultCode == ErrorCode.NONE) ? "SUCCESS" : "FAIL",
-                failReason = (resultCode != ErrorCode.NONE) ? resultCode.ToString() : null,
-                robotName = gameObject.name
-            };
-
-            StartCoroutine(ApiClient.Instance.UpdateJobResult(currentJob.JobId, request));
+            return new JobResult(
+                currentJob.JobId,
+                jobStartTime,
+                endTime,
+                travelTimeSec,
+                config.handleTime,
+                calculatedTotalTime,
+                pathLength,
+                resultCode,
+                gameObject.name
+            );
         }
 
         private void TransitionTo(RobotState newState)

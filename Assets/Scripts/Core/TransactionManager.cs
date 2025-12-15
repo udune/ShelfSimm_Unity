@@ -77,7 +77,7 @@ namespace Core
         /// <summary>
         /// PUT 작업을 트랜잭션으로 실행합니다.
         /// </summary>
-        public bool ExecutePut(WarehouseInventory warehouse, Cell cell, Book book, int quantity, out ErrorCode errorCode)
+        public bool ExecutePut(WarehouseInventory warehouse, Cell cell, BookData book, int quantity, out ErrorCode errorCode)
         {
             var transaction = new PutTransaction(warehouse, cell, book, quantity);
             bool success = ExecuteTransaction(transaction);

@@ -81,6 +81,11 @@ namespace Core
             return bookDatabase.Count;
         }
 
+        public BookData GetBookByTitle(string title)
+        {
+            return availableBooks.Find(x => x.Title.Equals(title));
+        }
+
         public BookData GetBookByIndex(int index)
         {
             if (index < 0 || index >= availableBooks.Count)

@@ -27,7 +27,7 @@ namespace Data
             MaxCapacity = 0;
         }
 
-        public bool CanPutBook(Book book, int quantity, out ErrorCode errorCode)
+        public bool CanPutBook(BookData book, int quantity, out ErrorCode errorCode)
         {
             errorCode = ErrorCode.NONE;
 
@@ -37,13 +37,13 @@ namespace Data
                 return false;
             }
 
-            if (book.HeightMm > HeightMm)
+            if (book.Height > HeightMm)
             {
                 errorCode = ErrorCode.HEIGHT_LIMIT;
                 return false;
             }
 
-            if (!IsEmpty && StoredBookId != book.BookId)
+            if (!IsEmpty && StoredBookId != book.Id)
             {
                 errorCode = ErrorCode.BOOK_MISMATCH;
                 return false;
@@ -51,7 +51,7 @@ namespace Data
 
             if (IsEmpty)
             {
-                MaxCapacity = Mathf.FloorToInt((float)WidthMm / book.ThicknessMm);
+                MaxCapacity = Mathf.FloorToInt((float)WidthMm / book.Thickness);
                 if (MaxCapacity == 0)
                 {
                     errorCode = ErrorCode.CAPACITY_FULL;
@@ -69,13 +69,13 @@ namespace Data
             return true;
         }
 
-        public void PutBook(Book book, int quantity)
+        public void PutBook(BookData book, int quantity)
         {
             if (IsEmpty)
             {
-                StoredBookId = book.BookId;
+                StoredBookId = book.Id;
                 StoredBookTitle = book.Title;
-                MaxCapacity = Mathf.FloorToInt((float)WidthMm / book.ThicknessMm);
+                MaxCapacity = Mathf.FloorToInt((float)WidthMm / book.Thickness);
             }
             CurrentStock += quantity;
         }

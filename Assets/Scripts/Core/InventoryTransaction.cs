@@ -68,11 +68,11 @@ namespace Core
     {
         private readonly WarehouseInventory _warehouse;
         private readonly Cell _cell;
-        private readonly Book _book;
+        private readonly BookData _book;
         private bool _warehouseUpdated = false;
         private bool _cellUpdated = false;
 
-        public PutTransaction(WarehouseInventory warehouse, Cell cell, Book book, int quantity)
+        public PutTransaction(WarehouseInventory warehouse, Cell cell, BookData book, int quantity)
         {
             _warehouse = warehouse;
             _cell = cell;

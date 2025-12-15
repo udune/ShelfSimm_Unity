@@ -32,10 +32,6 @@ namespace Managers
         [SerializeField] private GridRenderer gridRenderer;
         [SerializeField] private SimulationUIController simulationUIController;
 
-        [Header("임시 데이터")]
-        [SerializeField] private List<Cell> allCells;
-        [SerializeField] private List<Book> allBooks;
-
         public float ElapsedTime { get; private set; }
         public float AverageTaskTime => _summary != null && _summary.success > 0 ? ElapsedTime / _summary.success : 0;
 
@@ -44,6 +40,7 @@ namespace Managers
         private bool _isRunning;
         private bool _isPaused;
         private string _currentRunId;
+        private List<JobResult> _jobResults;
 
         private const float API_JOB_PROCESSING_DELAY = 0.5f;
         #endregion
@@ -103,7 +100,6 @@ namespace Managers
             List<BookDto> loadedBookDtos = null;
             yield return ApiClient.Instance.GetAllBooks(
                 bookDtos => {
-                    allBooks = bookDtos.Select(dto => new Book($"BOOK_{dto.id}", dto.title, dto.thicknessMn, dto.heightMm)).ToList();
                     loadedBookDtos = bookDtos;
                     booksLoaded = true;
                 },
@@ -223,18 +219,10 @@ namespace Managers
 
             _summary = new Summary();
             _jobQueue = new Queue<Job>();
+            _jobResults = new List<JobResult>();
             _isRunning = false;
             _isPaused = false;
             ElapsedTime = 0f;
-
-            if (allBooks == null || allBooks.Count == 0)
-            {
-                allBooks = new List<Book>();
-            }
-            if (allCells == null || allCells.Count == 0)
-            {
-                allCells = new List<Cell>();
-            }
 
             if (cellsLayout != null && cellsLayout.cells != null)
             {
@@ -242,14 +230,6 @@ namespace Managers
             }
 
             InitializeGrid();
-
-            if (cellsLayout != null && cellsLayout.cells != null && gridRenderer != null)
-            {
-                foreach (var cellDef in cellsLayout.cells)
-                {
-                    allCells.Add(new Cell(cellDef.code, cellDef.width, cellDef.height));
-                }
-            }
         }
 
         private void InitializeGrid()
@@ -310,7 +290,7 @@ namespace Managers
                 Job nextJob = _jobQueue.Dequeue();
 
                 Cell targetCell = FindCellByCode(nextJob.CellCode);
-                Book targetBook = FindBookByTitle(nextJob.BookTitle);
+                BookData targetBook = FindBookByTitle(nextJob.BookTitle);
 
                 if (targetCell != null && targetBook != null)
                 {
@@ -320,7 +300,7 @@ namespace Managers
                 else
                 {
                     Debug.LogError($"작업 처리 불가: Cell({nextJob.CellCode}) 또는 Book({nextJob.BookTitle})을 찾을 수 없음");
-                    OnJobFinished(nextJob, ErrorCode.INVALID_CODE);
+                    OnJobFinished(nextJob, ErrorCode.INVALID_CODE, null);
                 }
             }
             else
@@ -329,8 +309,13 @@ namespace Managers
             }
         }
 
-        private void OnJobFinished(Job job, ErrorCode resultCode)
+        private void OnJobFinished(Job job, ErrorCode resultCode, JobResult jobResult)
         {
+            if (jobResult != null)
+            {
+                _jobResults.Add(jobResult);
+            }
+
             if (resultCode == ErrorCode.NONE)
             {
                 RecordSuccess();
@@ -380,13 +365,12 @@ namespace Managers
 
             while (_jobQueue.Count > 0)
             {
-                OnJobFinished(_jobQueue.Dequeue(), ErrorCode.CANCELLED_BY_STOP);
+                OnJobFinished(_jobQueue.Dequeue(), ErrorCode.CANCELLED_BY_STOP, null);
             }
 
             if (useApiMode && !string.IsNullOrEmpty(_currentRunId))
             {
-                var statusReq = new UpdateRunStatusRequest { status = "COMPLETED" };
-                StartCoroutine(ApiClient.Instance.UpdateRunStatus(_currentRunId, statusReq));
+                StartCoroutine(SendJobResultsToAPI());
             }
 
             Debug.Log(_summary.ToString());
@@ -466,7 +450,14 @@ namespace Managers
         #region Helper Methods
         private Cell FindCellByCode(string code)
         {
-            return allCells.Find(c => c.CellCode == code);
+            if (cellsLayout == null || cellsLayout.cells == null)
+                return null;
+
+            var cellDef = cellsLayout.GetCellByCode(code);
+            if (cellDef == null)
+                return null;
+
+            return new Cell(cellDef.code, cellDef.width, cellDef.height);
         }
 
         public Cell GetCellByCode(string code)
@@ -479,9 +470,9 @@ namespace Managers
             return cellsLayout;
         }
 
-        private Book FindBookByTitle(string title)
+        private BookData FindBookByTitle(string title)
         {
-            return allBooks.Find(b => b.Title == title);
+            return bookRegistry.GetBookByTitle(title);
         }
 
         private int CalculatePathLength(string cellCode)
@@ -509,6 +500,61 @@ namespace Managers
             Debug.LogError(errorMessage);
             UIManager.Instance.ShowError(errorMessage);
             _isRunning = false;
+        }
+
+        private IEnumerator SendJobResultsToAPI()
+        {
+            if (_jobResults == null || _jobResults.Count == 0)
+            {
+                Debug.LogWarning("전송할 Job 결과가 없습니다.");
+                yield break;
+            }
+
+            Debug.Log($"시뮬레이션 종료: {_jobResults.Count}개의 Job 결과를 API로 전송합니다...");
+
+            int successCount = 0;
+            int failCount = 0;
+
+            foreach (var jobResult in _jobResults)
+            {
+                if (string.IsNullOrEmpty(jobResult.JobId))
+                {
+                    failCount++;
+                    continue;
+                }
+
+                var request = new UpdateJobResultRequest
+                {
+                    startTs = jobResult.StartTime.ToString("o"),
+                    endTs = jobResult.EndTime.ToString("o"),
+                    travelTimeSec = jobResult.TravelTimeSec,
+                    handleTimeSec = jobResult.HandleTimeSec,
+                    totalTimeSec = jobResult.TotalTimeSec,
+                    pathLengthCells = jobResult.PathLengthCells,
+                    result = (jobResult.ResultCode == ErrorCode.NONE) ? "SUCCESS" : "FAIL",
+                    failReason = (jobResult.ResultCode != ErrorCode.NONE) ? jobResult.ResultCode.ToString() : null,
+                    robotName = jobResult.RobotName
+                };
+
+                bool requestCompleted = false;
+                yield return ApiClient.Instance.UpdateJobResult(jobResult.JobId, request,
+                    () => { successCount++; requestCompleted = true; },
+                    error => { failCount++; requestCompleted = true; Debug.LogError($"Job 결과 전송 실패: {error}"); }
+                );
+
+                if (!requestCompleted)
+                {
+                    failCount++;
+                }
+            }
+
+            Debug.Log($"Job 결과 전송 완료: 성공 {successCount}개, 실패 {failCount}개");
+
+            var statusReq = new UpdateRunStatusRequest { status = "COMPLETED" };
+            yield return ApiClient.Instance.UpdateRunStatus(_currentRunId, statusReq,
+                () => Debug.Log("Run 상태가 COMPLETED로 변경되었습니다."),
+                error => Debug.LogError($"Run 상태 업데이트 실패: {error}")
+            );
         }
         #endregion
     }
