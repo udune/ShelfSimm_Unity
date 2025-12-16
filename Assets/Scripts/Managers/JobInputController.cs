@@ -23,8 +23,7 @@ public class JobInputController : MonoBehaviour
 
         [Header("References")]
         [SerializeField] private BookRegistry bookRegistry;
-        [SerializeField] private CellsLayoutSO cellsLayout;
-
+        
         private JobInputData currentJobInput = new JobInputData();
         private bool isInitialized = false;
 
@@ -158,7 +157,7 @@ public class JobInputController : MonoBehaviour
 
         private bool IsValidBookshelfCell(string cellCode)
         {
-            return cellsLayout.GetCellByCode(cellCode) != null;
+            return ConfigManager.Instance.CellsLayout.GetCellByCode(cellCode) != null;
         }
 
         private void OnActionTypeChanged(int value)

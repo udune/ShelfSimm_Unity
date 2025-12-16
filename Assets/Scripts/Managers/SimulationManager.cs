@@ -17,16 +17,12 @@ namespace Managers
         #endregion
 
         #region Fields & Properties
-        [Header("핵심 설정")]
-        [SerializeField] private SimulationConfig config;
-
         [Header("API 연동 설정")]
         [SerializeField] private bool useApiMode = true;
 
         [Header("내부 컴포넌트 참조")]
         [SerializeField] private RobotController robotController;
         [SerializeField] private SimpleAStarPathFinder pathFinder;
-        [SerializeField] private CellsLayoutSO cellsLayout;
         [SerializeField] private BookRegistry bookRegistry;
         [SerializeField] private JobInputController jobInputController;
         [SerializeField] private GridRenderer gridRenderer;
@@ -56,15 +52,12 @@ namespace Managers
             }
 
             Instance = this;
-
-            if (config != null)
-            {
-                config.OnHandleTimeChanged += HandleTimeChanged;
-            }
         }
 
         private void Start()
         {
+            ConfigManager.Instance.SimulationConfig.OnHandleTimeChanged += HandleTimeChanged;
+            
             InitializeSimulation();
 
             if (useApiMode)
@@ -86,7 +79,7 @@ namespace Managers
 
         private void OnDestroy()
         {
-            config.OnHandleTimeChanged -= HandleTimeChanged;
+            ConfigManager.Instance.SimulationConfig.OnHandleTimeChanged -= HandleTimeChanged;
         }
         
         #endregion
@@ -138,10 +131,10 @@ namespace Managers
             {
                 var createRunReq = new CreateRunRequest
                 {
-                    randomSeed = config.randomSeed,
-                    handleTimeSec = config.handleTime,
-                    robotSpeedCellsPerSec = config.robotSpeed,
-                    topN = config.topN
+                    randomSeed = ConfigManager.Instance.SimulationConfig.randomSeed,
+                    handleTimeSec = ConfigManager.Instance.SimulationConfig.handleTime,
+                    robotSpeedCellsPerSec = ConfigManager.Instance.SimulationConfig.robotSpeed,
+                    topN = ConfigManager.Instance.SimulationConfig.topN
                 };
                 bool runCreated = false;
                 yield return ApiClient.Instance.CreateRun(createRunReq,
@@ -166,7 +159,7 @@ namespace Managers
             {
                 runId = _currentRunId,
                 jobs = jobDtos,
-                layoutId = cellsLayout != null ? cellsLayout.layout_hash : ""
+                layoutId = ConfigManager.Instance.CellsLayout.layout_hash
             };
 
             bool jobsBatched = false;
@@ -215,7 +208,7 @@ namespace Managers
         {
             Time.timeScale = 1f;
             Time.fixedDeltaTime = 0.02f;
-            Random.InitState(config.randomSeed);
+            Random.InitState(ConfigManager.Instance.SimulationConfig.randomSeed);
 
             _summary = new Summary();
             _jobQueue = new Queue<Job>();
@@ -224,10 +217,7 @@ namespace Managers
             _isPaused = false;
             ElapsedTime = 0f;
 
-            if (cellsLayout != null && cellsLayout.cells != null)
-            {
-                cellsLayout.UpdateCellPositionsFromCodes();
-            }
+            ConfigManager.Instance.CellsLayout.UpdateCellPositionsFromCodes();
 
             InitializeGrid();
         }
@@ -236,20 +226,17 @@ namespace Managers
         {
             gridRenderer.Init();
 
-            if (cellsLayout.cells != null)
+            foreach (var cellDef in ConfigManager.Instance.CellsLayout.cells)
             {
-                foreach (var cellDef in cellsLayout.cells)
-                {
-                    gridRenderer.UpdateCell(cellDef.X, cellDef.Y, "bookshelf");
+                gridRenderer.UpdateCell(cellDef.X, cellDef.Y, "bookshelf");
 
-                    if (pathFinder != null)
-                    {
-                        pathFinder.AddObstacle(new Vector2Int(cellDef.X, cellDef.Y));
-                    }
+                if (pathFinder != null)
+                {
+                    pathFinder.AddObstacle(new Vector2Int(cellDef.X, cellDef.Y));
                 }
             }
 
-            gridRenderer.UpdateCell(cellsLayout.warehouse.x, cellsLayout.warehouse.y, "empty");
+            gridRenderer.UpdateCell(ConfigManager.Instance.CellsLayout.warehouse.x, ConfigManager.Instance.CellsLayout.warehouse.y, "empty");
             gridRenderer.RenderChanges();
         }
         #endregion
@@ -374,10 +361,7 @@ namespace Managers
             }
 
             Debug.Log(_summary.ToString());
-            if (UIManager.Instance != null)
-            {
-                UIManager.Instance.ShowSummary(_summary);
-            }
+            SimulationUIController.Instance.ShowSummary(_summary);
 
             Time.timeScale = 0f;
         }
@@ -438,7 +422,7 @@ namespace Managers
 
         private void UpdateDashboard()
         {
-            UIManager.Instance.UpdateDashboard(_summary);
+            SimulationUIController.Instance.UpdateDashboard(_summary);
         }
 
         private void HandleTimeChanged(float newHandleTime)
@@ -450,10 +434,7 @@ namespace Managers
         #region Helper Methods
         private Cell FindCellByCode(string code)
         {
-            if (cellsLayout == null || cellsLayout.cells == null)
-                return null;
-
-            var cellDef = cellsLayout.GetCellByCode(code);
+            var cellDef = ConfigManager.Instance.CellsLayout.GetCellByCode(code);
             if (cellDef == null)
                 return null;
 
@@ -465,11 +446,6 @@ namespace Managers
             return FindCellByCode(code);
         }
 
-        public CellsLayoutSO GetCellsLayout()
-        {
-            return cellsLayout;
-        }
-
         private BookData FindBookByTitle(string title)
         {
             return bookRegistry.GetBookByTitle(title);
@@ -477,18 +453,13 @@ namespace Managers
 
         private int CalculatePathLength(string cellCode)
         {
-            if (pathFinder == null || cellsLayout == null)
-            {
-                return 0;
-            }
-
-            CellDef cellDef = cellsLayout.GetCellByCode(cellCode);
+            CellDef cellDef = ConfigManager.Instance.CellsLayout.GetCellByCode(cellCode);
             if (cellDef == null)
             {
                 return 0;
             }
 
-            Vector2Int start = cellsLayout.warehouse;
+            Vector2Int start = ConfigManager.Instance.CellsLayout.warehouse;
             Vector2Int goal = new Vector2Int(cellDef.X, cellDef.Y);
 
             List<Vector2Int> path = pathFinder.FindPath(start, goal);
@@ -498,7 +469,7 @@ namespace Managers
         private void HandleApiInitializationFailure(string errorMessage)
         {
             Debug.LogError(errorMessage);
-            UIManager.Instance.ShowError(errorMessage);
+            SimulationUIController.Instance.ShowError(errorMessage);
             _isRunning = false;
         }
 

@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using API;
 using Data;
+using Managers;
 using UnityEngine;
 
 namespace Core
@@ -9,9 +10,7 @@ namespace Core
     public class RobotController : MonoBehaviour
     {
         [Header("내부 설정")]
-        [SerializeField] private SimulationConfig config;
         [SerializeField] private SimpleAStarPathFinder pathFinder;
-        [SerializeField] private CellsLayoutSO cellsLayout;
 
         [Header("시각화")]
         [SerializeField] private Transform robotTransform;
@@ -37,7 +36,7 @@ namespace Core
 
         private void Update()
         {
-            if (isStopped || isPaused || config == null)
+            if (isStopped || isPaused)
             {
                 return;
             }
@@ -59,7 +58,7 @@ namespace Core
         private void UpdateMoving()
         {
             moveTimer += Time.deltaTime;
-            if (moveTimer >= config.moveTimeoutSec)
+            if (moveTimer >= ConfigManager.Instance.SimulationConfig.moveTimeoutSec)
             {
                 Debug.LogError("로봇 이동 타임아웃");
                 HandleJobCompletion(ErrorCode.ROUTE_TIMEOUT);
@@ -72,7 +71,7 @@ namespace Core
         private void UpdateHandling()
         {
             handleTimer += Time.deltaTime;
-            if (handleTimer >= config.handleTime)
+            if (handleTimer >= ConfigManager.Instance.SimulationConfig.handleTime)
             {
                 OnHandleComplete();
             }
@@ -92,7 +91,7 @@ namespace Core
             }
 
             cellMoveTimer += Time.deltaTime;
-            float cellMoveTime = 1f / config.robotSpeed;
+            float cellMoveTime = 1f / ConfigManager.Instance.SimulationConfig.robotSpeed;
 
             if (cellMoveTimer >= cellMoveTime)
             {
@@ -162,14 +161,7 @@ namespace Core
                 return;
             }
 
-            if (cellsLayout == null)
-            {
-                Debug.LogError("CellsLayout이 없습니다.");
-                HandleJobCompletion(ErrorCode.INVALID_CODE);
-                return;
-            }
-
-            CellDef cellDef = cellsLayout.GetCellByCode(job.CellCode);
+            CellDef cellDef = ConfigManager.Instance.CellsLayout.GetCellByCode(job.CellCode);
             if (cellDef == null)
             {
                 Debug.LogError($"셀을 찾을 수 없습니다: {job.CellCode}");
@@ -177,7 +169,7 @@ namespace Core
                 return;
             }
 
-            Vector2Int warehouse = cellsLayout.warehouse;
+            Vector2Int warehouse = ConfigManager.Instance.CellsLayout.warehouse;
             Vector2Int goalPos = new Vector2Int(cellDef.X, cellDef.Y);
 
             if (pathFinder != null)
@@ -219,13 +211,7 @@ namespace Core
 
         private void StartReturning()
         {
-            if (cellsLayout == null)
-            {
-                HandleJobCompletion(ErrorCode.NONE);
-                return;
-            }
-
-            Vector2Int warehouse = cellsLayout.warehouse;
+            Vector2Int warehouse = ConfigManager.Instance.CellsLayout.warehouse;
 
             if (pathFinder != null)
             {
@@ -260,20 +246,20 @@ namespace Core
 
         private JobResult CreateJobResult(ErrorCode resultCode, DateTime endTime, float totalTime)
         {
-            if (config == null || currentJob == null)
+            if (currentJob == null)
             {
                 return null;
             }
 
-            float travelTimeSec = (config.robotSpeed > 0) ? (pathLength / config.robotSpeed) : 0f;
-            float calculatedTotalTime = travelTimeSec + config.handleTime;
+            float travelTimeSec = (ConfigManager.Instance.SimulationConfig.robotSpeed > 0) ? (pathLength / ConfigManager.Instance.SimulationConfig.robotSpeed) : 0f;
+            float calculatedTotalTime = travelTimeSec + ConfigManager.Instance.SimulationConfig.handleTime;
 
             return new JobResult(
                 currentJob.JobId,
                 jobStartTime,
                 endTime,
                 travelTimeSec,
-                config.handleTime,
+                ConfigManager.Instance.SimulationConfig.handleTime,
                 calculatedTotalTime,
                 pathLength,
                 resultCode,

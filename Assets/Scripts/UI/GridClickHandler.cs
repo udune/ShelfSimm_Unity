@@ -106,11 +106,6 @@ namespace UI
 
         private Cell GetCellData(string cellCode)
         {
-            if (SimulationManager.Instance == null)
-            {
-                return null;
-            }
-
             return SimulationManager.Instance.GetCellByCode(cellCode);
         }
 

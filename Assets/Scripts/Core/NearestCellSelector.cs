@@ -43,7 +43,7 @@ namespace Core
             if (tiebreakerConfig != null)
             {
                 tiebreakerService = new TiebreakerService(tiebreakerConfig);
-                DeterminismLogger.LogInitialization(tiebreakerConfig, tiebreakerConfig.randomSeed);
+                Debug.Log($"=== Deterministic Init: tiebreak={tiebreakerConfig.mode.ToString().ToLower()} seed={tiebreakerConfig.randomSeed} ===");
             }
             else
             {

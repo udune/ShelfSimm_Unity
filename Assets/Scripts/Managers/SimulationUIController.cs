@@ -11,10 +11,11 @@ namespace UI
 {
     public class SimulationUIController : MonoBehaviour
     {
+        public static SimulationUIController Instance { get; private set; }
+
         [Header("References")]
         [SerializeField] private JobInputController jobInputController;
         [SerializeField] private BookRegistry bookRegistry;
-        [SerializeField] private CellsLayoutSO cellsLayout;
 
         [Header("Job List UI")]
         [SerializeField] private Transform jobListContainer;
@@ -26,10 +27,43 @@ namespace UI
         [SerializeField] private Button clearAllButton;
         [SerializeField] private Button startSimulationButton;
 
+        [Header("Dashboard Buttons")]
+        [SerializeField] private Button pauseResumeButton;
+        [SerializeField] private TextMeshProUGUI pauseResumeButtonText;
+        [SerializeField] private Button stopButton;
+
+        [Header("Dashboard UI")]
+        [SerializeField] private TextMeshProUGUI completedCountText;
+        [SerializeField] private TextMeshProUGUI elapsedTimeText;
+        [SerializeField] private TextMeshProUGUI averageTimeText;
+
+        [Header("Summary UI")]
+        [SerializeField] private GameObject summaryPanel;
+        [SerializeField] private TextMeshProUGUI summaryText;
+
+        [Header("Error UI")]
+        [SerializeField] private GameObject errorPanel;
+        [SerializeField] private TextMeshProUGUI errorText;
+
         [Header("Status")]
         [SerializeField] private TextMeshProUGUI statusText;
 
         private List<Job> jobList = new List<Job>();
+        private bool isPaused = false;
+
+        private void Awake()
+        {
+            if (Instance != null && Instance != this)
+            {
+                Destroy(gameObject);
+                return;
+            }
+
+            Instance = this;
+
+            summaryPanel.SetActive(false);
+            errorPanel.SetActive(false);
+        }
 
         private void Start()
         {
@@ -37,6 +71,11 @@ namespace UI
             addJobButton.onClick.AddListener(OnAddJobClicked);
             clearAllButton.onClick.AddListener(OnClearAllClicked);
             startSimulationButton.onClick.AddListener(OnStartSimulationClicked);
+            pauseResumeButton.onClick.AddListener(TogglePauseResume);
+            stopButton.onClick.AddListener(StopSimulation);
+
+            pauseResumeButtonText.text = "중지";
+
             UpdateUI();
         }
 
@@ -100,7 +139,7 @@ namespace UI
 
         private bool IsValidBookshelfCell(string cellCode)
         {
-            return cellsLayout.GetCellByCode(cellCode) != null;
+            return ConfigManager.Instance.CellsLayout.GetCellByCode(cellCode) != null;
         }
 
         private void OnAddJobClicked()
@@ -207,6 +246,55 @@ namespace UI
         {
             jobList.Clear();
             UpdateJobList();
+        }
+
+        public void UpdateDashboard(Summary summary)
+        {
+            completedCountText.text = $"완료 건수: {summary.success}";
+            elapsedTimeText.text = $"경과 시간: {FormatTime(SimulationManager.Instance.ElapsedTime)}";
+            averageTimeText.text = $"평균 처리 시간: {FormatTime(SimulationManager.Instance.AverageTaskTime)}";
+        }
+
+        public void ShowSummary(Summary summary)
+        {
+            summaryPanel.SetActive(true);
+            summaryText.text = summary.ToString();
+        }
+
+        public void CloseSummary()
+        {
+            summaryPanel.SetActive(false);
+        }
+
+        public void ShowError(string errorMessage)
+        {
+            Debug.LogError(errorMessage);
+            errorPanel.SetActive(true);
+            errorText.text = errorMessage;
+        }
+
+        public void CloseError()
+        {
+            errorPanel.SetActive(false);
+        }
+
+        private void TogglePauseResume()
+        {
+            isPaused = !isPaused;
+            SimulationManager.Instance.TogglePause();
+            pauseResumeButtonText.text = isPaused ? "재개" : "중지";
+        }
+
+        private void StopSimulation()
+        {
+            SimulationManager.Instance.StopSimulation();
+        }
+
+        private string FormatTime(float timeInSeconds)
+        {
+            int minutes = (int)timeInSeconds / 60;
+            int seconds = (int)timeInSeconds % 60;
+            return $"{minutes:00}:{seconds:00}";
         }
     }
 }
