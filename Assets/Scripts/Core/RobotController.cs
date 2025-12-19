@@ -219,11 +219,13 @@ namespace Core
             if (currentJob.Action == JobAction.PUT)
             {
                 targetCell.PutBook(targetBook, currentJob.Quantity);
+                targetBook.ChangeStock(-currentJob.Quantity); // 전체 재고 감소
                 Debug.Log($"책 입고 완료: {targetBook.Title} x{currentJob.Quantity}");
             }
             else
             {
                 targetCell.PickBook(currentJob.Quantity);
+                targetBook.ChangeStock(currentJob.Quantity); // 전체 재고 증가
                 Debug.Log($"책 출고 완료: x{currentJob.Quantity}");
             }
 

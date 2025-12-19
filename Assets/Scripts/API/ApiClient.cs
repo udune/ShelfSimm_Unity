@@ -26,6 +26,13 @@ namespace API
         public string status;
         public string createdAt;
     }
+
+    [Serializable]
+    public class RunListResponse
+    {
+        public RunResponse[] items;
+        public int totalCount;
+    }
     
     [Serializable]
     public class JobDto
@@ -83,6 +90,7 @@ namespace API
         public int heightMm;
         public string sku;
         public string createdAt;
+        public int stockQuantity;
     }
 
     [Serializable]
@@ -93,6 +101,7 @@ namespace API
         public string cellCode;
         public string bookTitle;
         public int quantity;
+        public string result; // 작업 결과 (Success/Fail)
     }
 
     [Serializable]
@@ -109,6 +118,12 @@ namespace API
         public BookDto[] items;
     }
 
+    [Serializable]
+    public class JobListDto
+    {
+        public JobDetailsDto[] items;
+    }
+
     #endregion
 
     public class ApiClient : MonoBehaviour
@@ -118,6 +133,9 @@ namespace API
         [Header("API 설정")]
         [SerializeField] private string baseUrl = "https://shelfsim-api-190183336439.asia-northeast3.run.app/api";
         [SerializeField] private bool logRequests = true;
+
+        [Header("보안 설정 (개발/테스트 전용)")]
+        [SerializeField] private bool bypassSslValidation = false;
 
         private string currentRunId;
         private bool hasShownSecurityWarning = false;
@@ -130,6 +148,14 @@ namespace API
                 return;
             }
             Instance = this;
+
+            if (bypassSslValidation)
+            {
+                #if !UNITY_EDITOR && !DEVELOPMENT_BUILD
+                bypassSslValidation = false;
+                Debug.LogError("[API] Production build detected - SSL bypass disabled for security");
+                #endif
+            }
         }
 
         public IEnumerator CreateRun(CreateRunRequest request, Action<RunResponse> onSuccess, Action<string> onError = null)
@@ -140,6 +166,7 @@ namespace API
 
             using (UnityWebRequest www = UnityWebRequest.Post(url, json, "application/json"))
             {
+                ConfigureCertificateHandler(www);
                 yield return www.SendWebRequest();
 
                 if (www.result == UnityWebRequest.Result.Success)
@@ -164,6 +191,7 @@ namespace API
 
             using (UnityWebRequest www = UnityWebRequest.Post(url, json, "application/json"))
             {
+                ConfigureCertificateHandler(www);
                 yield return www.SendWebRequest();
 
                 if (www.result == UnityWebRequest.Result.Success)
@@ -195,6 +223,7 @@ namespace API
                 www.uploadHandler = new UploadHandlerRaw(bodyRaw);
                 www.downloadHandler = new DownloadHandlerBuffer();
                 www.SetRequestHeader("Content-Type", "application/json");
+                ConfigureCertificateHandler(www);
 
                 yield return www.SendWebRequest();
 
@@ -204,7 +233,7 @@ namespace API
                 }
                 else
                 {
-                    Debug.LogError($"[API] Error on PATCH {url}: {www.error}");
+                    Debug.LogError($"[API] Error on PATCH {url}: {www.error}. Response Code: {www.responseCode}");
                     Debug.LogError($"[API] Response: {www.downloadHandler.text}");
                     onError?.Invoke($"{www.error}\n{www.downloadHandler.text}");
                 }
@@ -223,6 +252,7 @@ namespace API
                 www.uploadHandler = new UploadHandlerRaw(bodyRaw);
                 www.downloadHandler = new DownloadHandlerBuffer();
                 www.SetRequestHeader("Content-Type", "application/json");
+                ConfigureCertificateHandler(www);
 
                 yield return www.SendWebRequest();
 
@@ -245,6 +275,7 @@ namespace API
 
             using (UnityWebRequest www = UnityWebRequest.Get(url))
             {
+                ConfigureCertificateHandler(www);
                 yield return www.SendWebRequest();
 
                 if (www.result == UnityWebRequest.Result.Success)
@@ -266,6 +297,7 @@ namespace API
 
             using (UnityWebRequest www = UnityWebRequest.Get(url))
             {
+                ConfigureCertificateHandler(www);
                 yield return www.SendWebRequest();
 
                 if (www.result == UnityWebRequest.Result.Success)
@@ -301,6 +333,7 @@ namespace API
 
             using (UnityWebRequest www = UnityWebRequest.Get(url))
             {
+                ConfigureCertificateHandler(www);
                 yield return www.SendWebRequest();
 
                 if (www.result == UnityWebRequest.Result.Success)
@@ -316,9 +349,96 @@ namespace API
             }
         }
 
+        public IEnumerator GetRuns(int page, int pageSize, Action<RunListResponse> onSuccess, Action<string> onError = null)
+        {
+            string url = $"{baseUrl}/Runs?page={page}&pageSize={pageSize}";
+            if (logRequests) Debug.Log($"[API] GET {url}");
+
+            using (UnityWebRequest www = UnityWebRequest.Get(url))
+            {
+                ConfigureCertificateHandler(www);
+                yield return www.SendWebRequest();
+
+                if (www.result == UnityWebRequest.Result.Success)
+                {
+                    // API 응답이 배열 형태인지 객체 형태인지 확인 필요.
+                    // 명세서에는 페이징 지원이라고 되어 있으므로 { items: [], totalCount: 0 } 형태일 가능성이 높음.
+                    // 하지만 현재 RunResponse[] 형태로 올 수도 있으므로 확인 필요.
+                    // 여기서는 일단 JSON을 그대로 파싱 시도.
+                    
+                    // 만약 배열로 온다면:
+                    string json = www.downloadHandler.text;
+                    if (json.TrimStart().StartsWith("["))
+                    {
+                        json = $"{{\"items\":{json}, \"totalCount\":0}}";
+                    }
+                    
+                    var response = JsonUtility.FromJson<RunListResponse>(json);
+                    onSuccess?.Invoke(response);
+                }
+                else
+                {
+                    Debug.LogError($"[API] Error: {www.error}");
+                    onError?.Invoke($"{www.error}\n{www.downloadHandler.text}");
+                }
+            }
+        }
+
+        public IEnumerator GetJobsByRunId(string runId, Action<List<JobDetailsDto>> onSuccess, Action<string> onError = null)
+        {
+            string url = $"{baseUrl}/Jobs?runId={runId}";
+            if (logRequests) Debug.Log($"[API] GET {url}");
+
+            using (UnityWebRequest www = UnityWebRequest.Get(url))
+            {
+                ConfigureCertificateHandler(www);
+                yield return www.SendWebRequest();
+
+                if (www.result == UnityWebRequest.Result.Success)
+                {
+                    string json = www.downloadHandler.text;
+                    // 배열로 온다고 가정
+                    if (json.TrimStart().StartsWith("["))
+                    {
+                        json = $"{{\"items\":{json}}}";
+                    }
+                    
+                    var dto = JsonUtility.FromJson<JobListDto>(json);
+                    var jobList = new List<JobDetailsDto>(dto.items);
+                    onSuccess?.Invoke(jobList);
+                }
+                else
+                {
+                    Debug.LogError($"[API] Error: {www.error}");
+                    onError?.Invoke($"{www.error}\n{www.downloadHandler.text}");
+                }
+            }
+        }
+
         public string GetCurrentRunId()
         {
             return currentRunId;
+        }
+
+        private void ConfigureCertificateHandler(UnityWebRequest request)
+        {
+            if (bypassSslValidation)
+            {
+                if (!hasShownSecurityWarning)
+                {
+                    Debug.LogWarning("[API] SSL validation bypassed - dev/test only");
+                    hasShownSecurityWarning = true;
+                }
+                request.certificateHandler = new BypassCertificate();
+            }
+        }
+    }
+
+    public class BypassCertificate : CertificateHandler
+    {
+        protected override bool ValidateCertificate(byte[] certificateData)
+        {
+            return true;
         }
     }
 }
