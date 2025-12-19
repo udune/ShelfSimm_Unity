@@ -271,6 +271,9 @@ namespace Core
             float travelTimeSec = (ConfigManager.Instance.SimulationConfig.robotSpeed > 0) ? (pathLength / ConfigManager.Instance.SimulationConfig.robotSpeed) : 0f;
             float calculatedTotalTime = travelTimeSec + ConfigManager.Instance.SimulationConfig.handleTime;
 
+            string resultString = (resultCode == ErrorCode.NONE) ? "Success" : "Failed";
+            string failReason = (resultCode == ErrorCode.NONE) ? "" : resultCode.ToString();
+
             return new JobResult(
                 currentJob.JobId,
                 jobStartTime,
@@ -279,7 +282,8 @@ namespace Core
                 ConfigManager.Instance.SimulationConfig.handleTime,
                 calculatedTotalTime,
                 pathLength,
-                resultCode,
+                resultString,
+                failReason,
                 gameObject.name
             );
         }

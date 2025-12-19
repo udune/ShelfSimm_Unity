@@ -13,15 +13,18 @@ namespace Managers
     public class SimulationManager : MonoBehaviour
     {
         #region Singleton
+
         public static SimulationManager Instance { get; private set; }
+
         #endregion
 
         #region Fields & Properties
-        [Header("API 연동 설정")]
-        [SerializeField] private bool useApiMode = true;
 
-        [Header("내부 컴포넌트 참조")]
-        [SerializeField] private RobotController robotController;
+        [Header("API 연동 설정")] [SerializeField] private bool useApiMode = true;
+
+        [Header("내부 컴포넌트 참조")] [SerializeField]
+        private RobotController robotController;
+
         [SerializeField] private SimpleAStarPathFinder pathFinder;
         [SerializeField] private BookRegistry bookRegistry;
         [SerializeField] private JobInputController jobInputController;
@@ -29,16 +32,17 @@ namespace Managers
         [SerializeField] private SimulationUIController simulationUIController;
 
         public float ElapsedTime { get; private set; }
-        public float AverageTaskTime => _summary != null && _summary.success > 0 ? ElapsedTime / _summary.success : 0;
+        public float AverageTaskTime => summary != null && summary.success > 0 ? ElapsedTime / summary.success : 0;
 
         private Queue<Job> _jobQueue;
-        private Summary _summary;
+        private Summary summary;
         private bool _isRunning;
         private bool _isPaused;
         private string _currentRunId;
         private List<JobResult> _jobResults;
 
         private const float API_JOB_PROCESSING_DELAY = 0.5f;
+
         #endregion
 
         #region Unity Lifecycle Methods
@@ -57,13 +61,10 @@ namespace Managers
         private void Start()
         {
             ConfigManager.Instance.SimulationConfig.OnHandleTimeChanged += HandleTimeChanged;
-            
+
             InitializeSimulation();
 
-            if (useApiMode)
-            {
-                StartCoroutine(InitializeAPI());
-            }
+            if (useApiMode) StartCoroutine(InitializeAPI());
 
             Debug.Log("시뮬레이션 준비 완료. UI에서 작업을 입력하고 실행하세요.");
         }
@@ -81,18 +82,20 @@ namespace Managers
         {
             ConfigManager.Instance.SimulationConfig.OnHandleTimeChanged -= HandleTimeChanged;
         }
-        
+
         #endregion
 
         #region Initialization
+
         private IEnumerator InitializeAPI()
         {
             Debug.Log("API 모드 초기화 중...");
 
-            bool booksLoaded = false;
+            var booksLoaded = false;
             List<BookDto> loadedBookDtos = null;
             yield return ApiClient.Instance.GetAllBooks(
-                bookDtos => {
+                bookDtos =>
+                {
                     loadedBookDtos = bookDtos;
                     booksLoaded = true;
                 },
@@ -116,13 +119,9 @@ namespace Managers
         public void PrepareSimulation(List<Job> jobs)
         {
             if (useApiMode)
-            {
                 StartCoroutine(PrepareSimulationWithAPI(jobs));
-            }
             else
-            {
                 StartSimulationWithJobs(jobs);
-            }
         }
 
         private IEnumerator PrepareSimulationWithAPI(List<Job> jobs)
@@ -136,9 +135,13 @@ namespace Managers
                     robotSpeedCellsPerSec = ConfigManager.Instance.SimulationConfig.robotSpeed,
                     topN = ConfigManager.Instance.SimulationConfig.topN
                 };
-                bool runCreated = false;
+                var runCreated = false;
                 yield return ApiClient.Instance.CreateRun(createRunReq,
-                    response => { _currentRunId = response.id; runCreated = true; },
+                    response =>
+                    {
+                        _currentRunId = response.id;
+                        runCreated = true;
+                    },
                     error => Debug.LogError($"Run 생성 실패: {error}")
                 );
                 if (!runCreated)
@@ -162,9 +165,9 @@ namespace Managers
                 layoutId = ConfigManager.Instance.CellsLayout.layout_hash
             };
 
-            bool jobsBatched = false;
+            var jobsBatched = false;
             yield return ApiClient.Instance.CreateJobsBatch(createJobsReq,
-                success =>{ jobsBatched = true; },
+                success => { jobsBatched = true; },
                 error => Debug.LogError($"Jobs 생성 실패: {error}")
             );
             if (!jobsBatched)
@@ -175,22 +178,24 @@ namespace Managers
 
             yield return new WaitForSeconds(API_JOB_PROCESSING_DELAY);
 
-            bool idsMapped = false;
+            var idsMapped = false;
             yield return ApiClient.Instance.GetRunDetails(_currentRunId,
-                runDetails => {
+                runDetails =>
+                {
                     var serverJobs = runDetails.jobs.ToDictionary(
-                        j => (j.cellCode, j.bookTitle, j.action),
-                        j => j.id
+                        job => (job.cellCode, job.bookTitle, job.action),
+                        job => job.id
                     );
 
                     foreach (var localJob in jobs)
                     {
                         var key = (localJob.CellCode, localJob.BookTitle, localJob.Action.ToString());
-                        if (serverJobs.TryGetValue(key, out string jobId))
+                        if (serverJobs.TryGetValue(key, out var jobId))
                         {
                             localJob.JobId = jobId;
                         }
                     }
+
                     idsMapped = true;
                 },
                 error => Debug.LogError($"Run 상세 정보 조회 실패: {error}")
@@ -210,7 +215,7 @@ namespace Managers
             Time.fixedDeltaTime = 0.02f;
             Random.InitState(ConfigManager.Instance.SimulationConfig.randomSeed);
 
-            _summary = new Summary();
+            summary = new Summary();
             _jobQueue = new Queue<Job>();
             _jobResults = new List<JobResult>();
             _isRunning = false;
@@ -236,15 +241,18 @@ namespace Managers
                 }
             }
 
-            gridRenderer.UpdateCell(ConfigManager.Instance.CellsLayout.warehouse.x, ConfigManager.Instance.CellsLayout.warehouse.y, "empty");
+            gridRenderer.UpdateCell(ConfigManager.Instance.CellsLayout.warehouse.x,
+                ConfigManager.Instance.CellsLayout.warehouse.y, "empty");
             gridRenderer.RenderChanges();
         }
+
         #endregion
 
         #region Simulation Control
+
         public void StartSimulationWithJobs(List<Job> jobs)
         {
-            if (_jobQueue == null || _summary == null)
+            if (_jobQueue == null || summary == null)
             {
                 Debug.LogWarning("시뮬레이션이 초기화되지 않았습니다. 지금 초기화를 진행합니다.");
                 InitializeSimulation();
@@ -262,10 +270,7 @@ namespace Managers
             Time.timeScale = 1f;
 
             SetTotalTargets(jobs.Count);
-            foreach (var job in jobs)
-            {
-                _jobQueue.Enqueue(job);
-            }
+            foreach (var job in jobs) _jobQueue.Enqueue(job);
 
             TryProcessNextJob();
         }
@@ -274,14 +279,14 @@ namespace Managers
         {
             if (_jobQueue.Count > 0)
             {
-                Job nextJob = _jobQueue.Dequeue();
+                var nextJob = _jobQueue.Dequeue();
 
-                Cell targetCell = FindCellByCode(nextJob.CellCode);
-                BookData targetBook = FindBookByTitle(nextJob.BookTitle);
+                var targetCell = FindCellByCode(nextJob.CellCode);
+                var targetBook = FindBookByTitle(nextJob.BookTitle);
 
                 if (targetCell != null && targetBook != null)
                 {
-                    int pathLength = CalculatePathLength(nextJob.CellCode);
+                    var pathLength = CalculatePathLength(nextJob.CellCode);
                     robotController.StartJob(nextJob, targetCell, targetBook, pathLength, OnJobFinished);
                 }
                 else
@@ -298,10 +303,7 @@ namespace Managers
 
         private void OnJobFinished(Job job, ErrorCode resultCode, JobResult jobResult)
         {
-            if (jobResult != null)
-            {
-                _jobResults.Add(jobResult);
-            }
+            if (jobResult != null) _jobResults.Add(jobResult);
 
             if (resultCode == ErrorCode.NONE)
             {
@@ -318,18 +320,13 @@ namespace Managers
 
         private void ShowErrorInUI(Job job, ErrorCode errorCode)
         {
-            string errorMessage = $"작업 실패 [{job.CellCode}]: {errorCode.ToMessage()}";
+            var errorMessage = $"작업 실패 [{job.CellCode}]: {errorCode.ToMessage()}";
             simulationUIController.ShowStatus(errorMessage, Color.red);
         }
 
         private void CheckSimulationComplete()
         {
-            if (_summary == null)
-            {
-                return;
-            }
-
-            if (_summary.total > 0 && _summary.attempt >= _summary.total)
+            if (summary.total > 0 && summary.attempt >= summary.total)
             {
                 StopSimulation();
             }
@@ -345,10 +342,7 @@ namespace Managers
             _isRunning = false;
             _isPaused = false;
 
-            if (robotController != null)
-            {
-                robotController.Stop();
-            }
+            if (robotController != null) robotController.Stop();
 
             while (_jobQueue.Count > 0)
             {
@@ -360,7 +354,7 @@ namespace Managers
                 StartCoroutine(SendJobResultsToAPI());
             }
 
-            Debug.Log(_summary.ToString());
+            Debug.Log(summary.ToString());
             Time.timeScale = 0f;
         }
 
@@ -389,47 +383,42 @@ namespace Managers
 
             Debug.Log(_isPaused ? "시뮬레이션 일시정지됨." : "시뮬레이션 재개됨.");
         }
+
         #endregion
 
         #region Summary & UI
+
         public void SetTotalTargets(int count)
         {
-            if (_summary != null)
-            {
-                _summary.total = count;
-            }
+            summary.total = count;
         }
 
         public void RecordSuccess()
         {
-            if (_summary != null)
-            {
-                _summary.RecordSuccess();
-            }
+            summary.RecordSuccess();
             UpdateDashboard();
         }
 
         public void RecordFailure(ErrorCode errorCode)
         {
-            if (_summary != null)
-            {
-                _summary.RecordFailure(errorCode);
-            }
+            summary.RecordFailure(errorCode);
             UpdateDashboard();
         }
 
         private void UpdateDashboard()
         {
-            SimulationUIController.Instance.UpdateDashboard(_summary);
+            SimulationUIController.Instance.UpdateDashboard(summary);
         }
 
         private void HandleTimeChanged(float newHandleTime)
         {
             Debug.Log($"[SimulationManager] HandleTime이 {newHandleTime}으로 변경됨을 감지했습니다.");
         }
+
         #endregion
 
         #region Helper Methods
+
         private Cell FindCellByCode(string code)
         {
             var cellDef = ConfigManager.Instance.CellsLayout.GetCellByCode(code);
@@ -451,22 +440,16 @@ namespace Managers
 
         private int CalculatePathLength(string cellCode)
         {
-            CellDef cellDef = ConfigManager.Instance.CellsLayout.GetCellByCode(cellCode);
-            if (cellDef == null)
-            {
-                return 0;
-            }
+            var cellDef = ConfigManager.Instance.CellsLayout.GetCellByCode(cellCode);
+            if (cellDef == null) return 0;
 
-            Vector2Int start = ConfigManager.Instance.CellsLayout.warehouse;
-            Vector2Int targetCellPos = new Vector2Int(cellDef.X, cellDef.Y);
+            var start = ConfigManager.Instance.CellsLayout.warehouse;
+            var targetCellPos = new Vector2Int(cellDef.X, cellDef.Y);
 
-            Vector2Int? accessiblePos = pathFinder?.FindAccessibleNeighbor(targetCellPos, start);
-            if (!accessiblePos.HasValue)
-            {
-                return 0;
-            }
+            var accessiblePos = pathFinder?.FindAccessibleNeighbor(targetCellPos, start);
+            if (!accessiblePos.HasValue) return 0;
 
-            List<Vector2Int> path = pathFinder.FindPath(start, accessiblePos.Value);
+            var path = pathFinder.FindPath(start, accessiblePos.Value);
             return path != null ? path.Count : 0;
         }
 
@@ -486,8 +469,8 @@ namespace Managers
 
             Debug.Log($"시뮬레이션 종료: {_jobResults.Count}개의 Job 결과를 API로 전송합니다...");
 
-            int successCount = 0;
-            int failCount = 0;
+            var successCount = 0;
+            var failCount = 0;
 
             foreach (var jobResult in _jobResults)
             {
@@ -505,15 +488,24 @@ namespace Managers
                     handleTimeSec = jobResult.HandleTimeSec,
                     totalTimeSec = jobResult.TotalTimeSec,
                     pathLengthCells = jobResult.PathLengthCells,
-                    result = (jobResult.ResultCode == ErrorCode.NONE) ? "SUCCESS" : "FAIL",
-                    failReason = (jobResult.ResultCode != ErrorCode.NONE) ? jobResult.ResultCode.ToString() : null,
+                    result = jobResult.Result,
+                    failReason = jobResult.FailReason,
                     robotName = jobResult.RobotName
                 };
 
-                bool requestCompleted = false;
+                var requestCompleted = false;
                 yield return ApiClient.Instance.UpdateJobResult(jobResult.JobId, request,
-                    () => { successCount++; requestCompleted = true; },
-                    error => { failCount++; requestCompleted = true; Debug.LogError($"Job 결과 전송 실패: {error}"); }
+                    () =>
+                    {
+                        successCount++;
+                        requestCompleted = true;
+                    },
+                    error =>
+                    {
+                        failCount++;
+                        requestCompleted = true;
+                        Debug.LogError($"Job 결과 전송 실패: {error}");
+                    }
                 );
 
                 if (!requestCompleted)
@@ -530,6 +522,7 @@ namespace Managers
                 error => Debug.LogError($"Run 상태 업데이트 실패: {error}")
             );
         }
+
         #endregion
     }
 }

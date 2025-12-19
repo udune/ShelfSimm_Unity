@@ -11,12 +11,13 @@ namespace Data
         public float HandleTimeSec { get; set; }
         public float TotalTimeSec { get; set; }
         public int PathLengthCells { get; set; }
-        public ErrorCode ResultCode { get; set; }
+        public string Result { get; set; }
+        public string FailReason { get; set; }
         public string RobotName { get; set; }
 
         public JobResult(string jobId, DateTime startTime, DateTime endTime,
             float travelTimeSec, float handleTimeSec, float totalTimeSec,
-            int pathLengthCells, ErrorCode resultCode, string robotName)
+            int pathLengthCells, string result, string failReason, string robotName)
         {
             JobId = jobId;
             StartTime = startTime;
@@ -25,7 +26,8 @@ namespace Data
             HandleTimeSec = handleTimeSec;
             TotalTimeSec = totalTimeSec;
             PathLengthCells = pathLengthCells;
-            ResultCode = resultCode;
+            Result = result;
+            FailReason = failReason;
             RobotName = robotName;
         }
     }

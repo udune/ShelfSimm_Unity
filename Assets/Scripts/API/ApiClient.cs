@@ -196,7 +196,11 @@ namespace API
         {
             string url = $"{baseUrl}/Jobs/{jobId}/result";
             string json = JsonUtility.ToJson(request);
-            if (logRequests) Debug.Log($"[API] PATCH {url}");
+            if (logRequests)
+            {
+                Debug.Log($"[API] PATCH {url}");
+                Debug.Log($"[API] Body: {json}");
+            }
 
             using (UnityWebRequest www = new UnityWebRequest(url, "PATCH"))
             {
@@ -214,7 +218,8 @@ namespace API
                 }
                 else
                 {
-                    Debug.LogError($"[API] Error: {www.error}");
+                    Debug.LogError($"[API] Error on PATCH {url}: {www.error}");
+                    Debug.LogError($"[API] Response: {www.downloadHandler.text}");
                     onError?.Invoke($"{www.error}\n{www.downloadHandler.text}");
                 }
             }
