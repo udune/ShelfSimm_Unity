@@ -40,6 +40,7 @@ namespace Managers
         private bool _isPaused;
         private string _currentRunId;
         private List<JobResult> _jobResults;
+        private Dictionary<string, Cell> _cellStates;
 
         private const float API_JOB_PROCESSING_DELAY = 0.5f;
 
@@ -113,7 +114,94 @@ namespace Managers
                 jobInputController.RefreshBookDropdown();
             }
 
-            Debug.Log("API 초기화 완료. 책 정보 로드 완료.");
+            yield return StartCoroutine(RestoreInventoryState());
+
+            Debug.Log("API 초기화 완료. 책 정보 및 재고 상태 복원 완료.");
+        }
+
+        private IEnumerator RestoreInventoryState()
+        {
+            Debug.Log("서버에서 재고 상태를 복원합니다...");
+
+            // 1. 가장 최근 Run ID 조회
+            string latestRunId = null;
+            bool runsLoaded = false;
+            yield return ApiClient.Instance.GetRuns(1, 1, 
+                response =>
+                {
+                    if (response.items != null && response.items.Length > 0)
+                    {
+                        // createdAt 기준으로 정렬된 첫 번째 항목이 가장 최신이라고 가정
+                        latestRunId = response.items[0].id;
+                    }
+                    runsLoaded = true;
+                },
+                error =>
+                {
+                    Debug.LogError($"Run 목록 조회 실패: {error}");
+                    runsLoaded = true;
+                });
+
+            if (!runsLoaded) yield return new WaitUntil(() => runsLoaded);
+
+            if (string.IsNullOrEmpty(latestRunId))
+            {
+                Debug.Log("이전 실행 기록이 없어 재고 상태 복원을 건너뜁니다.");
+                yield break;
+            }
+
+            // 2. 해당 Run의 모든 Job 조회
+            List<JobDetailsDto> jobs = null;
+            bool jobsLoaded = false;
+            yield return ApiClient.Instance.GetJobsByRunId(latestRunId,
+                jobList =>
+                {
+                    jobs = jobList;
+                    jobsLoaded = true;
+                },
+                error =>
+                {
+                    Debug.LogError($"Job 목록 조회 실패 (Run ID: {latestRunId}): {error}");
+                    jobsLoaded = true;
+                });
+
+            if (!jobsLoaded) yield return new WaitUntil(() => jobsLoaded);
+
+            if (jobs == null || jobs.Count == 0)
+            {
+                Debug.Log("작업 기록이 없어 재고 상태 복원을 건너뜁니다.");
+                yield break;
+            }
+
+            // 3. 성공한 Job들을 순서대로 적용하여 재고 상태 재구성
+            int appliedJobs = 0;
+            foreach (var job in jobs.Where(j => j.result == "Success").OrderBy(j => j.id)) // Job ID 순으로 정렬
+            {
+                Cell cell = FindCellByCode(job.cellCode);
+                BookData book = FindBookByTitle(job.bookTitle);
+
+                if (cell == null || book == null) continue;
+
+                if (job.action == "PUT")
+                {
+                    if(cell.CanPutBook(book, job.quantity, out _))
+                    {
+                        cell.PutBook(book, job.quantity);
+                        book.ChangeStock(-job.quantity); // 전체 재고 감소
+                        appliedJobs++;
+                    }
+                }
+                else if (job.action == "PICK")
+                {
+                    if(cell.CanPickBook(job.quantity, out _))
+                    {
+                        cell.PickBook(job.quantity);
+                        book.ChangeStock(job.quantity); // 전체 재고 증가
+                        appliedJobs++;
+                    }
+                }
+            }
+            Debug.Log($"{appliedJobs}개의 작업을 적용하여 재고 상태를 복원했습니다.");
         }
 
         public void PrepareSimulation(List<Job> jobs)
@@ -225,6 +313,15 @@ namespace Managers
             ConfigManager.Instance.CellsLayout.UpdateCellPositionsFromCodes();
 
             InitializeGrid();
+            
+            _cellStates = new Dictionary<string, Cell>();
+            if (ConfigManager.Instance.CellsLayout != null && ConfigManager.Instance.CellsLayout.cells != null)
+            {
+                foreach (var cellDef in ConfigManager.Instance.CellsLayout.cells)
+                {
+                    _cellStates[cellDef.code] = new Cell(cellDef.code, cellDef.width, cellDef.height);
+                }
+            }
         }
 
         private void InitializeGrid()
@@ -421,11 +518,11 @@ namespace Managers
 
         private Cell FindCellByCode(string code)
         {
-            var cellDef = ConfigManager.Instance.CellsLayout.GetCellByCode(code);
-            if (cellDef == null)
-                return null;
-
-            return new Cell(cellDef.code, cellDef.width, cellDef.height);
+            if (_cellStates != null && _cellStates.TryGetValue(code, out var cell))
+            {
+                return cell;
+            }
+            return null;
         }
 
         public Cell GetCellByCode(string code)

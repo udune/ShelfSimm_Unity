@@ -150,6 +150,7 @@ namespace Core
                     thickness: dto.thicknessMn,
                     height: dto.heightMm,
                     width: 150,
+                    stock: dto.stockQuantity,
                     category: "일반",
                     isbn: dto.sku
                 );

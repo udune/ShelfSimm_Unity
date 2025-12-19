@@ -16,12 +16,15 @@ namespace Data
         [SerializeField] private int thickness;
         [SerializeField] private int height;
         [SerializeField] private int width;
+        
+        [Header("재고")]
+        [SerializeField] private int stockQuantity;
 
         [Header("기타")]
         [SerializeField] private string category;
         [SerializeField] private bool isAvailable;
 
-        public BookData(string id, string title, string author, int thickness, int height, int width, string category = "일반", string isbn = "")
+        public BookData(string id, string title, string author, int thickness, int height, int width, int stock, string category = "일반", string isbn = "")
         {
             this.id = id;
             this.title = title;
@@ -29,6 +32,7 @@ namespace Data
             this.thickness = thickness;
             this.height = height;
             this.width = width;
+            this.stockQuantity = stock;
             this.category = category;
             this.isbn = isbn;
             isAvailable = true;
@@ -46,6 +50,7 @@ namespace Data
         public int Thickness => thickness;
         public int Height => height;
         public int Width => width;
+        public int StockQuantity => stockQuantity;
         public string Category => category;
         public bool IsAvailable => isAvailable;
 
@@ -56,6 +61,16 @@ namespace Data
         public void SetAvailability(bool available)
         {
             isAvailable = available;
+        }
+
+        public void SetStockQuantity(int quantity)
+        {
+            stockQuantity = quantity;
+        }
+        
+        public void ChangeStock(int amount)
+        {
+            stockQuantity += amount;
         }
 
         public override string ToString()
