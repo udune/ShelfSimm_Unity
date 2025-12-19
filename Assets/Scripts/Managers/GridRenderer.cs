@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
@@ -5,14 +6,13 @@ using UnityEngine.UI;
 public class GridRenderer : MonoBehaviour
 {
     [Header("그리드 설정")]
-    [SerializeField]
     private RawImage gridImage;
 
     [SerializeField]
-    private int totalColumns = 15;
+    private int totalColumns = 50;
 
     [SerializeField]
-    private int totalRows = 15;
+    private int totalRows = 50;
 
     private readonly Dictionary<Vector2Int, string> cellStates = new();
     private readonly HashSet<Vector2Int> dirtyPixels = new();
@@ -25,15 +25,17 @@ public class GridRenderer : MonoBehaviour
 
     public int Height { get; private set; }
 
+    private void Start()
+    {
+        gridImage = GetComponent<RawImage>();
+    }
+
     public void Init()
     {
-        if (gridImage != null)
-        {
-            var rect = gridImage.rectTransform.rect;
-            Width = Mathf.RoundToInt(rect.width);
-            Height = Mathf.RoundToInt(rect.height);
-        }
-
+        var rect = gridImage.rectTransform.rect;
+        Width = Mathf.RoundToInt(rect.width);
+        Height = Mathf.RoundToInt(rect.height);
+        
         cellWidth = Width / totalColumns;
         cellHeight = Height / totalRows;
 
@@ -42,10 +44,7 @@ public class GridRenderer : MonoBehaviour
         gridTexture = new Texture2D(Width, Height);
         gridTexture.filterMode = FilterMode.Point;
 
-        if (gridImage != null)
-        {
-            gridImage.texture = gridTexture;
-        }
+        gridImage.texture = gridTexture;
 
         ClearGrid();
     }
@@ -95,7 +94,7 @@ public class GridRenderer : MonoBehaviour
         var color = GetColor(type);
 
         var startX = x * cellWidth;
-        var startY = (totalRows - 1 - y) * cellHeight;
+        var startY = y * cellHeight;
 
         for (var py = 0; py < cellHeight; py++)
         {
@@ -111,6 +110,18 @@ public class GridRenderer : MonoBehaviour
         var pos = new Vector2Int(x, y);
         return cellStates.ContainsKey(pos) ? cellStates[pos] : "empty";
     }
+
+    public Vector2 GetCellPixelPosition(int x, int y)
+    {
+        float pixelX = x * cellWidth + cellWidth / 2f;
+        float pixelY = y * cellHeight + cellHeight / 2f;
+        return new Vector2(pixelX, pixelY);
+    }
+
+    public int TotalColumns => totalColumns;
+    public int TotalRows => totalRows;
+    public int CellWidth => cellWidth;
+    public int CellHeight => cellHeight;
 
     private Color GetColor(string type)
     {

@@ -145,5 +145,27 @@ namespace Core
             path.Reverse();
             return path;
         }
+
+        public Vector2Int? FindAccessibleNeighbor(Vector2Int target, Vector2Int from)
+        {
+            var candidates = new List<Vector2Int>();
+
+            foreach (var dir in directions)
+            {
+                var neighbor = target + dir;
+                if (IsWalkable(neighbor))
+                {
+                    candidates.Add(neighbor);
+                }
+            }
+
+            if (candidates.Count == 0)
+            {
+                return null;
+            }
+
+            candidates.Sort((a, b) => CalculateDistance(from, a).CompareTo(CalculateDistance(from, b)));
+            return candidates[0];
+        }
     }
 }

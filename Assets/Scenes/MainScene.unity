@@ -1062,9 +1062,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1caecfb7ce4abb542b1c3d479852c2a8, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::UI.GridRenderer
-  gridImage: {fileID: 178436921}
-  totalColumns: 15
-  totalRows: 15
+  totalColumns: 50
+  totalRows: 50
 --- !u!114 &178436924
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1077,10 +1076,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a0d51d1649fec874785ced6dd8fe89b3, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::UI.GridClickHandler
-  gridRenderer: {fileID: 178436923}
-  gridImage: {fileID: 178436921}
-  cellSize: 10
-  cellsLayout: {fileID: 11400000, guid: ca37c83da2181f84098b76f464509f3b, type: 2}
   highlightBorder: {fileID: 1334605684}
   infoPanel: {fileID: 1357545168}
   highlightManager: {fileID: 630751316}
@@ -1300,10 +1295,6 @@ MonoBehaviour:
   completedCountText: {fileID: 1387459457}
   elapsedTimeText: {fileID: 1967851491}
   averageTimeText: {fileID: 1084050436}
-  summaryPanel: {fileID: 0}
-  summaryText: {fileID: 0}
-  errorPanel: {fileID: 0}
-  errorText: {fileID: 0}
   statusText: {fileID: 32321139}
 --- !u!1 &357217765
 GameObject:
@@ -5421,8 +5412,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Core::Core.RobotController
   pathFinder: {fileID: 770401732}
-  robotTransform: {fileID: 3121842750099007506}
-  visualCellSize: 50
+  gridRenderer: {fileID: 178436923}
+  robotRectTransform: {fileID: 3121842750099007506}
 --- !u!1 &1316753154
 GameObject:
   m_ObjectHideFlags: 0
@@ -5604,7 +5595,7 @@ RectTransform:
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 75, y: 75}
+  m_SizeDelta: {x: 50, y: 50}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!1 &1344840398
 GameObject:
@@ -9852,7 +9843,7 @@ RectTransform:
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 0, y: 0}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 50, y: 50}
+  m_SizeDelta: {x: 20, y: 20}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &5937542912387940032
 MonoBehaviour:

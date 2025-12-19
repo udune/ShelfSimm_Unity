@@ -42,12 +42,6 @@ namespace Managers
 
         private void ShowHighlight(GameObject cell)
         {
-            if (highlightBorder == null)
-            {
-                return;
-            }
-
-            highlightBorder.transform.position = cell.transform.position;
             highlightBorder.color = highlightColor;
             highlightBorder.gameObject.SetActive(true);
 
@@ -59,20 +53,12 @@ namespace Managers
             while (true)
             {
                 yield return new WaitForSeconds(blinkDuration);
-                if (highlightBorder != null)
-                {
-                    highlightBorder.gameObject.SetActive(!highlightBorder.gameObject.activeSelf);
-                }
+                highlightBorder.gameObject.SetActive(!highlightBorder.gameObject.activeSelf);
             }
         }
 
         private void ShowAccessibilityBadge(bool isAccessible)
         {
-            if (accessibilityBadge == null || badgeText == null || badgeBackground == null)
-            {
-                return;
-            }
-
             accessibilityBadge.SetActive(true);
             if (isAccessible)
             {
@@ -94,16 +80,8 @@ namespace Managers
                 blinkCoroutine = null;
             }
 
-            if (highlightBorder != null)
-            {
-                highlightBorder.gameObject.SetActive(false);
-            }
-
-            if (accessibilityBadge != null)
-            {
-                accessibilityBadge.SetActive(false);
-            }
-
+            highlightBorder.gameObject.SetActive(false);
+            accessibilityBadge.SetActive(false);
             currentSelectedCell = null;
         }
 

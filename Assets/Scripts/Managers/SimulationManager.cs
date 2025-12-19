@@ -361,8 +361,6 @@ namespace Managers
             }
 
             Debug.Log(_summary.ToString());
-            SimulationUIController.Instance.ShowSummary(_summary);
-
             Time.timeScale = 0f;
         }
 
@@ -460,16 +458,21 @@ namespace Managers
             }
 
             Vector2Int start = ConfigManager.Instance.CellsLayout.warehouse;
-            Vector2Int goal = new Vector2Int(cellDef.X, cellDef.Y);
+            Vector2Int targetCellPos = new Vector2Int(cellDef.X, cellDef.Y);
 
-            List<Vector2Int> path = pathFinder.FindPath(start, goal);
+            Vector2Int? accessiblePos = pathFinder?.FindAccessibleNeighbor(targetCellPos, start);
+            if (!accessiblePos.HasValue)
+            {
+                return 0;
+            }
+
+            List<Vector2Int> path = pathFinder.FindPath(start, accessiblePos.Value);
             return path != null ? path.Count : 0;
         }
 
         private void HandleApiInitializationFailure(string errorMessage)
         {
             Debug.LogError(errorMessage);
-            SimulationUIController.Instance.ShowError(errorMessage);
             _isRunning = false;
         }
 

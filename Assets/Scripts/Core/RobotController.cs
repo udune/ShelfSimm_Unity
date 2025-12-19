@@ -11,10 +11,10 @@ namespace Core
     {
         [Header("내부 설정")]
         [SerializeField] private SimpleAStarPathFinder pathFinder;
+        [SerializeField] private GridRenderer gridRenderer;
 
         [Header("시각화")]
-        [SerializeField] private Transform robotTransform;
-        [SerializeField] private float visualCellSize = 50f;
+        [SerializeField] private RectTransform robotRectTransform;
 
         private RobotState currentState = RobotState.IDLE;
         private float handleTimer;
@@ -33,6 +33,12 @@ namespace Core
         private int pathIndex;
         private Vector2Int currentGridPosition;
         private float cellMoveTimer;
+
+        private void Start()
+        {
+            currentGridPosition = ConfigManager.Instance.CellsLayout.warehouse;
+            UpdateRobotVisualPosition();
+        }
 
         private void Update()
         {
@@ -112,11 +118,18 @@ namespace Core
 
         private void UpdateRobotVisualPosition()
         {
-            robotTransform.position = new Vector3(
-                currentGridPosition.x * visualCellSize,
-                currentGridPosition.y * visualCellSize,
-                0
-            );
+            RectTransform gridRectTransform = gridRenderer.GetComponent<RectTransform>();
+            Rect rect = gridRectTransform.rect;
+
+            float cellWidth = gridRenderer.CellWidth;
+            float cellHeight = gridRenderer.CellHeight;
+
+            float localX = rect.x + (currentGridPosition.x + 0.5f) * cellWidth;
+            float localY = rect.y + (currentGridPosition.y + 0.5f) * cellHeight;
+
+            Vector3 worldPos = gridRectTransform.TransformPoint(new Vector2(localX, localY));
+
+            robotRectTransform.position = worldPos;
         }
 
         private void OnPathComplete()
@@ -170,16 +183,24 @@ namespace Core
             }
 
             Vector2Int warehouse = ConfigManager.Instance.CellsLayout.warehouse;
-            Vector2Int goalPos = new Vector2Int(cellDef.X, cellDef.Y);
+            Vector2Int targetCellPos = new Vector2Int(cellDef.X, cellDef.Y);
+
+            Vector2Int? accessiblePos = pathFinder?.FindAccessibleNeighbor(targetCellPos, warehouse);
+            if (!accessiblePos.HasValue)
+            {
+                Debug.LogError($"책장에 접근할 수 없습니다: {job.CellCode} (위치: {targetCellPos})");
+                HandleJobCompletion(ErrorCode.ROUTE_BLOCKED);
+                return;
+            }
 
             if (pathFinder != null)
             {
-                currentPath = pathFinder.FindPath(warehouse, goalPos);
+                currentPath = pathFinder.FindPath(warehouse, accessiblePos.Value);
             }
 
             if (currentPath == null || currentPath.Count == 0)
             {
-                Debug.LogError($"경로를 찾을 수 없습니다: {warehouse} -> {goalPos}");
+                Debug.LogError($"경로를 찾을 수 없습니다: {warehouse} -> {accessiblePos.Value}");
                 HandleJobCompletion(ErrorCode.ROUTE_BLOCKED);
                 return;
             }
@@ -212,11 +233,7 @@ namespace Core
         private void StartReturning()
         {
             Vector2Int warehouse = ConfigManager.Instance.CellsLayout.warehouse;
-
-            if (pathFinder != null)
-            {
-                currentPath = pathFinder.FindPath(currentGridPosition, warehouse);
-            }
+            currentPath = pathFinder.FindPath(currentGridPosition, warehouse);
 
             if (currentPath == null || currentPath.Count == 0)
             {
@@ -269,7 +286,10 @@ namespace Core
 
         private void TransitionTo(RobotState newState)
         {
-            if ((isStopped && newState != RobotState.IDLE) || currentState == newState) return;
+            if ((isStopped && newState != RobotState.IDLE) || currentState == newState)
+            {
+                return;
+            }
 
             Debug.Log($"로봇 상태 전환: {currentState} -> {newState}");
             currentState = newState;

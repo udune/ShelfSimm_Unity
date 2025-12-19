@@ -1,3 +1,4 @@
+using System;
 using Data;
 using Managers;
 using UnityEngine;
@@ -9,18 +10,22 @@ namespace UI
     public class GridClickHandler : MonoBehaviour, IPointerClickHandler
     {
         [Header("References")]
-        [SerializeField] private GridRenderer gridRenderer;
-        [SerializeField] private RawImage gridImage;
-        [SerializeField] private int cellSize = 10;
-        [SerializeField] private CellsLayoutSO cellsLayout;
+        private GridRenderer gridRenderer;
+        private RawImage gridImage;
         [SerializeField] private Transform highlightBorder;
 
         [SerializeField] private CellInfoPanel infoPanel;
 
         [SerializeField] private CellHighlightManager highlightManager;
 
-        private const int TOTAL_COLUMNS = 15;
-        private const int TOTAL_ROWS = 15;
+        private const int TOTAL_COLUMNS = 50;
+        private const int TOTAL_ROWS = 50;
+
+        private void Start()
+        {
+            gridImage = GetComponent<RawImage>();
+            gridRenderer = GetComponent<GridRenderer>();
+        }
 
         public void OnPointerClick(PointerEventData eventData)
         {
@@ -35,30 +40,24 @@ namespace UI
             CellDef cellDef = GetCellDefAtPosition(gridPos.x, gridPos.y);
             bool isAccessible = IsCellAccessible(gridPos.x, gridPos.y, cellType);
             
-            if (highlightManager != null)
-            {
-                highlightManager.SelectCell(gridImage.gameObject, isAccessible);
-                PositionHighlight(gridPos);
-            }
+            highlightManager.SelectCell(gridImage.gameObject, isAccessible);
+            PositionHighlight(gridPos);
 
-            if (infoPanel != null)
+            if (cellDef != null)
             {
-                if (cellDef != null)
+                Cell cell = GetCellData(cellDef.code);
+                if (cell != null)
                 {
-                    Cell cell = GetCellData(cellDef.code);
-                    if (cell != null)
-                    {
-                        infoPanel.UpdateCellInfoDetailed(cell, isAccessible);
-                    }
-                    else
-                    {
-                        infoPanel.UpdateCellInfo(cellDef.code, isAccessible);
-                    }
+                    infoPanel.UpdateCellInfoDetailed(cell, isAccessible);
                 }
                 else
                 {
-                    infoPanel.Hide();
+                    infoPanel.UpdateCellInfo(cellDef.code, isAccessible);
                 }
+            }
+            else
+            {
+                infoPanel.Hide();
             }
         }
 
@@ -89,19 +88,12 @@ namespace UI
                 return new Vector2Int(-1, -1);
             }
 
-            gridY = TOTAL_ROWS - 1 - gridY;
-
             return new Vector2Int(gridX, gridY);
         }
     
         private CellDef GetCellDefAtPosition(int x, int y)
         {
-            if (cellsLayout == null)
-            {
-                return null;
-            }
-
-            return cellsLayout.GetCellByPosition(x, y);
+            return ConfigManager.Instance.CellsLayout.GetCellByPosition(x, y);
         }
 
         private Cell GetCellData(string cellCode)
@@ -122,7 +114,7 @@ namespace UI
         private void PositionHighlight(Vector2Int gridPos)
         {
             GameObject highlight = highlightManager.GetSelectedCell();
-            if (highlight == null)
+            if (highlight == null || highlightBorder == null)
             {
                 return;
             }
@@ -130,17 +122,18 @@ namespace UI
             RectTransform rectTransform = gridImage.rectTransform;
             Rect rect = rectTransform.rect;
 
-            float cellWidth = rect.width / TOTAL_COLUMNS;
-            float cellHeight = rect.height / TOTAL_ROWS;
-
-            int displayY = TOTAL_ROWS - 1 - gridPos.y;
+            float cellWidth = gridRenderer.CellWidth;
+            float cellHeight = gridRenderer.CellHeight;
 
             float localX = rect.x + (gridPos.x + 0.5f) * cellWidth;
-            float localY = rect.y + (displayY + 0.5f) * cellHeight;
+            float localY = rect.y + (gridPos.y + 0.5f) * cellHeight;
 
             Vector3 worldPos = rectTransform.TransformPoint(new Vector2(localX, localY));
 
             highlightBorder.position = worldPos;
+
+            RectTransform highlightRect = highlightBorder.GetComponent<RectTransform>();
+            highlightRect.sizeDelta = new Vector2(cellWidth, cellHeight);
         }
     }
 }

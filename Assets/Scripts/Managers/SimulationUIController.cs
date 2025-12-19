@@ -37,14 +37,6 @@ namespace UI
         [SerializeField] private TextMeshProUGUI elapsedTimeText;
         [SerializeField] private TextMeshProUGUI averageTimeText;
 
-        [Header("Summary UI")]
-        [SerializeField] private GameObject summaryPanel;
-        [SerializeField] private TextMeshProUGUI summaryText;
-
-        [Header("Error UI")]
-        [SerializeField] private GameObject errorPanel;
-        [SerializeField] private TextMeshProUGUI errorText;
-
         [Header("Status")]
         [SerializeField] private TextMeshProUGUI statusText;
 
@@ -60,9 +52,6 @@ namespace UI
             }
 
             Instance = this;
-
-            summaryPanel.SetActive(false);
-            errorPanel.SetActive(false);
         }
 
         private void Start()
@@ -253,29 +242,6 @@ namespace UI
             completedCountText.text = $"완료 건수: {summary.success}";
             elapsedTimeText.text = $"경과 시간: {FormatTime(SimulationManager.Instance.ElapsedTime)}";
             averageTimeText.text = $"평균 처리 시간: {FormatTime(SimulationManager.Instance.AverageTaskTime)}";
-        }
-
-        public void ShowSummary(Summary summary)
-        {
-            summaryPanel.SetActive(true);
-            summaryText.text = summary.ToString();
-        }
-
-        public void CloseSummary()
-        {
-            summaryPanel.SetActive(false);
-        }
-
-        public void ShowError(string errorMessage)
-        {
-            Debug.LogError(errorMessage);
-            errorPanel.SetActive(true);
-            errorText.text = errorMessage;
-        }
-
-        public void CloseError()
-        {
-            errorPanel.SetActive(false);
         }
 
         private void TogglePauseResume()
