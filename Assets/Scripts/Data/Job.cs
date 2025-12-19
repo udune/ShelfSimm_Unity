@@ -4,7 +4,9 @@ namespace Data
 
     public class Job
     {
-        public string JobId { get; set; } // 서버에서 발급한 고유 ID
+        public string JobId { get; set; }
+        public string BookId { get; set; }
+        public string Code { get; set; }
         public JobAction Action { get; }
         public string CellCode { get; }
         public string BookTitle { get; }

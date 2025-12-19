@@ -1,3 +1,4 @@
+using System.Collections;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -6,82 +7,59 @@ namespace Managers
 {
     public class CellHighlightManager : MonoBehaviour
     {
-        [Header("Highlight Settings")] 
+        [Header("Highlight Settings")]
         [SerializeField] private Image highlightBorder;
         [SerializeField] private float blinkDuration = 0.3f;
         [SerializeField] private Color highlightColor = Color.yellow;
-        
+
         [Header("Accessibility Badge")]
         [SerializeField] private GameObject accessibilityBadge;
         [SerializeField] private TextMeshProUGUI badgeText;
         [SerializeField] private Image badgeBackground;
         [SerializeField] private Color accessibleColor = Color.green;
         [SerializeField] private Color blockedColor = Color.red;
-        
-        private bool isBlinking = false;
+
+        private Coroutine blinkCoroutine;
         private GameObject currentSelectedCell;
 
         public void SelectCell(GameObject cell, bool isAccessible)
         {
             if (cell == null)
             {
+                ClearHighlight();
                 return;
             }
 
-            if (currentSelectedCell != cell && currentSelectedCell != null)
+            if (currentSelectedCell != cell)
             {
                 ClearHighlight();
+                currentSelectedCell = cell;
+                ShowHighlight(cell);
             }
-
-            currentSelectedCell = cell;
-
-            ShowHighlight(cell);
 
             ShowAccessibilityBadge(isAccessible);
         }
 
         private void ShowHighlight(GameObject cell)
         {
-            if (highlightBorder == null)
-            {
-                return;
-            }
-
-            highlightBorder.transform.position = cell.transform.position;
             highlightBorder.color = highlightColor;
             highlightBorder.gameObject.SetActive(true);
 
-            // 이미 깜빡이고 있다면 중지
-            if (isBlinking)
-            {
-                CancelInvoke(nameof(ToggleHighlight));
-            }
-
-            isBlinking = true;
-            // 0.3초 간격으로 깜빡임 시작
-            InvokeRepeating(nameof(ToggleHighlight), blinkDuration, blinkDuration);
+            blinkCoroutine = StartCoroutine(BlinkRoutine());
         }
 
-        private void ToggleHighlight()
+        private IEnumerator BlinkRoutine()
         {
-            if (highlightBorder == null)
+            while (true)
             {
-                return;
+                yield return new WaitForSeconds(blinkDuration);
+                highlightBorder.gameObject.SetActive(!highlightBorder.gameObject.activeSelf);
             }
-
-            // 가시성 토글 (visible ↔ invisible)
-            highlightBorder.gameObject.SetActive(!highlightBorder.gameObject.activeSelf);
         }
 
         private void ShowAccessibilityBadge(bool isAccessible)
         {
-            if (accessibilityBadge == null || badgeText == null || badgeBackground == null)
-            {
-                return;
-            }
-            
             accessibilityBadge.SetActive(true);
-
             if (isAccessible)
             {
                 badgeText.text = "접근 가능";
@@ -93,26 +71,23 @@ namespace Managers
                 badgeBackground.color = blockedColor;
             }
         }
-        
+
         public void ClearHighlight()
         {
-            if (isBlinking)
+            if (blinkCoroutine != null)
             {
-                CancelInvoke(nameof(ToggleHighlight));
-                isBlinking = false;
+                StopCoroutine(blinkCoroutine);
+                blinkCoroutine = null;
             }
 
-            if (highlightBorder != null)
-            {
-                highlightBorder.gameObject.SetActive(false);
-            }
-
-            if (accessibilityBadge != null)
-            {
-                accessibilityBadge.SetActive(false);
-            }
-
+            highlightBorder.gameObject.SetActive(false);
+            accessibilityBadge.SetActive(false);
             currentSelectedCell = null;
+        }
+
+        private void OnDisable()
+        {
+            ClearHighlight();
         }
 
         public GameObject GetSelectedCell()

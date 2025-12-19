@@ -41,6 +41,7 @@ namespace API
     {
         public string runId;
         public JobDto[] jobs;
+        public string layoutId;
     }
     
     [Serializable]
@@ -75,16 +76,13 @@ namespace API
     [Serializable]
     public class BookDto
     {
-        public string id;
+        public int id;
         public string title;
-        public int thicknessMm;
+        public string author;
+        public int thicknessMn;
         public int heightMm;
-    }
-
-    [Serializable]
-    public class BookListDto
-    {
-        public List<BookDto> items;
+        public string sku;
+        public string createdAt;
     }
 
     [Serializable]
@@ -105,38 +103,67 @@ namespace API
         public List<JobDetailsDto> jobs;
     }
 
+    [Serializable]
+    public class BookListDto
+    {
+        public BookDto[] items;
+    }
+
     #endregion
 
     public class ApiClient : MonoBehaviour
     {
+        public static ApiClient Instance { get; private set; }
+
         [Header("API 설정")]
         [SerializeField] private string baseUrl = "https://shelfsim-api-190183336439.asia-northeast3.run.app/api";
         [SerializeField] private bool logRequests = true;
-    
+
+        [Header("보안 설정 (개발/테스트 전용)")]
+        [SerializeField] private bool bypassSslValidation = false;
+
         private string currentRunId;
+        private bool hasShownSecurityWarning = false;
+
+        private void Awake()
+        {
+            if (Instance != null && Instance != this)
+            {
+                Destroy(gameObject);
+                return;
+            }
+            Instance = this;
+
+            if (bypassSslValidation)
+            {
+                #if !UNITY_EDITOR && !DEVELOPMENT_BUILD
+                bypassSslValidation = false;
+                Debug.LogError("[API] Production build detected - SSL bypass disabled for security");
+                #endif
+            }
+        }
 
         public IEnumerator CreateRun(CreateRunRequest request, Action<RunResponse> onSuccess, Action<string> onError = null)
         {
             string url = $"{baseUrl}/Runs";
             string json = JsonUtility.ToJson(request);
-            if (logRequests) Debug.Log($"[API] POST {url} - Body: {json}");
+            if (logRequests) Debug.Log($"[API] POST {url}");
 
             using (UnityWebRequest www = UnityWebRequest.Post(url, json, "application/json"))
             {
-                www.certificateHandler = new BypassCertificate();
+                ConfigureCertificateHandler(www);
                 yield return www.SendWebRequest();
 
                 if (www.result == UnityWebRequest.Result.Success)
                 {
                     var response = JsonUtility.FromJson<RunResponse>(www.downloadHandler.text);
                     currentRunId = response.id;
-                    Debug.Log($"[API] Run Created: {response.id}");
                     onSuccess?.Invoke(response);
                 }
                 else
                 {
-                    Debug.LogError($"[API] Error: {www.error}\n{www.downloadHandler.text}");
-                    onError?.Invoke(www.error);
+                    Debug.LogError($"[API] Error: {www.error}");
+                    onError?.Invoke($"{www.error}\n{www.downloadHandler.text}");
                 }
             }
         }
@@ -145,23 +172,22 @@ namespace API
         {
             string url = $"{baseUrl}/Jobs/batch";
             string json = JsonUtility.ToJson(request);
-            if (logRequests) Debug.Log($"[API] POST {url} - Body: {json}");
+            if (logRequests) Debug.Log($"[API] POST {url}");
 
             using (UnityWebRequest www = UnityWebRequest.Post(url, json, "application/json"))
             {
-                www.certificateHandler = new BypassCertificate();
+                ConfigureCertificateHandler(www);
                 yield return www.SendWebRequest();
 
                 if (www.result == UnityWebRequest.Result.Success)
                 {
                     var response = JsonUtility.FromJson<JobsBatchResponse>(www.downloadHandler.text);
-                    Debug.Log($"[API] Jobs Created: {response.accepted} jobs");
                     onSuccess?.Invoke(response);
                 }
                 else
                 {
-                    Debug.LogError($"[API] Error: {www.error}\n{www.downloadHandler.text}");
-                    onError?.Invoke(www.error);
+                    Debug.LogError($"[API] Error: {www.error}");
+                    onError?.Invoke($"{www.error}\n{www.downloadHandler.text}");
                 }
             }
         }
@@ -170,7 +196,11 @@ namespace API
         {
             string url = $"{baseUrl}/Jobs/{jobId}/result";
             string json = JsonUtility.ToJson(request);
-            if (logRequests) Debug.Log($"[API] PATCH {url} - Body: {json}");
+            if (logRequests)
+            {
+                Debug.Log($"[API] PATCH {url}");
+                Debug.Log($"[API] Body: {json}");
+            }
 
             using (UnityWebRequest www = new UnityWebRequest(url, "PATCH"))
             {
@@ -178,19 +208,19 @@ namespace API
                 www.uploadHandler = new UploadHandlerRaw(bodyRaw);
                 www.downloadHandler = new DownloadHandlerBuffer();
                 www.SetRequestHeader("Content-Type", "application/json");
-                www.certificateHandler = new BypassCertificate();
+                ConfigureCertificateHandler(www);
 
                 yield return www.SendWebRequest();
 
                 if (www.result == UnityWebRequest.Result.Success)
                 {
-                    Debug.Log($"[API] Job Updated: {jobId}");
                     onSuccess?.Invoke();
                 }
                 else
                 {
-                    Debug.LogError($"[API] Error: {www.error}\n{www.downloadHandler.text}");
-                    onError?.Invoke(www.error);
+                    Debug.LogError($"[API] Error on PATCH {url}: {www.error}");
+                    Debug.LogError($"[API] Response: {www.downloadHandler.text}");
+                    onError?.Invoke($"{www.error}\n{www.downloadHandler.text}");
                 }
             }
         }
@@ -199,7 +229,7 @@ namespace API
         {
             string url = $"{baseUrl}/Runs/{runId}/status";
             string json = JsonUtility.ToJson(request);
-            if (logRequests) Debug.Log($"[API] PATCH {url} - Body: {json}");
+            if (logRequests) Debug.Log($"[API] PATCH {url}");
 
             using (UnityWebRequest www = new UnityWebRequest(url, "PATCH"))
             {
@@ -207,19 +237,18 @@ namespace API
                 www.uploadHandler = new UploadHandlerRaw(bodyRaw);
                 www.downloadHandler = new DownloadHandlerBuffer();
                 www.SetRequestHeader("Content-Type", "application/json");
-                www.certificateHandler = new BypassCertificate();
+                ConfigureCertificateHandler(www);
 
                 yield return www.SendWebRequest();
 
                 if (www.result == UnityWebRequest.Result.Success)
                 {
-                    Debug.Log($"[API] Run Status Updated: {runId}");
                     onSuccess?.Invoke();
                 }
                 else
                 {
-                    Debug.LogError($"[API] Error: {www.error}\n{www.downloadHandler.text}");
-                    onError?.Invoke(www.error);
+                    Debug.LogError($"[API] Error: {www.error}");
+                    onError?.Invoke($"{www.error}\n{www.downloadHandler.text}");
                 }
             }
         }
@@ -231,18 +260,17 @@ namespace API
 
             using (UnityWebRequest www = UnityWebRequest.Get(url))
             {
-                www.certificateHandler = new BypassCertificate();
+                ConfigureCertificateHandler(www);
                 yield return www.SendWebRequest();
 
                 if (www.result == UnityWebRequest.Result.Success)
                 {
-                    Debug.Log($"[API] CSV Data Received for Run: {runId}");
                     onSuccess?.Invoke(www.downloadHandler.text);
                 }
                 else
                 {
-                    Debug.LogError($"[API] Error: {www.error}\n{www.downloadHandler.text}");
-                    onError?.Invoke(www.error);
+                    Debug.LogError($"[API] Error: {www.error}");
+                    onError?.Invoke($"{www.error}\n{www.downloadHandler.text}");
                 }
             }
         }
@@ -254,21 +282,31 @@ namespace API
 
             using (UnityWebRequest www = UnityWebRequest.Get(url))
             {
-                www.certificateHandler = new BypassCertificate();
+                ConfigureCertificateHandler(www);
                 yield return www.SendWebRequest();
 
                 if (www.result == UnityWebRequest.Result.Success)
                 {
-                    string jsonResponse = "{\"items\":" + www.downloadHandler.text + "}";
-                    BookListDto bookList = JsonUtility.FromJson<BookListDto>(jsonResponse);
-                    
-                    Debug.Log($"[API] Books Received: {bookList.items.Count} items");
-                    onSuccess?.Invoke(bookList.items);
+                    string jsonResponse = www.downloadHandler.text;
+                    if (logRequests)
+                    {
+                        Debug.Log($"[API] Books response: {jsonResponse}");
+                    }
+
+                    string dtoJson = $"{{\"items\":{jsonResponse}}}";
+                    BookListDto dto = JsonUtility.FromJson<BookListDto>(dtoJson);
+                    List<BookDto> bookList = new List<BookDto>(dto.items);
+
+                    if (logRequests)
+                    {
+                        Debug.Log($"[API] Loaded {bookList.Count} books");
+                    }
+                    onSuccess?.Invoke(bookList);
                 }
                 else
                 {
-                    Debug.LogError($"[API] Error getting books: {www.error}\n{www.downloadHandler.text}");
-                    onError?.Invoke(www.error);
+                    Debug.LogError($"[API] Error: {www.error}");
+                    onError?.Invoke($"{www.error}\n{www.downloadHandler.text}");
                 }
             }
         }
@@ -280,29 +318,41 @@ namespace API
 
             using (UnityWebRequest www = UnityWebRequest.Get(url))
             {
-                www.certificateHandler = new BypassCertificate();
+                ConfigureCertificateHandler(www);
                 yield return www.SendWebRequest();
 
                 if (www.result == UnityWebRequest.Result.Success)
                 {
                     RunDetailsDto runDetails = JsonUtility.FromJson<RunDetailsDto>(www.downloadHandler.text);
-                    Debug.Log($"[API] Run Details Received: {runDetails.jobs.Count} jobs found.");
                     onSuccess?.Invoke(runDetails);
                 }
                 else
                 {
-                    Debug.LogError($"[API] Error getting run details: {www.error}\n{www.downloadHandler.text}");
-                    onError?.Invoke(www.error);
+                    Debug.LogError($"[API] Error: {www.error}");
+                    onError?.Invoke($"{www.error}\n{www.downloadHandler.text}");
                 }
             }
         }
-    
+
         public string GetCurrentRunId()
         {
             return currentRunId;
         }
+
+        private void ConfigureCertificateHandler(UnityWebRequest request)
+        {
+            if (bypassSslValidation)
+            {
+                if (!hasShownSecurityWarning)
+                {
+                    Debug.LogWarning("[API] SSL validation bypassed - dev/test only");
+                    hasShownSecurityWarning = true;
+                }
+                request.certificateHandler = new BypassCertificate();
+            }
+        }
     }
-    
+
     public class BypassCertificate : CertificateHandler
     {
         protected override bool ValidateCertificate(byte[] certificateData)
