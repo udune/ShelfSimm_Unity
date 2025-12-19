@@ -40,6 +40,7 @@ namespace Managers
         private bool _isPaused;
         private string _currentRunId;
         private List<JobResult> _jobResults;
+        private Dictionary<string, Cell> _cellStates;
 
         private const float API_JOB_PROCESSING_DELAY = 0.5f;
 
@@ -64,7 +65,10 @@ namespace Managers
 
             InitializeSimulation();
 
-            if (useApiMode) StartCoroutine(InitializeAPI());
+            if (useApiMode)
+            {
+                StartCoroutine(InitializeAPI());
+            }
 
             Debug.Log("시뮬레이션 준비 완료. UI에서 작업을 입력하고 실행하세요.");
         }
@@ -225,6 +229,12 @@ namespace Managers
             ConfigManager.Instance.CellsLayout.UpdateCellPositionsFromCodes();
 
             InitializeGrid();
+            
+            _cellStates = new Dictionary<string, Cell>();
+            foreach (var cellDef in ConfigManager.Instance.CellsLayout.cells)
+            {
+                _cellStates[cellDef.code] = new Cell(cellDef.code, cellDef.width, cellDef.height);
+            }
         }
 
         private void InitializeGrid()
@@ -303,7 +313,10 @@ namespace Managers
 
         private void OnJobFinished(Job job, ErrorCode resultCode, JobResult jobResult)
         {
-            if (jobResult != null) _jobResults.Add(jobResult);
+            if (jobResult != null)
+            {
+                _jobResults.Add(jobResult);
+            }
 
             if (resultCode == ErrorCode.NONE)
             {
@@ -342,7 +355,7 @@ namespace Managers
             _isRunning = false;
             _isPaused = false;
 
-            if (robotController != null) robotController.Stop();
+            robotController.Stop();
 
             while (_jobQueue.Count > 0)
             {
@@ -354,7 +367,6 @@ namespace Managers
                 StartCoroutine(SendJobResultsToAPI());
             }
 
-            Debug.Log(summary.ToString());
             Time.timeScale = 0f;
         }
 
@@ -421,11 +433,11 @@ namespace Managers
 
         private Cell FindCellByCode(string code)
         {
-            var cellDef = ConfigManager.Instance.CellsLayout.GetCellByCode(code);
-            if (cellDef == null)
-                return null;
-
-            return new Cell(cellDef.code, cellDef.width, cellDef.height);
+            if (_cellStates != null && _cellStates.TryGetValue(code, out var cell))
+            {
+                return cell;
+            }
+            return null;
         }
 
         public Cell GetCellByCode(string code)
@@ -441,13 +453,19 @@ namespace Managers
         private int CalculatePathLength(string cellCode)
         {
             var cellDef = ConfigManager.Instance.CellsLayout.GetCellByCode(cellCode);
-            if (cellDef == null) return 0;
+            if (cellDef == null)
+            {
+                return 0;
+            }
 
             var start = ConfigManager.Instance.CellsLayout.warehouse;
             var targetCellPos = new Vector2Int(cellDef.X, cellDef.Y);
 
             var accessiblePos = pathFinder?.FindAccessibleNeighbor(targetCellPos, start);
-            if (!accessiblePos.HasValue) return 0;
+            if (!accessiblePos.HasValue)
+            {
+                return 0;
+            }
 
             var path = pathFinder.FindPath(start, accessiblePos.Value);
             return path != null ? path.Count : 0;

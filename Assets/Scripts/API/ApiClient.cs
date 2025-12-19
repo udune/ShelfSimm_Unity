@@ -119,9 +119,6 @@ namespace API
         [SerializeField] private string baseUrl = "https://shelfsim-api-190183336439.asia-northeast3.run.app/api";
         [SerializeField] private bool logRequests = true;
 
-        [Header("보안 설정 (개발/테스트 전용)")]
-        [SerializeField] private bool bypassSslValidation = false;
-
         private string currentRunId;
         private bool hasShownSecurityWarning = false;
 
@@ -133,14 +130,6 @@ namespace API
                 return;
             }
             Instance = this;
-
-            if (bypassSslValidation)
-            {
-                #if !UNITY_EDITOR && !DEVELOPMENT_BUILD
-                bypassSslValidation = false;
-                Debug.LogError("[API] Production build detected - SSL bypass disabled for security");
-                #endif
-            }
         }
 
         public IEnumerator CreateRun(CreateRunRequest request, Action<RunResponse> onSuccess, Action<string> onError = null)
@@ -151,7 +140,6 @@ namespace API
 
             using (UnityWebRequest www = UnityWebRequest.Post(url, json, "application/json"))
             {
-                ConfigureCertificateHandler(www);
                 yield return www.SendWebRequest();
 
                 if (www.result == UnityWebRequest.Result.Success)
@@ -176,7 +164,6 @@ namespace API
 
             using (UnityWebRequest www = UnityWebRequest.Post(url, json, "application/json"))
             {
-                ConfigureCertificateHandler(www);
                 yield return www.SendWebRequest();
 
                 if (www.result == UnityWebRequest.Result.Success)
@@ -208,7 +195,6 @@ namespace API
                 www.uploadHandler = new UploadHandlerRaw(bodyRaw);
                 www.downloadHandler = new DownloadHandlerBuffer();
                 www.SetRequestHeader("Content-Type", "application/json");
-                ConfigureCertificateHandler(www);
 
                 yield return www.SendWebRequest();
 
@@ -237,7 +223,6 @@ namespace API
                 www.uploadHandler = new UploadHandlerRaw(bodyRaw);
                 www.downloadHandler = new DownloadHandlerBuffer();
                 www.SetRequestHeader("Content-Type", "application/json");
-                ConfigureCertificateHandler(www);
 
                 yield return www.SendWebRequest();
 
@@ -260,7 +245,6 @@ namespace API
 
             using (UnityWebRequest www = UnityWebRequest.Get(url))
             {
-                ConfigureCertificateHandler(www);
                 yield return www.SendWebRequest();
 
                 if (www.result == UnityWebRequest.Result.Success)
@@ -282,7 +266,6 @@ namespace API
 
             using (UnityWebRequest www = UnityWebRequest.Get(url))
             {
-                ConfigureCertificateHandler(www);
                 yield return www.SendWebRequest();
 
                 if (www.result == UnityWebRequest.Result.Success)
@@ -318,7 +301,6 @@ namespace API
 
             using (UnityWebRequest www = UnityWebRequest.Get(url))
             {
-                ConfigureCertificateHandler(www);
                 yield return www.SendWebRequest();
 
                 if (www.result == UnityWebRequest.Result.Success)
@@ -337,27 +319,6 @@ namespace API
         public string GetCurrentRunId()
         {
             return currentRunId;
-        }
-
-        private void ConfigureCertificateHandler(UnityWebRequest request)
-        {
-            if (bypassSslValidation)
-            {
-                if (!hasShownSecurityWarning)
-                {
-                    Debug.LogWarning("[API] SSL validation bypassed - dev/test only");
-                    hasShownSecurityWarning = true;
-                }
-                request.certificateHandler = new BypassCertificate();
-            }
-        }
-    }
-
-    public class BypassCertificate : CertificateHandler
-    {
-        protected override bool ValidateCertificate(byte[] certificateData)
-        {
-            return true;
         }
     }
 }

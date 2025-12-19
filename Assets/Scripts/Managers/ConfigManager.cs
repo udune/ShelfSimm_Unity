@@ -13,7 +13,6 @@ namespace Managers
         #region Config References
         [Header("Core Configurations")]
         [SerializeField] private SimulationConfig simulationConfig;
-        [SerializeField] private TiebreakerConfig tiebreakerConfig;
 
         [Header("Data Configurations")]
         [SerializeField] private CellsLayoutSO cellsLayout;
@@ -21,7 +20,6 @@ namespace Managers
 
         #region Public Properties
         public SimulationConfig SimulationConfig => simulationConfig;
-        public TiebreakerConfig TiebreakerConfig => tiebreakerConfig;
         public CellsLayoutSO CellsLayout => cellsLayout;
         #endregion
 

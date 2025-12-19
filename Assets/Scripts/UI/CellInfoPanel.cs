@@ -2,6 +2,7 @@ using TMPro;
 using UnityEngine;
 using Data;
 using Core;
+using System.Text;
 
 namespace UI
 {
@@ -13,7 +14,6 @@ namespace UI
         [SerializeField] private TextMeshProUGUI dimensionsText;
         [SerializeField] private TextMeshProUGUI capacityText;
         [SerializeField] private TextMeshProUGUI bookInfoText;
-        [SerializeField] private GameObject panelObject;
 
         [Header("Colors")]
         [SerializeField] private Color accessibleColor = Color.green;
@@ -21,36 +21,23 @@ namespace UI
 
         private void Start()
         {
-            if (panelObject != null)
-            {
-                panelObject.SetActive(false);
-            }
+            gameObject.SetActive(false);
         }
 
         public void UpdateCellInfo(string cellCode, bool isAccessible)
         {
-            if (panelObject != null)
-            {
-                panelObject.SetActive(true);
-            }
+            gameObject.SetActive(true);
+            cellCodeText.text = $"셀: {cellCode}";
 
-            if (cellCodeText != null)
+            if (isAccessible)
             {
-                cellCodeText.text = $"셀: {cellCode}";
+                accessibilityText.text = "접근 가능";
+                accessibilityText.color = accessibleColor;
             }
-
-            if (accessibilityText != null)
+            else
             {
-                if (isAccessible)
-                {
-                    accessibilityText.text = "접근 가능";
-                    accessibilityText.color = accessibleColor;
-                }
-                else
-                {
-                    accessibilityText.text = "접근 불가";
-                    accessibilityText.color = blockedColor;
-                }
+                accessibilityText.text = "접근 불가";
+                accessibilityText.color = blockedColor;
             }
         }
 
@@ -62,67 +49,37 @@ namespace UI
                 return;
             }
 
-            if (panelObject != null)
+            gameObject.SetActive(true);
+            cellCodeText.text = $"셀: {cell.CellCode}";
+
+            if (isAccessible)
             {
-                panelObject.SetActive(true);
+                accessibilityText.text = "접근 가능";
+                accessibilityText.color = accessibleColor;
+            }
+            else
+            {
+                accessibilityText.text = "접근 불가";
+                accessibilityText.color = blockedColor;
             }
 
-            if (cellCodeText != null)
+            dimensionsText.text = $"치수: {cell.WidthMm}mm × {cell.HeightMm}mm";
+
+            if (cell.CurrentStock > 0 && !string.IsNullOrEmpty(cell.StoredBookTitle))
             {
-                cellCodeText.text = $"셀: {cell.CellCode}";
+                bookInfoText.text = $"보관 도서: {cell.StoredBookTitle}";
+            }
+            else
+            {
+                bookInfoText.text = "보관 도서: 없음";
             }
 
-            if (accessibilityText != null)
-            {
-                if (isAccessible)
-                {
-                    accessibilityText.text = "접근 가능";
-                    accessibilityText.color = accessibleColor;
-                }
-                else
-                {
-                    accessibilityText.text = "접근 불가";
-                    accessibilityText.color = blockedColor;
-                }
-            }
-
-            if (dimensionsText != null)
-            {
-                dimensionsText.text = $"치수: {cell.WidthMm}mm × {cell.HeightMm}mm";
-            }
-
-            if (capacityText != null)
-            {
-                if (cell.MaxCapacity > 0)
-                {
-                    int remainingCapacity = cell.MaxCapacity - cell.CurrentStock;
-                    capacityText.text = $"용량: {cell.CurrentStock}/{cell.MaxCapacity}권 (잔여: {remainingCapacity}권)";
-                }
-                else
-                {
-                    capacityText.text = "용량: 빈 칸 (도서 입고 시 계산됨)";
-                }
-            }
-
-            if (bookInfoText != null)
-            {
-                if (!string.IsNullOrEmpty(cell.StoredBookTitle))
-                {
-                    bookInfoText.text = $"보관 도서: '{cell.StoredBookTitle}'";
-                }
-                else
-                {
-                    bookInfoText.text = "보관 도서: 없음";
-                }
-            }
+            capacityText.text = cell.MaxCapacity > 0 ? $"용량: {cell.CurrentStock}/{cell.MaxCapacity}권" : "용량: -";
         }
 
         public void Hide()
         {
-            if (panelObject != null)
-            {
-                panelObject.SetActive(false);
-            }
+            gameObject.SetActive(false);
         }
     }
 }

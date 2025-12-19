@@ -3,12 +3,13 @@ using System.Collections.Generic;
 using System.Linq;
 using Core;
 using Data;
-using Managers;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
-public class JobInputController : MonoBehaviour
+namespace Managers
+{
+    public class JobInputController : MonoBehaviour
     {
         [Header("UI")]
         [SerializeField] private TMP_InputField cellCodesInput;
@@ -299,4 +300,4 @@ public class JobInputController : MonoBehaviour
 
             UpdateUI();
         }
-    }
+    }}

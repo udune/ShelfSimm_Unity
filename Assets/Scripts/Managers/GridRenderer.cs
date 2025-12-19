@@ -3,7 +3,9 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 
-public class GridRenderer : MonoBehaviour
+namespace Managers
+{
+    public class GridRenderer : MonoBehaviour
 {
     [Header("그리드 설정")]
     private RawImage gridImage;
@@ -136,4 +138,5 @@ public class GridRenderer : MonoBehaviour
             _ => Color.white
         };
     }
+}
 }
