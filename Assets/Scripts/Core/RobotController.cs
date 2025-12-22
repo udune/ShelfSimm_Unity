@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using API;
 using Data;
 using Managers;
 using UnityEngine;
@@ -26,6 +25,7 @@ namespace Core
         private Cell targetCell;
         private BookData targetBook;
         private Action<Job, ErrorCode, JobResult> onJobCompleteCallback;
+        private Action onReturnCompleteCallback;
         private DateTime jobStartTime;
         private int pathLength;
 
@@ -36,8 +36,7 @@ namespace Core
 
         private void Start()
         {
-            currentGridPosition = ConfigManager.Instance.CellsLayout.warehouse;
-            UpdateRobotVisualPosition();
+            Reset();
         }
 
         private void Update()
@@ -118,6 +117,8 @@ namespace Core
 
         private void UpdateRobotVisualPosition()
         {
+            if (gridRenderer == null || robotRectTransform == null) return;
+
             RectTransform gridRectTransform = gridRenderer.GetComponent<RectTransform>();
             Rect rect = gridRectTransform.rect;
 
@@ -143,15 +144,18 @@ namespace Core
             else if (currentState == RobotState.RETURNING)
             {
                 Debug.Log("로봇이 웨어하우스로 복귀했습니다.");
-                HandleJobCompletion(ErrorCode.NONE);
+                HandleReturnCompletion();
             }
         }
 
         public void StartJob(Job job, Cell cell, BookData book, int calculatedPathLength, Action<Job, ErrorCode, JobResult> onComplete)
         {
+            DateTime startTime = DateTime.UtcNow;
+
             if (currentState != RobotState.IDLE)
             {
-                onComplete?.Invoke(job, ErrorCode.ROBOT_BUSY, null);
+                var failResult = CreateImmediateFailureResult(job, ErrorCode.ROBOT_BUSY, startTime);
+                onComplete?.Invoke(job, ErrorCode.ROBOT_BUSY, failResult);
                 return;
             }
 
@@ -159,13 +163,13 @@ namespace Core
             targetCell = cell;
             targetBook = book;
             onJobCompleteCallback = onComplete;
-            jobStartTime = DateTime.UtcNow;
+            jobStartTime = startTime;
             pathLength = calculatedPathLength;
 
             ErrorCode errorCode;
             bool canProceed = (job.Action == JobAction.PUT)
                 ? cell.CanPutBook(book, job.Quantity, out errorCode)
-                : cell.CanPickBook(job.Quantity, out errorCode);
+                : cell.CanPickBook(book, job.Quantity, out errorCode);
 
             if (!canProceed)
             {
@@ -182,10 +186,8 @@ namespace Core
                 return;
             }
 
-            Vector2Int warehouse = ConfigManager.Instance.CellsLayout.warehouse;
             Vector2Int targetCellPos = new Vector2Int(cellDef.X, cellDef.Y);
-
-            Vector2Int? accessiblePos = pathFinder?.FindAccessibleNeighbor(targetCellPos, warehouse);
+            Vector2Int? accessiblePos = pathFinder?.FindAccessibleNeighbor(targetCellPos, currentGridPosition);
             if (!accessiblePos.HasValue)
             {
                 Debug.LogError($"책장에 접근할 수 없습니다: {job.CellCode} (위치: {targetCellPos})");
@@ -193,24 +195,28 @@ namespace Core
                 return;
             }
 
-            if (pathFinder != null)
-            {
-                currentPath = pathFinder.FindPath(warehouse, accessiblePos.Value);
-            }
+            currentPath = pathFinder.FindPath(currentGridPosition, accessiblePos.Value);
 
             if (currentPath == null || currentPath.Count == 0)
             {
-                Debug.LogError($"경로를 찾을 수 없습니다: {warehouse} -> {accessiblePos.Value}");
+                if (currentGridPosition == accessiblePos.Value)
+                {
+                    // 이미 목적지에 도착한 경우, 바로 Handling 상태로 전환
+                    Debug.Log("이미 목표 위치에 있으므로 바로 작업을 시작합니다.");
+                    TransitionTo(RobotState.HANDLING);
+                    handleTimer = 0f;
+                    return;
+                }
+                Debug.LogError($"경로를 찾을 수 없습니다: {currentGridPosition} -> {accessiblePos.Value}");
                 HandleJobCompletion(ErrorCode.ROUTE_BLOCKED);
                 return;
             }
 
             pathIndex = 0;
-            currentGridPosition = warehouse;
             moveTimer = 0f;
             cellMoveTimer = 0f;
 
-            Debug.Log($"작업 시작: {job.CellCode}, 경로 길이: {currentPath.Count}");
+            Debug.Log($"작업 시작: {job.CellCode}, 현재위치: {currentGridPosition}, 경로 길이: {currentPath.Count}");
             TransitionTo(RobotState.MOVING);
         }
 
@@ -219,28 +225,41 @@ namespace Core
             if (currentJob.Action == JobAction.PUT)
             {
                 targetCell.PutBook(targetBook, currentJob.Quantity);
-                targetBook.ChangeStock(-currentJob.Quantity); // 전체 재고 감소
+                targetBook.ChangeStock(-currentJob.Quantity);
                 Debug.Log($"책 입고 완료: {targetBook.Title} x{currentJob.Quantity}");
             }
             else
             {
-                targetCell.PickBook(currentJob.Quantity);
-                targetBook.ChangeStock(currentJob.Quantity); // 전체 재고 증가
-                Debug.Log($"책 출고 완료: x{currentJob.Quantity}");
+                targetCell.PickBook(targetBook, currentJob.Quantity);
+                targetBook.ChangeStock(currentJob.Quantity);
+                Debug.Log($"책 출고 완료: {targetBook.Title} x{currentJob.Quantity}");
             }
+            
+            HandleJobCompletion(ErrorCode.NONE);
+        }
 
+        public void DoReturnToWarehouse(Action onComplete)
+        {
+            onReturnCompleteCallback = onComplete;
             StartReturning();
         }
 
         private void StartReturning()
         {
             Vector2Int warehouse = ConfigManager.Instance.CellsLayout.warehouse;
+            if (currentGridPosition == warehouse)
+            {
+                Debug.LogWarning("이미 웨어하우스에 있습니다. 즉시 복귀 완료 처리합니다.");
+                HandleReturnCompletion();
+                return;
+            }
+            
             currentPath = pathFinder.FindPath(currentGridPosition, warehouse);
 
             if (currentPath == null || currentPath.Count == 0)
             {
-                Debug.LogWarning("복귀 경로를 찾을 수 없습니다. 작업 완료 처리합니다.");
-                HandleJobCompletion(ErrorCode.NONE);
+                Debug.LogWarning("복귀 경로를 찾을 수 없습니다. 즉시 복귀 완료 처리합니다.");
+                HandleReturnCompletion();
                 return;
             }
 
@@ -257,21 +276,33 @@ namespace Core
             Debug.Log($"작업 완료: {currentJob?.CellCode}, 결과: {resultCode}, 소요시간: {totalTime:F2}초");
 
             JobResult jobResult = CreateJobResult(resultCode, endTime, totalTime);
-            onJobCompleteCallback?.Invoke(currentJob, resultCode, jobResult);
+            
+            var jobToComplete = currentJob;
+            var callback = onJobCompleteCallback;
 
-            ClearJobData();
             TransitionTo(RobotState.IDLE);
+            ClearJobData();
+
+            callback?.Invoke(jobToComplete, resultCode, jobResult);
+        }
+        
+        private void HandleReturnCompletion()
+        {
+            var callback = onReturnCompleteCallback;
+            
+            TransitionTo(RobotState.IDLE);
+            ClearJobData();
+
+            callback?.Invoke();
         }
 
         private JobResult CreateJobResult(ErrorCode resultCode, DateTime endTime, float totalTime)
         {
-            if (currentJob == null)
-            {
-                return null;
-            }
+            if (currentJob == null) return null;
 
-            float travelTimeSec = (ConfigManager.Instance.SimulationConfig.robotSpeed > 0) ? (pathLength / ConfigManager.Instance.SimulationConfig.robotSpeed) : 0f;
-            float calculatedTotalTime = travelTimeSec + ConfigManager.Instance.SimulationConfig.handleTime;
+            float handleTime = (resultCode == ErrorCode.NONE) ? ConfigManager.Instance.SimulationConfig.handleTime : 0f;
+            float travelTime = totalTime - handleTime;
+            if (travelTime < 0) travelTime = 0;
 
             string resultString = (resultCode == ErrorCode.NONE) ? "Success" : "Failed";
             string failReason = (resultCode == ErrorCode.NONE) ? "" : resultCode.ToString();
@@ -280,12 +311,28 @@ namespace Core
                 currentJob.JobId,
                 jobStartTime,
                 endTime,
-                travelTimeSec,
-                ConfigManager.Instance.SimulationConfig.handleTime,
-                calculatedTotalTime,
+                travelTime,
+                handleTime,
+                totalTime,
                 pathLength,
                 resultString,
                 failReason,
+                gameObject.name
+            );
+        }
+
+        private JobResult CreateImmediateFailureResult(Job job, ErrorCode errorCode, DateTime startTime)
+        {
+            DateTime endTime = DateTime.UtcNow;
+            float totalTime = (float)(endTime - startTime).TotalSeconds;
+
+            return new JobResult(
+                job.JobId,
+                startTime,
+                endTime,
+                0f, 0f, totalTime, 0,
+                "Failed",
+                errorCode.ToString(),
                 gameObject.name
             );
         }
@@ -307,6 +354,7 @@ namespace Core
             targetCell = null;
             targetBook = null;
             onJobCompleteCallback = null;
+            onReturnCompleteCallback = null;
             currentPath = null;
             pathIndex = 0;
         }
@@ -331,7 +379,27 @@ namespace Core
                 Debug.Log("로봇 정지");
                 HandleJobCompletion(ErrorCode.CANCELLED_BY_STOP);
             }
+            else if (currentState == RobotState.RETURNING)
+            {
+                HandleReturnCompletion();
+            }
             TransitionTo(RobotState.IDLE);
+        }
+
+        public void Reset()
+        {
+            isStopped = false;
+            isPaused = false;
+            TransitionTo(RobotState.IDLE);
+            ClearJobData();
+            
+            currentGridPosition = ConfigManager.Instance.CellsLayout.warehouse;
+            UpdateRobotVisualPosition();
+
+            handleTimer = 0f;
+            moveTimer = 0f;
+            cellMoveTimer = 0f;
+            Debug.Log("로봇 리셋 완료");
         }
     }
 }

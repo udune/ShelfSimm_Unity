@@ -65,7 +65,10 @@ namespace Managers
 
             InitializeSimulation();
 
-            if (useApiMode) StartCoroutine(InitializeAPI());
+            if (useApiMode)
+            {
+                StartCoroutine(InitializeAPI());
+            }
 
             Debug.Log("시뮬레이션 준비 완료. UI에서 작업을 입력하고 실행하세요.");
         }
@@ -108,7 +111,7 @@ namespace Managers
                 yield break;
             }
 
-            if (bookRegistry != null && loadedBookDtos != null)
+            if (loadedBookDtos != null)
             {
                 bookRegistry.LoadBooksFromApi(loadedBookDtos);
                 jobInputController.RefreshBookDropdown();
@@ -123,7 +126,6 @@ namespace Managers
         {
             Debug.Log("서버에서 재고 상태를 복원합니다...");
 
-            // 1. 가장 최근 Run ID 조회
             string latestRunId = null;
             bool runsLoaded = false;
             yield return ApiClient.Instance.GetRuns(1, 1, 
@@ -131,7 +133,6 @@ namespace Managers
                 {
                     if (response.items != null && response.items.Length > 0)
                     {
-                        // createdAt 기준으로 정렬된 첫 번째 항목이 가장 최신이라고 가정
                         latestRunId = response.items[0].id;
                     }
                     runsLoaded = true;
@@ -142,7 +143,10 @@ namespace Managers
                     runsLoaded = true;
                 });
 
-            if (!runsLoaded) yield return new WaitUntil(() => runsLoaded);
+            if (!runsLoaded)
+            {
+                yield return new WaitUntil(() => runsLoaded);
+            }
 
             if (string.IsNullOrEmpty(latestRunId))
             {
@@ -150,7 +154,6 @@ namespace Managers
                 yield break;
             }
 
-            // 2. 해당 Run의 모든 Job 조회
             List<JobDetailsDto> jobs = null;
             bool jobsLoaded = false;
             yield return ApiClient.Instance.GetJobsByRunId(latestRunId,
@@ -165,7 +168,10 @@ namespace Managers
                     jobsLoaded = true;
                 });
 
-            if (!jobsLoaded) yield return new WaitUntil(() => jobsLoaded);
+            if (!jobsLoaded)
+            {
+                yield return new WaitUntil(() => jobsLoaded);
+            }
 
             if (jobs == null || jobs.Count == 0)
             {
@@ -173,9 +179,8 @@ namespace Managers
                 yield break;
             }
 
-            // 3. 성공한 Job들을 순서대로 적용하여 재고 상태 재구성
             int appliedJobs = 0;
-            foreach (var job in jobs.Where(j => j.result == "Success").OrderBy(j => j.id)) // Job ID 순으로 정렬
+            foreach (var job in jobs.Where(j => j.result == "Success").OrderBy(j => j.id))
             {
                 Cell cell = FindCellByCode(job.cellCode);
                 BookData book = FindBookByTitle(job.bookTitle);
@@ -187,16 +192,17 @@ namespace Managers
                     if(cell.CanPutBook(book, job.quantity, out _))
                     {
                         cell.PutBook(book, job.quantity);
-                        book.ChangeStock(-job.quantity); // 전체 재고 감소
+                        book.ChangeStock(-job.quantity);
                         appliedJobs++;
                     }
                 }
                 else if (job.action == "PICK")
                 {
-                    if(cell.CanPickBook(job.quantity, out _))
+                    ErrorCode errorCode; // Declare errorCode variable
+                    if(cell.CanPickBook(book, job.quantity, out errorCode)) // Pass errorCode
                     {
-                        cell.PickBook(job.quantity);
-                        book.ChangeStock(job.quantity); // 전체 재고 증가
+                        cell.PickBook(book, job.quantity);
+                        book.ChangeStock(job.quantity);
                         appliedJobs++;
                     }
                 }
@@ -308,12 +314,12 @@ namespace Managers
             _jobResults = new List<JobResult>();
             _isRunning = false;
             _isPaused = false;
+            _currentRunId = null;
             ElapsedTime = 0f;
 
             ConfigManager.Instance.CellsLayout.UpdateCellPositionsFromCodes();
-
             InitializeGrid();
-            
+
             _cellStates = new Dictionary<string, Cell>();
             if (ConfigManager.Instance.CellsLayout != null && ConfigManager.Instance.CellsLayout.cells != null)
             {
@@ -322,22 +328,24 @@ namespace Managers
                     _cellStates[cellDef.code] = new Cell(cellDef.code, cellDef.width, cellDef.height);
                 }
             }
+
+            if (robotController != null)
+            {
+                robotController.Reset();
+            }
         }
 
         private void InitializeGrid()
         {
             gridRenderer.Init();
-
             foreach (var cellDef in ConfigManager.Instance.CellsLayout.cells)
             {
                 gridRenderer.UpdateCell(cellDef.X, cellDef.Y, "bookshelf");
-
                 if (pathFinder != null)
                 {
                     pathFinder.AddObstacle(new Vector2Int(cellDef.X, cellDef.Y));
                 }
             }
-
             gridRenderer.UpdateCell(ConfigManager.Instance.CellsLayout.warehouse.x,
                 ConfigManager.Instance.CellsLayout.warehouse.y, "empty");
             gridRenderer.RenderChanges();
@@ -349,34 +357,43 @@ namespace Managers
 
         public void StartSimulationWithJobs(List<Job> jobs)
         {
-            if (_jobQueue == null || summary == null)
-            {
-                Debug.LogWarning("시뮬레이션이 초기화되지 않았습니다. 지금 초기화를 진행합니다.");
-                InitializeSimulation();
-            }
+            Debug.Log($"[StartSimulationWithJobs] 시뮬레이션 시작, 작업 수: {jobs?.Count ?? 0}");
+            InitializeSimulation();
 
             if (jobs == null || jobs.Count == 0)
             {
                 Debug.LogWarning("시작할 작업이 없습니다.");
                 return;
             }
+            
+            var sortedJobs = jobs.OrderBy(job => CalculatePathLength(job.CellCode)).ToList();
+            Debug.Log("작업 목록을 가까운 순으로 정렬했습니다.");
 
             _isRunning = true;
             _isPaused = false;
             ElapsedTime = 0f;
             Time.timeScale = 1f;
 
-            SetTotalTargets(jobs.Count);
-            foreach (var job in jobs) _jobQueue.Enqueue(job);
+            SetTotalTargets(sortedJobs.Count);
+            Debug.Log($"[StartSimulationWithJobs] Summary 초기화: total={summary.total}, attempt={summary.attempt}");
+
+            foreach (var job in sortedJobs)
+            {
+                _jobQueue.Enqueue(job);
+                Debug.Log($"[StartSimulationWithJobs] 작업 추가: {job.Action} - {job.CellCode} - {job.BookTitle} x{job.Quantity} (경로 길이: {CalculatePathLength(job.CellCode)})");
+            }
 
             TryProcessNextJob();
         }
 
         private void TryProcessNextJob()
         {
+            if (!_isRunning) return;
+
             if (_jobQueue.Count > 0)
             {
                 var nextJob = _jobQueue.Dequeue();
+                Debug.Log($"[TryProcessNextJob] 다음 작업 처리 시작: {nextJob.Action} - {nextJob.CellCode} - {nextJob.BookTitle} x{nextJob.Quantity}");
 
                 var targetCell = FindCellByCode(nextJob.CellCode);
                 var targetBook = FindBookByTitle(nextJob.BookTitle);
@@ -394,12 +411,14 @@ namespace Managers
             }
             else
             {
-                CheckSimulationComplete();
+                Debug.Log("[TryProcessNextJob] 모든 작업 완료. 웨어하우스로 복귀합니다.");
+                robotController.DoReturnToWarehouse(OnAllJobsAndReturnFinished);
             }
         }
 
         private void OnJobFinished(Job job, ErrorCode resultCode, JobResult jobResult)
         {
+            Debug.Log($"[OnJobFinished] 작업 완료: {job.CellCode} - {job.BookTitle}, 결과: {resultCode}");
             if (jobResult != null) _jobResults.Add(jobResult);
 
             if (resultCode == ErrorCode.NONE)
@@ -414,6 +433,12 @@ namespace Managers
 
             TryProcessNextJob();
         }
+        
+        private void OnAllJobsAndReturnFinished()
+        {
+            Debug.Log("모든 작업 및 복귀 완료. 시뮬레이션을 종료합니다.");
+            StopSimulation();
+        }
 
         private void ShowErrorInUI(Job job, ErrorCode errorCode)
         {
@@ -421,20 +446,9 @@ namespace Managers
             simulationUIController.ShowStatus(errorMessage, Color.red);
         }
 
-        private void CheckSimulationComplete()
-        {
-            if (summary.total > 0 && summary.attempt >= summary.total)
-            {
-                StopSimulation();
-            }
-        }
-
         public void StopSimulation()
         {
-            if (!_isRunning)
-            {
-                return;
-            }
+            if (!_isRunning) return;
 
             _isRunning = false;
             _isPaused = false;
@@ -452,7 +466,14 @@ namespace Managers
             }
 
             Debug.Log(summary.ToString());
-            Time.timeScale = 0f;
+            
+            // Time.timeScale을 0으로 설정하면 모든 Time-based Coroutine이 멈추므로 UI 동작을 위해 주석 처리
+            // Time.timeScale = 0f;
+
+            if (simulationUIController != null)
+            {
+                simulationUIController.ClearJobs();
+            }
         }
 
         public void TogglePause()
@@ -468,14 +489,8 @@ namespace Managers
 
             if (robotController != null)
             {
-                if (_isPaused)
-                {
-                    robotController.Pause();
-                }
-                else
-                {
-                    robotController.Resume();
-                }
+                if (_isPaused) robotController.Pause();
+                else robotController.Resume();
             }
 
             Debug.Log(_isPaused ? "시뮬레이션 일시정지됨." : "시뮬레이션 재개됨.");
@@ -547,7 +562,7 @@ namespace Managers
             if (!accessiblePos.HasValue) return 0;
 
             var path = pathFinder.FindPath(start, accessiblePos.Value);
-            return path != null ? path.Count : 0;
+            return path?.Count ?? 0;
         }
 
         private void HandleApiInitializationFailure(string errorMessage)

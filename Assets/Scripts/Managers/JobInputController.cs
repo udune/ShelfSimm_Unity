@@ -11,22 +11,20 @@ namespace Managers
 {
     public class JobInputController : MonoBehaviour
     {
-        [Header("UI")]
-        [SerializeField] private TMP_InputField cellCodesInput;
+        [Header("UI")] [SerializeField] private TMP_InputField cellCodesInput;
         [SerializeField] private TMP_Dropdown actionTypeDropdown;
         [SerializeField] private TMP_Dropdown bookDropdown;
         [SerializeField] private TMP_InputField quantityInput;
         [SerializeField] private Button executeButton;
 
-        [Header("Setting")]
-        [SerializeField] private Color validColor = new Color(0.2f, 0.2f, 0.25f, 1);
+        [Header("Setting")] [SerializeField] private Color validColor = new(0.2f, 0.2f, 0.25f, 1);
         [SerializeField] private Color invalidColor = Color.red;
 
-        [Header("References")]
-        [SerializeField] private BookRegistry bookRegistry;
-        
-        private JobInputData currentJobInput = new JobInputData();
-        private bool isInitialized = false;
+        [Header("References")] [SerializeField]
+        private BookRegistry bookRegistry;
+
+        private JobInputData currentJobInput = new();
+        private bool isInitialized;
 
         public Action<JobInputData> OnValidInputChanged;
         public Action<JobInputData> OnExecuteRequested;
@@ -38,32 +36,20 @@ namespace Managers
 
         private void Init()
         {
-            if (actionTypeDropdown != null)
-            {
-                actionTypeDropdown.ClearOptions();
-                actionTypeDropdown.AddOptions(new List<string> { "PUT", "PICK" });
-                actionTypeDropdown.value = 0;
-                actionTypeDropdown.onValueChanged.AddListener(OnActionTypeChanged);
-            }
+            actionTypeDropdown.ClearOptions();
+            actionTypeDropdown.AddOptions(new List<string> { "PUT", "PICK" });
+            actionTypeDropdown.value = 0;
+            actionTypeDropdown.onValueChanged.AddListener(OnActionTypeChanged);
 
-            if (quantityInput != null)
-            {
-                quantityInput.text = "1";
-                quantityInput.contentType = TMP_InputField.ContentType.IntegerNumber;
-                quantityInput.onValueChanged.AddListener(OnQuantityChanged);
-                quantityInput.onEndEdit.AddListener(OnQuantityEndEdit);
-            }
+            quantityInput.text = "1";
+            quantityInput.contentType = TMP_InputField.ContentType.IntegerNumber;
+            quantityInput.onValueChanged.AddListener(OnQuantityChanged);
+            quantityInput.onEndEdit.AddListener(OnQuantityEndEdit);
 
-            if (cellCodesInput != null)
-            {
-                cellCodesInput.onValueChanged.AddListener(OnCellCodesChanged);
-                cellCodesInput.placeholder.GetComponent<TextMeshProUGUI>().text = "예: D20, A15, B03";
-            }
+            cellCodesInput.onValueChanged.AddListener(OnCellCodesChanged);
+            cellCodesInput.placeholder.GetComponent<TextMeshProUGUI>().text = "예: D20, A15, B03";
 
-            if (bookDropdown != null)
-            {
-                bookDropdown.onValueChanged.AddListener(OnBookChanged);
-            }
+            bookDropdown.onValueChanged.AddListener(OnBookChanged);
 
             currentJobInput.quantity = 1;
             isInitialized = true;
@@ -73,30 +59,13 @@ namespace Managers
 
         public void RefreshBookDropdown()
         {
-            if (bookDropdown == null)
-            {
-                Debug.LogWarning("[JobInputController] bookDropdown is null");
-                return;
-            }
-
-            if (bookRegistry == null)
-            {
-                bookRegistry = FindObjectOfType<BookRegistry>();
-            }
-
-            if (bookRegistry == null)
-            {
-                Debug.LogWarning("[JobInputController] BookRegistry not found");
-                return;
-            }
-
             // 기존 옵션 초기화
             bookDropdown.ClearOptions();
 
             // 새로운 책 목록 로드
             var books = bookRegistry.GetAllAvailableBooks();
             var options = new List<string> { "도서를 선택하세요" };
-            
+
             if (books != null && books.Length > 0)
             {
                 options.AddRange(books.Select(book => book.DisplayText));
@@ -108,10 +77,7 @@ namespace Managers
 
         private void OnCellCodesChanged(string input)
         {
-            if (!isInitialized)
-            {
-                return;
-            }
+            if (!isInitialized) return;
 
             currentJobInput.cellCodesText = input;
             ParseCellCodes(input);
@@ -123,31 +89,21 @@ namespace Managers
             currentJobInput.parsedCodes.Clear();
             currentJobInput.invalidCodes.Clear();
 
-            if (string.IsNullOrWhiteSpace(input))
+            if (string.IsNullOrWhiteSpace(input)) return;
+
+            var codes = input.Split(new[] { ',', ' ' }, StringSplitOptions.RemoveEmptyEntries);
+
+            foreach (var code in codes)
             {
-                return;
-            }
+                var trimmed = code.Trim();
+                if (string.IsNullOrEmpty(trimmed)) continue;
 
-            string[] codes = input.Split(new char[] {',', ' '}, StringSplitOptions.RemoveEmptyEntries);
-
-            foreach (string code in codes)
-            {
-                string trimmed = code.Trim();
-                if (string.IsNullOrEmpty(trimmed))
-                {
-                    continue;
-                }
-
-                if (CodeNormalizer.TryNormalizeCode(trimmed, out string normalized))
+                if (CodeNormalizer.TryNormalizeCode(trimmed, out var normalized))
                 {
                     if (IsValidBookshelfCell(normalized))
-                    {
                         currentJobInput.parsedCodes.Add(normalized);
-                    }
                     else
-                    {
                         currentJobInput.invalidCodes.Add(trimmed);
-                    }
                 }
                 else
                 {
@@ -163,10 +119,7 @@ namespace Managers
 
         private void OnActionTypeChanged(int value)
         {
-            if (!isInitialized)
-            {
-                return;
-            }
+            if (!isInitialized) return;
 
             currentJobInput.actionType = (JobAction)value;
             UpdateUI();
@@ -181,7 +134,9 @@ namespace Managers
 
             if (value > 0 && bookDropdown != null)
             {
-                currentJobInput.bookId = $"BOOK_{value}";
+                // dropdown의 첫 번째 옵션은 "도서를 선택하세요"이므로 value - 1
+                var book = bookRegistry.GetBookByIndex(value - 1);
+                currentJobInput.bookId = book != null ? book.Id : "";
             }
             else
             {
@@ -199,25 +154,17 @@ namespace Managers
             }
 
             if (string.IsNullOrWhiteSpace(input))
-            {
                 currentJobInput.quantity = 0;
-            }
-            else if (int.TryParse(input, out int value))
-            {
-                currentJobInput.quantity = value;
-            }
+            else if (int.TryParse(input, out var value)) currentJobInput.quantity = value;
 
             UpdateUI();
         }
 
         private void OnQuantityEndEdit(string input)
         {
-            if (!isInitialized || quantityInput == null)
-            {
-                return;
-            }
+            if (!isInitialized) return;
 
-            int correctedQuantity = InputValidator.CorrectQuantity(currentJobInput.quantity);
+            var correctedQuantity = InputValidator.CorrectQuantity(currentJobInput.quantity);
 
             if (correctedQuantity != currentJobInput.quantity)
             {
@@ -230,43 +177,27 @@ namespace Managers
 
         private void UpdateUI()
         {
-            if (!isInitialized)
-            {
-                return;
-            }
+            if (!isInitialized) return;
 
             var validation = InputValidator.ValidateJobInput(currentJobInput);
 
-            if (executeButton != null)
-            {
-                bool isEnable = InputValidator.IsEnableExecuteButton(currentJobInput);
-                executeButton.interactable = isEnable;
+            var isEnable = InputValidator.IsEnableExecuteButton(currentJobInput);
+            executeButton.interactable = isEnable;
 
-                var colors = executeButton.colors;
-                colors.normalColor = isEnable ? Color.green : Color.gray;
-                executeButton.colors = colors;
+            var colors = executeButton.colors;
+            colors.normalColor = isEnable ? Color.green : Color.gray;
+            executeButton.colors = colors;
+
+            var image = cellCodesInput.GetComponent<Image>();
+            if (image != null)
+            {
+                if (currentJobInput.invalidCodes != null && currentJobInput.invalidCodes.Count > 0)
+                    image.color = invalidColor;
+                else
+                    image.color = validColor;
             }
 
-            if (cellCodesInput != null)
-            {
-                var image = cellCodesInput.GetComponent<Image>();
-                if (image != null)
-                {
-                    if (currentJobInput.invalidCodes != null && currentJobInput.invalidCodes.Count > 0)
-                    {
-                        image.color = invalidColor;
-                    }
-                    else
-                    {
-                        image.color = validColor;
-                    }
-                }
-            }
-
-            if (validation.IsValid)
-            {
-                OnValidInputChanged?.Invoke(currentJobInput);
-            }
+            if (validation.IsValid) OnValidInputChanged?.Invoke(currentJobInput);
         }
 
         public JobInputData GetCurrentJobInput()
@@ -277,27 +208,11 @@ namespace Managers
         public void ResetInput()
         {
             currentJobInput = new JobInputData { quantity = 1 };
-
-            if (cellCodesInput != null)
-            {
-                cellCodesInput.text = "";
-            }
-
-            if (actionTypeDropdown != null)
-            {
-                actionTypeDropdown.value = 0;
-            }
-
-            if (bookDropdown != null)
-            {
-                bookDropdown.value = 0;
-            }
-
-            if (quantityInput != null)
-            {
-                quantityInput.text = "1";
-            }
-
+            cellCodesInput.text = "";
+            actionTypeDropdown.value = 0;
+            bookDropdown.value = 0;
+            quantityInput.text = "1";
             UpdateUI();
         }
-    }}
+    }
+}

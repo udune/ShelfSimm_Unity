@@ -73,19 +73,11 @@ namespace UI
             var bookData = bookRegistry != null ? bookRegistry.GetBookById(jobInput.bookId) : null;
             string bookTitle = bookData != null ? bookData.title : "Unknown Book";
 
-            var existingCells = new HashSet<string>(jobList.Select(j => j.CellCode));
-            var duplicates = new List<string>();
             var invalidCells = new List<string>();
             int addedCount = 0;
 
             foreach (var cellCode in jobInput.parsedCodes)
             {
-                if (existingCells.Contains(cellCode))
-                {
-                    duplicates.Add(cellCode);
-                    continue;
-                }
-
                 if (!IsValidBookshelfCell(cellCode))
                 {
                     invalidCells.Add(cellCode);
@@ -94,27 +86,16 @@ namespace UI
 
                 var job = new Job(jobInput.actionType, cellCode, bookTitle, jobInput.quantity);
                 jobList.Add(job);
-                existingCells.Add(cellCode);
                 addedCount++;
             }
 
             UpdateJobList();
             jobInputController.ResetInput();
 
-            if (invalidCells.Count > 0 && duplicates.Count > 0)
-            {
-                string message = $"{addedCount}개 추가됨. 중복: {string.Join(", ", duplicates)}, 미등록 셀: {string.Join(", ", invalidCells)}";
-                ShowStatus(message, Color.red);
-            }
-            else if (invalidCells.Count > 0)
+            if (invalidCells.Count > 0)
             {
                 string message = $"{addedCount}개 추가됨. 책장에 등록되지 않은 셀: {string.Join(", ", invalidCells)}";
                 ShowStatus(message, Color.red);
-            }
-            else if (duplicates.Count > 0)
-            {
-                string message = $"{addedCount}개 추가됨. 중복 제외: {string.Join(", ", duplicates)}";
-                ShowStatus(message, new Color(1f, 0.6f, 0f));
             }
             else if (addedCount > 0)
             {
