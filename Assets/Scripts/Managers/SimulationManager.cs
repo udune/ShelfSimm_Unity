@@ -57,20 +57,37 @@ namespace Managers
             }
 
             Instance = this;
+            
+            // Cell 상태를 앱 세션 동안 유지하기 위해 Awake에서 한 번만 초기화
+            _cellStates = new Dictionary<string, Cell>();
+            if (ConfigManager.Instance.CellsLayout != null && ConfigManager.Instance.CellsLayout.cells != null)
+            {
+                foreach (var cellDef in ConfigManager.Instance.CellsLayout.cells)
+                {
+                    _cellStates[cellDef.code] = new Cell(cellDef.code, cellDef.width, cellDef.height);
+                }
+            }
         }
 
         private void Start()
         {
             ConfigManager.Instance.SimulationConfig.OnHandleTimeChanged += HandleTimeChanged;
 
-            InitializeSimulation();
+            InitializeGrid();
+            
+            if (robotController != null)
+            {
+                robotController.Reset();
+            }
 
             if (useApiMode)
             {
                 StartCoroutine(InitializeAPI());
             }
-
-            Debug.Log("시뮬레이션 준비 완료. UI에서 작업을 입력하고 실행하세요.");
+            else
+            {
+                Debug.Log("시뮬레이션 준비 완료. UI에서 작업을 입력하고 실행하세요.");
+            }
         }
 
         private void Update()
@@ -198,8 +215,7 @@ namespace Managers
                 }
                 else if (job.action == "PICK")
                 {
-                    ErrorCode errorCode; // Declare errorCode variable
-                    if(cell.CanPickBook(book, job.quantity, out errorCode)) // Pass errorCode
+                    if(cell.CanPickBook(book, job.quantity, out _))
                     {
                         cell.PickBook(book, job.quantity);
                         book.ChangeStock(job.quantity);
@@ -220,29 +236,28 @@ namespace Managers
 
         private IEnumerator PrepareSimulationWithAPI(List<Job> jobs)
         {
-            if (string.IsNullOrEmpty(_currentRunId))
+            // 새 시뮬레이션이므로 새 Run ID를 받음
+            _currentRunId = null;
+            var createRunReq = new CreateRunRequest
             {
-                var createRunReq = new CreateRunRequest
+                randomSeed = ConfigManager.Instance.SimulationConfig.randomSeed,
+                handleTimeSec = ConfigManager.Instance.SimulationConfig.handleTime,
+                robotSpeedCellsPerSec = ConfigManager.Instance.SimulationConfig.robotSpeed,
+                topN = ConfigManager.Instance.SimulationConfig.topN
+            };
+            var runCreated = false;
+            yield return ApiClient.Instance.CreateRun(createRunReq,
+                response =>
                 {
-                    randomSeed = ConfigManager.Instance.SimulationConfig.randomSeed,
-                    handleTimeSec = ConfigManager.Instance.SimulationConfig.handleTime,
-                    robotSpeedCellsPerSec = ConfigManager.Instance.SimulationConfig.robotSpeed,
-                    topN = ConfigManager.Instance.SimulationConfig.topN
-                };
-                var runCreated = false;
-                yield return ApiClient.Instance.CreateRun(createRunReq,
-                    response =>
-                    {
-                        _currentRunId = response.id;
-                        runCreated = true;
-                    },
-                    error => Debug.LogError($"Run 생성 실패: {error}")
-                );
-                if (!runCreated)
-                {
-                    Debug.LogError("Run 생성 실패");
-                    yield break;
-                }
+                    _currentRunId = response.id;
+                    runCreated = true;
+                },
+                error => Debug.LogError($"Run 생성 실패: {error}")
+            );
+            if (!runCreated)
+            {
+                Debug.LogError("Run 생성 실패");
+                yield break;
             }
 
             var jobDtos = jobs.Select(job => new JobDto
@@ -306,7 +321,6 @@ namespace Managers
         private void InitializeSimulation()
         {
             Time.timeScale = 1f;
-            Time.fixedDeltaTime = 0.02f;
             Random.InitState(ConfigManager.Instance.SimulationConfig.randomSeed);
 
             summary = new Summary();
@@ -314,20 +328,7 @@ namespace Managers
             _jobResults = new List<JobResult>();
             _isRunning = false;
             _isPaused = false;
-            _currentRunId = null;
             ElapsedTime = 0f;
-
-            ConfigManager.Instance.CellsLayout.UpdateCellPositionsFromCodes();
-            InitializeGrid();
-
-            _cellStates = new Dictionary<string, Cell>();
-            if (ConfigManager.Instance.CellsLayout != null && ConfigManager.Instance.CellsLayout.cells != null)
-            {
-                foreach (var cellDef in ConfigManager.Instance.CellsLayout.cells)
-                {
-                    _cellStates[cellDef.code] = new Cell(cellDef.code, cellDef.width, cellDef.height);
-                }
-            }
 
             if (robotController != null)
             {
@@ -338,6 +339,7 @@ namespace Managers
         private void InitializeGrid()
         {
             gridRenderer.Init();
+            ConfigManager.Instance.CellsLayout.UpdateCellPositionsFromCodes();
             foreach (var cellDef in ConfigManager.Instance.CellsLayout.cells)
             {
                 gridRenderer.UpdateCell(cellDef.X, cellDef.Y, "bookshelf");
@@ -467,9 +469,6 @@ namespace Managers
 
             Debug.Log(summary.ToString());
             
-            // Time.timeScale을 0으로 설정하면 모든 Time-based Coroutine이 멈추므로 UI 동작을 위해 주석 처리
-            // Time.timeScale = 0f;
-
             if (simulationUIController != null)
             {
                 simulationUIController.ClearJobs();

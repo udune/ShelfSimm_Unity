@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Core;
 using UnityEngine;
 
 namespace Data
@@ -47,8 +48,14 @@ namespace Data
         // 최소 두께 반환 (MaxCapacity 계산용)
         private int GetMinThickness()
         {
-            if (books.Count == 0) return 1;
-            return books.Values.Min(b => b.Thickness);
+            if (books.Count > 0)
+            {
+                return books.Values.Min(b => b.Thickness);
+            }
+            
+            // 책이 없을 경우, 기본 책의 두께를 기준으로 계산
+            var defaultBook = BookRegistry.Instance.GetDefaultBook();
+            return defaultBook != null ? defaultBook.Thickness : 30; // 기본 책도 없으면 임의의 값(30mm) 사용
         }
 
         // 남은 너비 계산

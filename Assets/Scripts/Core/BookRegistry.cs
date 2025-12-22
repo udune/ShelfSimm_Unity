@@ -10,8 +10,20 @@ namespace Core
     // 도서 데이터를 관리하는 클래스
     public class BookRegistry : MonoBehaviour
     {
+        public static BookRegistry Instance { get; private set; }
+
         private Dictionary<string, BookData> bookDatabase = new Dictionary<string, BookData>();
         private List<BookData> availableBooks = new List<BookData>();
+
+        private void Awake()
+        {
+            if (Instance != null && Instance != this)
+            {
+                Destroy(gameObject);
+                return;
+            }
+            Instance = this;
+        }
 
         public BookData GetBookById(string bookId)
         {
@@ -94,6 +106,15 @@ namespace Core
             }
 
             return availableBooks[index];
+        }
+
+        public BookData GetDefaultBook()
+        {
+            if (availableBooks != null && availableBooks.Count > 0)
+            {
+                return availableBooks[0];
+            }
+            return null;
         }
 
         public void AddBook(BookData newBook)
