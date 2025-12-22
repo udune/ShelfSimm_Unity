@@ -143,87 +143,89 @@ namespace Managers
         {
             Debug.Log("서버에서 재고 상태를 복원합니다...");
 
-            string latestRunId = null;
-            bool runsLoaded = false;
-            yield return ApiClient.Instance.GetRuns(1, 1, 
+            // 1. 최근 Run 목록을 가져옴
+            RunResponse[] recentRuns = null;
+            bool runsRequestComplete = false;
+            yield return ApiClient.Instance.GetRuns(1, 10, // 최근 10개 Run을 확인
                 response =>
                 {
                     if (response.items != null && response.items.Length > 0)
                     {
-                        latestRunId = response.items[0].id;
+                        recentRuns = response.items;
                     }
-                    runsLoaded = true;
+                    runsRequestComplete = true;
                 },
                 error =>
                 {
                     Debug.LogError($"Run 목록 조회 실패: {error}");
-                    runsLoaded = true;
+                    runsRequestComplete = true;
                 });
 
-            if (!runsLoaded)
-            {
-                yield return new WaitUntil(() => runsLoaded);
-            }
+            if (!runsRequestComplete) yield return new WaitUntil(() => runsRequestComplete);
 
-            if (string.IsNullOrEmpty(latestRunId))
+            if (recentRuns == null || recentRuns.Length == 0)
             {
                 Debug.Log("이전 실행 기록이 없어 재고 상태 복원을 건너뜁니다.");
                 yield break;
             }
 
-            List<JobDetailsDto> jobs = null;
-            bool jobsLoaded = false;
-            yield return ApiClient.Instance.GetJobsByRunId(latestRunId,
-                jobList =>
-                {
-                    jobs = jobList;
-                    jobsLoaded = true;
-                },
-                error =>
-                {
-                    Debug.LogError($"Job 목록 조회 실패 (Run ID: {latestRunId}): {error}");
-                    jobsLoaded = true;
-                });
-
-            if (!jobsLoaded)
+            // 2. 성공한 Job이 있는 가장 최신 Run을 찾음
+            foreach (var run in recentRuns) // API가 최신순으로 정렬해서 보내준다고 가정
             {
-                yield return new WaitUntil(() => jobsLoaded);
-            }
-
-            if (jobs == null || jobs.Count == 0)
-            {
-                Debug.Log("작업 기록이 없어 재고 상태 복원을 건너뜁니다.");
-                yield break;
-            }
-
-            int appliedJobs = 0;
-            foreach (var job in jobs.Where(j => j.result == "Success").OrderBy(j => j.id))
-            {
-                Cell cell = FindCellByCode(job.cellCode);
-                BookData book = FindBookByTitle(job.bookTitle);
-
-                if (cell == null || book == null) continue;
-
-                if (job.action == "PUT")
-                {
-                    if(cell.CanPutBook(book, job.quantity, out _))
+                List<JobDetailsDto> jobsInRun = null;
+                bool jobsRequestComplete = false;
+                yield return ApiClient.Instance.GetJobsByRunId(run.id,
+                    jobList =>
                     {
-                        cell.PutBook(book, job.quantity);
-                        book.ChangeStock(-job.quantity);
-                        appliedJobs++;
-                    }
-                }
-                else if (job.action == "PICK")
-                {
-                    if(cell.CanPickBook(book, job.quantity, out _))
+                        jobsInRun = jobList;
+                        jobsRequestComplete = true;
+                    },
+                    error =>
                     {
-                        cell.PickBook(book, job.quantity);
-                        book.ChangeStock(job.quantity);
-                        appliedJobs++;
+                        Debug.LogError($"Job 목록 조회 실패 (Run ID: {run.id}): {error}");
+                        jobsRequestComplete = true;
+                    });
+
+                if (!jobsRequestComplete) yield return new WaitUntil(() => jobsRequestComplete);
+
+                if (jobsInRun != null && jobsInRun.Any(j => j.result == "Success"))
+                {
+                    Debug.Log($"재고 복원을 위한 Run ID: {run.id}");
+                    
+                    // 3. 찾은 Run의 Job들을 기준으로 재고 상태 복원
+                    int appliedJobs = 0;
+                    foreach (var job in jobsInRun.Where(j => j.result == "Success").OrderBy(j => j.id))
+                    {
+                        Cell cell = FindCellByCode(job.cellCode);
+                        BookData book = FindBookByTitle(job.bookTitle);
+
+                        if (cell == null || book == null) continue;
+
+                        if (job.action == "PUT")
+                        {
+                            if(cell.CanPutBook(book, job.quantity, out _))
+                            {
+                                cell.PutBook(book, job.quantity);
+                                book.ChangeStock(-job.quantity);
+                                appliedJobs++;
+                            }
+                        }
+                        else if (job.action == "PICK")
+                        {
+                            if(cell.CanPickBook(book, job.quantity, out _))
+                            {
+                                cell.PickBook(book, job.quantity);
+                                book.ChangeStock(job.quantity);
+                                appliedJobs++;
+                            }
+                        }
                     }
+                    Debug.Log($"{appliedJobs}개의 작업을 적용하여 재고 상태를 복원했습니다.");
+                    yield break; // 복원 완료 후 코루틴 종료
                 }
             }
-            Debug.Log($"{appliedJobs}개의 작업을 적용하여 재고 상태를 복원했습니다.");
+
+            Debug.Log("성공 기록이 있는 이전 실행이 없어 재고 상태 복원을 건너뜁니다.");
         }
 
         public void PrepareSimulation(List<Job> jobs)
