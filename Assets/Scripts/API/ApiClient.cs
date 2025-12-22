@@ -134,12 +134,6 @@ namespace API
         [SerializeField] private string baseUrl = "https://shelfsim-api-190183336439.asia-northeast3.run.app/api";
         [SerializeField] private bool logRequests = true;
 
-        [Header("보안 설정 (개발/테스트 전용)")]
-        [SerializeField] private bool bypassSslValidation = false;
-
-        private string currentRunId;
-        private bool hasShownSecurityWarning = false;
-
         private void Awake()
         {
             if (Instance != null && Instance != this)
@@ -148,14 +142,6 @@ namespace API
                 return;
             }
             Instance = this;
-
-            if (bypassSslValidation)
-            {
-                #if !UNITY_EDITOR && !DEVELOPMENT_BUILD
-                bypassSslValidation = false;
-                Debug.LogError("[API] Production build detected - SSL bypass disabled for security");
-                #endif
-            }
         }
 
         public IEnumerator CreateRun(CreateRunRequest request, Action<RunResponse> onSuccess, Action<string> onError = null)
@@ -164,22 +150,18 @@ namespace API
             string json = JsonUtility.ToJson(request);
             if (logRequests) Debug.Log($"[API] POST {url}");
 
-            using (UnityWebRequest www = UnityWebRequest.Post(url, json, "application/json"))
-            {
-                ConfigureCertificateHandler(www);
-                yield return www.SendWebRequest();
+            using UnityWebRequest www = UnityWebRequest.Post(url, json, "application/json");
+            yield return www.SendWebRequest();
 
-                if (www.result == UnityWebRequest.Result.Success)
-                {
-                    var response = JsonUtility.FromJson<RunResponse>(www.downloadHandler.text);
-                    currentRunId = response.id;
-                    onSuccess?.Invoke(response);
-                }
-                else
-                {
-                    Debug.LogError($"[API] Error: {www.error}");
-                    onError?.Invoke($"{www.error}\n{www.downloadHandler.text}");
-                }
+            if (www.result == UnityWebRequest.Result.Success)
+            {
+                var response = JsonUtility.FromJson<RunResponse>(www.downloadHandler.text);
+                onSuccess?.Invoke(response);
+            }
+            else
+            {
+                Debug.LogError($"[API] Error: {www.error}");
+                onError?.Invoke($"{www.error}\n{www.downloadHandler.text}");
             }
         }
     
@@ -189,21 +171,18 @@ namespace API
             string json = JsonUtility.ToJson(request);
             if (logRequests) Debug.Log($"[API] POST {url}");
 
-            using (UnityWebRequest www = UnityWebRequest.Post(url, json, "application/json"))
-            {
-                ConfigureCertificateHandler(www);
-                yield return www.SendWebRequest();
+            using UnityWebRequest www = UnityWebRequest.Post(url, json, "application/json");
+            yield return www.SendWebRequest();
 
-                if (www.result == UnityWebRequest.Result.Success)
-                {
-                    var response = JsonUtility.FromJson<JobsBatchResponse>(www.downloadHandler.text);
-                    onSuccess?.Invoke(response);
-                }
-                else
-                {
-                    Debug.LogError($"[API] Error: {www.error}");
-                    onError?.Invoke($"{www.error}\n{www.downloadHandler.text}");
-                }
+            if (www.result == UnityWebRequest.Result.Success)
+            {
+                var response = JsonUtility.FromJson<JobsBatchResponse>(www.downloadHandler.text);
+                onSuccess?.Invoke(response);
+            }
+            else
+            {
+                Debug.LogError($"[API] Error: {www.error}");
+                onError?.Invoke($"{www.error}\n{www.downloadHandler.text}");
             }
         }
     
@@ -217,26 +196,23 @@ namespace API
                 Debug.Log($"[API] Body: {json}");
             }
 
-            using (UnityWebRequest www = new UnityWebRequest(url, "PATCH"))
+            using UnityWebRequest www = new UnityWebRequest(url, "PATCH");
+            byte[] bodyRaw = Encoding.UTF8.GetBytes(json);
+            www.uploadHandler = new UploadHandlerRaw(bodyRaw);
+            www.downloadHandler = new DownloadHandlerBuffer();
+            www.SetRequestHeader("Content-Type", "application/json");
+
+            yield return www.SendWebRequest();
+
+            if (www.result == UnityWebRequest.Result.Success)
             {
-                byte[] bodyRaw = Encoding.UTF8.GetBytes(json);
-                www.uploadHandler = new UploadHandlerRaw(bodyRaw);
-                www.downloadHandler = new DownloadHandlerBuffer();
-                www.SetRequestHeader("Content-Type", "application/json");
-                ConfigureCertificateHandler(www);
-
-                yield return www.SendWebRequest();
-
-                if (www.result == UnityWebRequest.Result.Success)
-                {
-                    onSuccess?.Invoke();
-                }
-                else
-                {
-                    Debug.LogError($"[API] Error on PATCH {url}: {www.error}. Response Code: {www.responseCode}");
-                    Debug.LogError($"[API] Response: {www.downloadHandler.text}");
-                    onError?.Invoke($"{www.error}\n{www.downloadHandler.text}");
-                }
+                onSuccess?.Invoke();
+            }
+            else
+            {
+                Debug.LogError($"[API] Error on PATCH {url}: {www.error}. Response Code: {www.responseCode}");
+                Debug.LogError($"[API] Response: {www.downloadHandler.text}");
+                onError?.Invoke($"{www.error}\n{www.downloadHandler.text}");
             }
         }
 
@@ -246,25 +222,22 @@ namespace API
             string json = JsonUtility.ToJson(request);
             if (logRequests) Debug.Log($"[API] PATCH {url}");
 
-            using (UnityWebRequest www = new UnityWebRequest(url, "PATCH"))
+            using UnityWebRequest www = new UnityWebRequest(url, "PATCH");
+            byte[] bodyRaw = Encoding.UTF8.GetBytes(json);
+            www.uploadHandler = new UploadHandlerRaw(bodyRaw);
+            www.downloadHandler = new DownloadHandlerBuffer();
+            www.SetRequestHeader("Content-Type", "application/json");
+
+            yield return www.SendWebRequest();
+
+            if (www.result == UnityWebRequest.Result.Success)
             {
-                byte[] bodyRaw = Encoding.UTF8.GetBytes(json);
-                www.uploadHandler = new UploadHandlerRaw(bodyRaw);
-                www.downloadHandler = new DownloadHandlerBuffer();
-                www.SetRequestHeader("Content-Type", "application/json");
-                ConfigureCertificateHandler(www);
-
-                yield return www.SendWebRequest();
-
-                if (www.result == UnityWebRequest.Result.Success)
-                {
-                    onSuccess?.Invoke();
-                }
-                else
-                {
-                    Debug.LogError($"[API] Error: {www.error}");
-                    onError?.Invoke($"{www.error}\n{www.downloadHandler.text}");
-                }
+                onSuccess?.Invoke();
+            }
+            else
+            {
+                Debug.LogError($"[API] Error: {www.error}");
+                onError?.Invoke($"{www.error}\n{www.downloadHandler.text}");
             }
         }
 
@@ -273,20 +246,17 @@ namespace API
             string url = $"{baseUrl}/Runs/{runId}/results.csv";
             if (logRequests) Debug.Log($"[API] GET {url}");
 
-            using (UnityWebRequest www = UnityWebRequest.Get(url))
-            {
-                ConfigureCertificateHandler(www);
-                yield return www.SendWebRequest();
+            using UnityWebRequest www = UnityWebRequest.Get(url);
+            yield return www.SendWebRequest();
 
-                if (www.result == UnityWebRequest.Result.Success)
-                {
-                    onSuccess?.Invoke(www.downloadHandler.text);
-                }
-                else
-                {
-                    Debug.LogError($"[API] Error: {www.error}");
-                    onError?.Invoke($"{www.error}\n{www.downloadHandler.text}");
-                }
+            if (www.result == UnityWebRequest.Result.Success)
+            {
+                onSuccess?.Invoke(www.downloadHandler.text);
+            }
+            else
+            {
+                Debug.LogError($"[API] Error: {www.error}");
+                onError?.Invoke($"{www.error}\n{www.downloadHandler.text}");
             }
         }
 
@@ -295,34 +265,31 @@ namespace API
             string url = $"{baseUrl}/Books";
             if (logRequests) Debug.Log($"[API] GET {url}");
 
-            using (UnityWebRequest www = UnityWebRequest.Get(url))
+            using UnityWebRequest www = UnityWebRequest.Get(url);
+            yield return www.SendWebRequest();
+
+            if (www.result == UnityWebRequest.Result.Success)
             {
-                ConfigureCertificateHandler(www);
-                yield return www.SendWebRequest();
-
-                if (www.result == UnityWebRequest.Result.Success)
+                string jsonResponse = www.downloadHandler.text;
+                if (logRequests)
                 {
-                    string jsonResponse = www.downloadHandler.text;
-                    if (logRequests)
-                    {
-                        Debug.Log($"[API] Books response: {jsonResponse}");
-                    }
-
-                    string dtoJson = $"{{\"items\":{jsonResponse}}}";
-                    BookListDto dto = JsonUtility.FromJson<BookListDto>(dtoJson);
-                    List<BookDto> bookList = new List<BookDto>(dto.items);
-
-                    if (logRequests)
-                    {
-                        Debug.Log($"[API] Loaded {bookList.Count} books");
-                    }
-                    onSuccess?.Invoke(bookList);
+                    Debug.Log($"[API] Books response: {jsonResponse}");
                 }
-                else
+
+                string dtoJson = $"{{\"items\":{jsonResponse}}}";
+                BookListDto dto = JsonUtility.FromJson<BookListDto>(dtoJson);
+                List<BookDto> bookList = new List<BookDto>(dto.items);
+
+                if (logRequests)
                 {
-                    Debug.LogError($"[API] Error: {www.error}");
-                    onError?.Invoke($"{www.error}\n{www.downloadHandler.text}");
+                    Debug.Log($"[API] Loaded {bookList.Count} books");
                 }
+                onSuccess?.Invoke(bookList);
+            }
+            else
+            {
+                Debug.LogError($"[API] Error: {www.error}");
+                onError?.Invoke($"{www.error}\n{www.downloadHandler.text}");
             }
         }
 
@@ -331,21 +298,18 @@ namespace API
             string url = $"{baseUrl}/Runs/{runId}";
             if (logRequests) Debug.Log($"[API] GET {url}");
 
-            using (UnityWebRequest www = UnityWebRequest.Get(url))
-            {
-                ConfigureCertificateHandler(www);
-                yield return www.SendWebRequest();
+            using UnityWebRequest www = UnityWebRequest.Get(url);
+            yield return www.SendWebRequest();
 
-                if (www.result == UnityWebRequest.Result.Success)
-                {
-                    RunDetailsDto runDetails = JsonUtility.FromJson<RunDetailsDto>(www.downloadHandler.text);
-                    onSuccess?.Invoke(runDetails);
-                }
-                else
-                {
-                    Debug.LogError($"[API] Error: {www.error}");
-                    onError?.Invoke($"{www.error}\n{www.downloadHandler.text}");
-                }
+            if (www.result == UnityWebRequest.Result.Success)
+            {
+                RunDetailsDto runDetails = JsonUtility.FromJson<RunDetailsDto>(www.downloadHandler.text);
+                onSuccess?.Invoke(runDetails);
+            }
+            else
+            {
+                Debug.LogError($"[API] Error: {www.error}");
+                onError?.Invoke($"{www.error}\n{www.downloadHandler.text}");
             }
         }
 
@@ -354,33 +318,30 @@ namespace API
             string url = $"{baseUrl}/Runs?page={page}&pageSize={pageSize}";
             if (logRequests) Debug.Log($"[API] GET {url}");
 
-            using (UnityWebRequest www = UnityWebRequest.Get(url))
-            {
-                ConfigureCertificateHandler(www);
-                yield return www.SendWebRequest();
+            using UnityWebRequest www = UnityWebRequest.Get(url);
+            yield return www.SendWebRequest();
 
-                if (www.result == UnityWebRequest.Result.Success)
-                {
-                    // API 응답이 배열 형태인지 객체 형태인지 확인 필요.
-                    // 명세서에는 페이징 지원이라고 되어 있으므로 { items: [], totalCount: 0 } 형태일 가능성이 높음.
-                    // 하지만 현재 RunResponse[] 형태로 올 수도 있으므로 확인 필요.
-                    // 여기서는 일단 JSON을 그대로 파싱 시도.
+            if (www.result == UnityWebRequest.Result.Success)
+            {
+                // API 응답이 배열 형태인지 객체 형태인지 확인 필요.
+                // 명세서에는 페이징 지원이라고 되어 있으므로 { items: [], totalCount: 0 } 형태일 가능성이 높음.
+                // 하지만 현재 RunResponse[] 형태로 올 수도 있으므로 확인 필요.
+                // 여기서는 일단 JSON을 그대로 파싱 시도.
                     
-                    // 만약 배열로 온다면:
-                    string json = www.downloadHandler.text;
-                    if (json.TrimStart().StartsWith("["))
-                    {
-                        json = $"{{\"items\":{json}, \"totalCount\":0}}";
-                    }
-                    
-                    var response = JsonUtility.FromJson<RunListResponse>(json);
-                    onSuccess?.Invoke(response);
-                }
-                else
+                // 만약 배열로 온다면:
+                string json = www.downloadHandler.text;
+                if (json.TrimStart().StartsWith("["))
                 {
-                    Debug.LogError($"[API] Error: {www.error}");
-                    onError?.Invoke($"{www.error}\n{www.downloadHandler.text}");
+                    json = $"{{\"items\":{json}, \"totalCount\":0}}";
                 }
+                    
+                var response = JsonUtility.FromJson<RunListResponse>(json);
+                onSuccess?.Invoke(response);
+            }
+            else
+            {
+                Debug.LogError($"[API] Error: {www.error}");
+                onError?.Invoke($"{www.error}\n{www.downloadHandler.text}");
             }
         }
 
@@ -389,56 +350,27 @@ namespace API
             string url = $"{baseUrl}/Jobs?runId={runId}";
             if (logRequests) Debug.Log($"[API] GET {url}");
 
-            using (UnityWebRequest www = UnityWebRequest.Get(url))
-            {
-                ConfigureCertificateHandler(www);
-                yield return www.SendWebRequest();
+            using UnityWebRequest www = UnityWebRequest.Get(url);
+            yield return www.SendWebRequest();
 
-                if (www.result == UnityWebRequest.Result.Success)
+            if (www.result == UnityWebRequest.Result.Success)
+            {
+                string json = www.downloadHandler.text;
+                // 배열로 온다고 가정
+                if (json.TrimStart().StartsWith("["))
                 {
-                    string json = www.downloadHandler.text;
-                    // 배열로 온다고 가정
-                    if (json.TrimStart().StartsWith("["))
-                    {
-                        json = $"{{\"items\":{json}}}";
-                    }
+                    json = $"{{\"items\":{json}}}";
+                }
                     
-                    var dto = JsonUtility.FromJson<JobListDto>(json);
-                    var jobList = new List<JobDetailsDto>(dto.items);
-                    onSuccess?.Invoke(jobList);
-                }
-                else
-                {
-                    Debug.LogError($"[API] Error: {www.error}");
-                    onError?.Invoke($"{www.error}\n{www.downloadHandler.text}");
-                }
+                var dto = JsonUtility.FromJson<JobListDto>(json);
+                var jobList = new List<JobDetailsDto>(dto.items);
+                onSuccess?.Invoke(jobList);
             }
-        }
-
-        public string GetCurrentRunId()
-        {
-            return currentRunId;
-        }
-
-        private void ConfigureCertificateHandler(UnityWebRequest request)
-        {
-            if (bypassSslValidation)
+            else
             {
-                if (!hasShownSecurityWarning)
-                {
-                    Debug.LogWarning("[API] SSL validation bypassed - dev/test only");
-                    hasShownSecurityWarning = true;
-                }
-                request.certificateHandler = new BypassCertificate();
+                Debug.LogError($"[API] Error: {www.error}");
+                onError?.Invoke($"{www.error}\n{www.downloadHandler.text}");
             }
-        }
-    }
-
-    public class BypassCertificate : CertificateHandler
-    {
-        protected override bool ValidateCertificate(byte[] certificateData)
-        {
-            return true;
         }
     }
 }
