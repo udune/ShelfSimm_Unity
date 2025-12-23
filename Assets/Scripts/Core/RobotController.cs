@@ -15,6 +15,10 @@ namespace Core
         [Header("시각화")]
         [SerializeField] private RectTransform robotRectTransform;
 
+        // Events for 3D Visualization
+        public event Action<Vector2Int> OnPositionChanged;
+        public event Action<string> OnStatusChanged;
+
         private RobotState currentState = RobotState.IDLE;
         private float handleTimer;
         private float moveTimer;
@@ -107,6 +111,7 @@ namespace Core
                 {
                     currentGridPosition = currentPath[pathIndex];
                     UpdateRobotVisualPosition();
+                    OnPositionChanged?.Invoke(currentGridPosition);
                 }
                 else
                 {
@@ -346,6 +351,7 @@ namespace Core
 
             Debug.Log($"로봇 상태 전환: {currentState} -> {newState}");
             currentState = newState;
+            OnStatusChanged?.Invoke(currentState.ToString());
         }
 
         private void ClearJobData()
@@ -363,12 +369,14 @@ namespace Core
         {
             isPaused = true;
             Debug.Log("로봇 일시정지");
+            OnStatusChanged?.Invoke("PAUSED");
         }
 
         public void Resume()
         {
             isPaused = false;
             Debug.Log("로봇 재개");
+            OnStatusChanged?.Invoke(currentState.ToString());
         }
 
         public void Stop()
@@ -384,6 +392,7 @@ namespace Core
                 HandleReturnCompletion();
             }
             TransitionTo(RobotState.IDLE);
+            OnStatusChanged?.Invoke("STOPPED");
         }
 
         public void Reset()
@@ -395,6 +404,7 @@ namespace Core
             
             currentGridPosition = ConfigManager.Instance.CellsLayout.warehouse;
             UpdateRobotVisualPosition();
+            OnPositionChanged?.Invoke(currentGridPosition);
 
             handleTimer = 0f;
             moveTimer = 0f;
