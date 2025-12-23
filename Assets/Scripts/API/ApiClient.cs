@@ -28,10 +28,23 @@ namespace API
     }
 
     [Serializable]
+    public class RunListMeta
+    {
+        public int page;
+        public int pageSize;
+        public int totalCount;
+        public int totalPages;
+    }
+
+    [Serializable]
     public class RunListResponse
     {
-        public RunResponse[] items;
-        public int totalCount;
+        public RunResponse[] data;
+        public RunListMeta meta;
+
+        // 하위 호환성을 위한 속성
+        public RunResponse[] items => data;
+        public int totalCount => meta?.totalCount ?? 0;
     }
     
     [Serializable]
@@ -327,15 +340,18 @@ namespace API
                 // 명세서에는 페이징 지원이라고 되어 있으므로 { items: [], totalCount: 0 } 형태일 가능성이 높음.
                 // 하지만 현재 RunResponse[] 형태로 올 수도 있으므로 확인 필요.
                 // 여기서는 일단 JSON을 그대로 파싱 시도.
-                    
+
                 // 만약 배열로 온다면:
                 string json = www.downloadHandler.text;
+                Debug.Log($"[API] GetRuns 응답: {json}");
+
                 if (json.TrimStart().StartsWith("["))
                 {
                     json = $"{{\"items\":{json}, \"totalCount\":0}}";
                 }
-                    
+
                 var response = JsonUtility.FromJson<RunListResponse>(json);
+                Debug.Log($"[API] GetRuns 파싱 결과: items={response?.items?.Length ?? 0}개, totalCount={response?.totalCount ?? 0}");
                 onSuccess?.Invoke(response);
             }
             else

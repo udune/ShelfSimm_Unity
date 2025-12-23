@@ -169,8 +169,10 @@ namespace Managers
                 yield break;
             }
 
-            // 2. 성공한 Job이 있는 가장 최신 Run을 찾음
-            foreach (var run in recentRuns) // API가 최신순으로 정렬해서 보내준다고 가정
+            // 2. 모든 Run의 모든 성공한 Job을 수집
+            var allSuccessJobs = new List<JobDetailsDto>();
+
+            foreach (var run in recentRuns)
             {
                 List<JobDetailsDto> jobsInRun = null;
                 bool jobsRequestComplete = false;
@@ -188,44 +190,83 @@ namespace Managers
 
                 if (!jobsRequestComplete) yield return new WaitUntil(() => jobsRequestComplete);
 
-                if (jobsInRun != null && jobsInRun.Any(j => j.result == "Success"))
+                if (jobsInRun != null)
                 {
-                    Debug.Log($"재고 복원을 위한 Run ID: {run.id}");
-                    
-                    // 3. 찾은 Run의 Job들을 기준으로 재고 상태 복원
-                    int appliedJobs = 0;
-                    foreach (var job in jobsInRun.Where(j => j.result == "Success").OrderBy(j => j.id))
+                    var successJobs = jobsInRun.Where(j => j.result == "Success").ToList();
+                    if (successJobs.Count > 0)
                     {
-                        Cell cell = FindCellByCode(job.cellCode);
-                        BookData book = FindBookByTitle(job.bookTitle);
-
-                        if (cell == null || book == null) continue;
-
-                        if (job.action == "PUT")
-                        {
-                            if(cell.CanPutBook(book, job.quantity, out _))
-                            {
-                                cell.PutBook(book, job.quantity);
-                                book.ChangeStock(-job.quantity);
-                                appliedJobs++;
-                            }
-                        }
-                        else if (job.action == "PICK")
-                        {
-                            if(cell.CanPickBook(book, job.quantity, out _))
-                            {
-                                cell.PickBook(book, job.quantity);
-                                book.ChangeStock(job.quantity);
-                                appliedJobs++;
-                            }
-                        }
+                        Debug.Log($"Run ID {run.id}에서 성공한 작업 {successJobs.Count}개 발견");
+                        allSuccessJobs.AddRange(successJobs);
                     }
-                    Debug.Log($"{appliedJobs}개의 작업을 적용하여 재고 상태를 복원했습니다.");
-                    yield break; // 복원 완료 후 코루틴 종료
                 }
             }
 
-            Debug.Log("성공 기록이 있는 이전 실행이 없어 재고 상태 복원을 건너뜁니다.");
+            if (allSuccessJobs.Count == 0)
+            {
+                Debug.Log("성공 기록이 있는 이전 실행이 없어 재고 상태 복원을 건너뜁니다.");
+                yield break;
+            }
+
+            // 3. 모든 성공한 Job을 ID 순으로 정렬하여 시간순으로 복원 (ID를 숫자로 파싱하여 정렬)
+            var sortedJobs = allSuccessJobs.OrderBy(j =>
+            {
+                if (int.TryParse(j.id, out var numericId))
+                    return numericId;
+                return 0;
+            }).ToList();
+
+            Debug.Log($"총 {sortedJobs.Count}개의 성공한 작업을 시간순으로 복원합니다.");
+            Debug.Log($"Job ID 순서: {string.Join(", ", sortedJobs.Select(j => j.id))}");
+
+            int appliedJobs = 0;
+            foreach (var job in sortedJobs)
+            {
+                Cell cell = FindCellByCode(job.cellCode);
+                BookData book = FindBookByTitle(job.bookTitle);
+
+                if (cell == null)
+                {
+                    Debug.LogWarning($"Cell {job.cellCode}를 찾을 수 없음 (Job ID: {job.id})");
+                    continue;
+                }
+
+                if (book == null)
+                {
+                    Debug.LogWarning($"Book {job.bookTitle}를 찾을 수 없음 (Job ID: {job.id})");
+                    continue;
+                }
+
+                if (job.action == "PUT")
+                {
+                    if(cell.CanPutBook(book, job.quantity, out var errorCode))
+                    {
+                        cell.PutBook(book, job.quantity);
+                        book.ChangeStock(-job.quantity);
+                        appliedJobs++;
+                        Debug.Log($"[재고 복원] Job {job.id}: {job.cellCode}에 {job.bookTitle} {job.quantity}권 PUT → 현재 재고: {cell.GetBookQuantity(book.Id)}권");
+                    }
+                    else
+                    {
+                        Debug.LogWarning($"[재고 복원] Job {job.id}: PUT 실패 - {errorCode}");
+                    }
+                }
+                else if (job.action == "PICK")
+                {
+                    if(cell.CanPickBook(book, job.quantity, out var errorCode))
+                    {
+                        cell.PickBook(book, job.quantity);
+                        book.ChangeStock(job.quantity);
+                        appliedJobs++;
+                        Debug.Log($"[재고 복원] Job {job.id}: {job.cellCode}에서 {job.bookTitle} {job.quantity}권 PICK → 현재 재고: {cell.GetBookQuantity(book.Id)}권");
+                    }
+                    else
+                    {
+                        Debug.LogWarning($"[재고 복원] Job {job.id}: PICK 실패 - {errorCode} (현재 {job.cellCode} 재고: {cell.GetBookQuantity(book.Id)}권)");
+                    }
+                }
+            }
+
+            Debug.Log($"{appliedJobs}개의 작업을 적용하여 재고 상태를 복원했습니다.");
         }
 
         public void PrepareSimulation(List<Job> jobs)
