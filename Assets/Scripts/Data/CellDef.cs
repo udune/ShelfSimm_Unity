@@ -31,15 +31,6 @@ namespace Data
             this.orientation = orientation;
         }
 
-        public int CalculateCapacity(int bookThickness)
-        {
-            if (bookThickness <= 0)
-            {
-                return 0;
-            }
-            return Mathf.FloorToInt((float)width / bookThickness);
-        }
-
         public override string ToString()
         {
             return $"Cell {code} at ({x}, {y}) - {width}x{height}mm";

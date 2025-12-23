@@ -31,11 +31,6 @@ namespace Core
             obstacles.Add(pos);
         }
 
-        public void RemoveObstacle(Vector2Int pos)
-        {
-            obstacles.Remove(pos);
-        }
-
         private bool IsWalkable(Vector2Int pos)
         {
             if (pos.x < 0 || pos.x >= gridWidth || pos.y < 0 || pos.y >= gridHeight)

@@ -41,58 +41,6 @@ namespace Core
             return availableBooks?.ToArray();
         }
 
-        public BookData[] GetBooksByCategory(string category)
-        {
-            if (string.IsNullOrEmpty(category))
-            {
-                return GetAllAvailableBooks();
-            }
-
-            return availableBooks
-                .Where(book => book.Category.Equals(category, StringComparison.OrdinalIgnoreCase))
-                .ToArray();
-        }
-
-        public BookData[] SearchBooks(string searchTerm)
-        {
-            if (string.IsNullOrWhiteSpace(searchTerm))
-            {
-                return GetAllAvailableBooks();
-            }
-
-            string lowerSearchTerm = searchTerm.ToLower();
-
-            return availableBooks
-                .Where(book => book.Title.ToLower().Contains(lowerSearchTerm) ||
-                               book.Author.ToLower().Contains(lowerSearchTerm) ||
-                               book.Category.ToLower().Contains(lowerSearchTerm))
-                .ToArray();
-        }
-
-        public string[] GetBookDisplayTexts()
-        {
-            return availableBooks.Select(book => book.DisplayText).ToArray();
-        }
-
-        public string[] GetBookIds()
-        {
-            return availableBooks.Select(book => book.Id).ToArray();
-        }
-
-        public string[] GetAllCategories()
-        {
-            return availableBooks
-                .Select(book => book.Category)
-                .Distinct()
-                .OrderBy(category => category)
-                .ToArray();
-        }
-
-        public int GetBookCount()
-        {
-            return bookDatabase.Count;
-        }
-
         public BookData GetBookByTitle(string title)
         {
             return availableBooks.Find(x => x.Title.Equals(title));
@@ -115,41 +63,6 @@ namespace Core
                 return availableBooks[0];
             }
             return null;
-        }
-
-        public void AddBook(BookData newBook)
-        {
-            if (newBook == null || string.IsNullOrEmpty(newBook.Id))
-            {
-                Debug.LogError("[BookRegistry] 유효하지 않은 도서 데이터입니다");
-                return;
-            }
-
-            if (bookDatabase.ContainsKey(newBook.Id))
-            {
-                Debug.LogWarning($"[BookRegistry] 이미 존재하는 도서 ID입니다: {newBook.Id}");
-                return;
-            }
-
-            bookDatabase[newBook.Id] = newBook;
-
-            if (newBook.IsAvailable)
-            {
-                availableBooks.Add(newBook);
-            }
-        }
-
-        public bool RemoveBook(string bookId)
-        {
-            if (string.IsNullOrEmpty(bookId) || !bookDatabase.ContainsKey(bookId))
-            {
-                return false;
-            }
-
-            BookData book = bookDatabase[bookId];
-            bookDatabase.Remove(bookId);
-            availableBooks.Remove(book);
-            return true;
         }
 
         public void LoadBooksFromApi(List<BookDto> bookDtos)

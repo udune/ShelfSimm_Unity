@@ -26,7 +26,6 @@ namespace Managers
         private JobInputData currentJobInput = new();
         private bool isInitialized;
 
-        public Action<JobInputData> OnValidInputChanged;
         public Action<JobInputData> OnExecuteRequested;
 
         private void Start()
@@ -196,8 +195,6 @@ namespace Managers
                 else
                     image.color = validColor;
             }
-
-            if (validation.IsValid) OnValidInputChanged?.Invoke(currentJobInput);
         }
 
         public JobInputData GetCurrentJobInput()

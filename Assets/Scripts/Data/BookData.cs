@@ -45,29 +45,12 @@ namespace Data
 
         public string Id => id;
         public string Title => title;
-        public string Author => author;
-        public string ISBN => isbn;
         public int Thickness => thickness;
         public int Height => height;
         public int Width => width;
-        public int StockQuantity => stockQuantity;
-        public string Category => category;
-        public bool IsAvailable => isAvailable;
 
         public string DisplayText => $"{title} - {author}";
-        public string SimpleDisplayText => title;
-        public string DetailedInfo => $"{title} by {author} ({category}) - {thickness}mm x {height}mm x {width}mm";
 
-        public void SetAvailability(bool available)
-        {
-            isAvailable = available;
-        }
-
-        public void SetStockQuantity(int quantity)
-        {
-            stockQuantity = quantity;
-        }
-        
         public void ChangeStock(int amount)
         {
             stockQuantity += amount;
@@ -76,20 +59,6 @@ namespace Data
         public override string ToString()
         {
             return DisplayText;
-        }
-
-        public override bool Equals(object obj)
-        {
-            if (obj is BookData other)
-            {
-                return id == other.id;
-            }
-            return false;
-        }
-
-        public override int GetHashCode()
-        {
-            return id?.GetHashCode() ?? 0;
         }
     }
 }

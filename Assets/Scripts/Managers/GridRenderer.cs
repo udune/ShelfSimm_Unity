@@ -113,13 +113,6 @@ namespace Managers
         return cellStates.ContainsKey(pos) ? cellStates[pos] : "empty";
     }
 
-    public Vector2 GetCellPixelPosition(int x, int y)
-    {
-        float pixelX = x * cellWidth + cellWidth / 2f;
-        float pixelY = y * cellHeight + cellHeight / 2f;
-        return new Vector2(pixelX, pixelY);
-    }
-
     public int TotalColumns => totalColumns;
     public int TotalRows => totalRows;
     public int CellWidth => cellWidth;

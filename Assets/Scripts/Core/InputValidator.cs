@@ -131,33 +131,5 @@ namespace Core
             var validationResult = ValidateJobInput(jobInput);
             return validationResult.IsValid;
         }
-
-        public static float GetInputCompleteness(JobInputData jobInput)
-        {
-            if (jobInput == null)
-            {
-                return 0f;
-            }
-
-            var validationResult = ValidateJobInput(jobInput);
-            float completeness = 0f;
-
-            if (validationResult.HasCellCodes)
-            {
-                completeness += 0.5f;
-            }
-
-            if (validationResult.HasValidBook)
-            {
-                completeness += 0.3f;
-            }
-
-            if (validationResult.HasValidQuantity)
-            {
-                completeness += 0.2f;
-            }
-
-            return completeness;
-        }
     }
 }

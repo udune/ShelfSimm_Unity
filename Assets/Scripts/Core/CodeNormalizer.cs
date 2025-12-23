@@ -62,41 +62,5 @@ namespace Core
                 return false;
             }
         }
-
-        public static CodeNormalizationResult[] NormalizeCodes(string[] rawCodes)
-        {
-            if (rawCodes == null)
-            {
-                return Array.Empty<CodeNormalizationResult>();
-            }
-
-            var results = new CodeNormalizationResult[rawCodes.Length];
-
-            for (int i = 0; i < rawCodes.Length; i++)
-            {
-                if (TryNormalizeCode(rawCodes[i], out string normalized))
-                {
-                    results[i] = new CodeNormalizationResult
-                    {
-                        OriginalCode = rawCodes[i],
-                        NormalizedCode = normalized,
-                        IsValid = true,
-                        ErrorMessage = null
-                    };
-                }
-                else
-                {
-                    results[i] = new CodeNormalizationResult
-                    {
-                        OriginalCode = rawCodes[i],
-                        NormalizedCode = null,
-                        IsValid = false,
-                        ErrorMessage = $"잘못된 코드 형식: {rawCodes[i]}"
-                    };
-                }
-            }
-
-            return results;
-        }
     }
 }
