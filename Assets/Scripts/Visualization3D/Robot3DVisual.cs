@@ -23,7 +23,6 @@ namespace Visualization3D
         private void OnPositionChanged(Vector2Int gridPos)
         {
             Vector3 targetPos = GridToWorld(gridPos);
-            targetPos.y = 0.5f;
 
             if (moveCoroutine != null)
             {

@@ -30,7 +30,6 @@ namespace UI
         [Header("Dashboard Buttons")]
         [SerializeField] private Button pauseResumeButton;
         [SerializeField] private TextMeshProUGUI pauseResumeButtonText;
-        [SerializeField] private Button stopButton;
 
         [Header("Dashboard UI")]
         [SerializeField] private TextMeshProUGUI completedCountText;
@@ -41,7 +40,6 @@ namespace UI
         [SerializeField] private TextMeshProUGUI statusText;
 
         private List<Job> jobList = new List<Job>();
-        private bool isPaused = false;
 
         private void Awake()
         {
@@ -61,7 +59,6 @@ namespace UI
             clearAllButton.onClick.AddListener(OnClearAllClicked);
             startSimulationButton.onClick.AddListener(OnStartSimulationClicked);
             pauseResumeButton.onClick.AddListener(TogglePauseResume);
-            stopButton.onClick.AddListener(StopSimulation);
 
             pauseResumeButtonText.text = "중지";
 
@@ -227,14 +224,12 @@ namespace UI
 
         private void TogglePauseResume()
         {
-            isPaused = !isPaused;
             SimulationManager.Instance.TogglePause();
-            pauseResumeButtonText.text = isPaused ? "재개" : "중지";
-        }
 
-        private void StopSimulation()
-        {
-            SimulationManager.Instance.StopSimulation();
+            // Manager의 실제 pause 상태를 확인하여 UI 업데이트
+            pauseResumeButtonText.text = SimulationManager.Instance.IsPaused ? "재개" : "중지";
+
+            Debug.Log($"[SimulationUIController] Pause button clicked. Current state: {(SimulationManager.Instance.IsPaused ? "PAUSED" : "RUNNING")}");
         }
 
         private string FormatTime(float timeInSeconds)

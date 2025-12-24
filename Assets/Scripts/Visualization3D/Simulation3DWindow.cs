@@ -11,23 +11,21 @@ namespace Visualization3D
         public GameObject windowPanel;
         public RawImage viewportImage;
         public TextMeshProUGUI statusText;
-        public Button closeButton;
 
         [Header("3D References")]
         public Camera camera3D;
         public Simulation3DEnvironment environment;
 
         private bool isOpen = false;
-        public RobotController robotController;
+        private RobotController robotController;
 
         void Start()
         {
-            closeButton.onClick.AddListener(Close);
             windowPanel.SetActive(false);
             Debug.Log("[Simulation3DWindow] Initialized");
         }
 
-        public void Open()
+        public void Open(RobotController controller)
         {
             if (isOpen)
             {
@@ -35,6 +33,7 @@ namespace Visualization3D
                 return;
             }
 
+            robotController = controller;
             Debug.Log("[Simulation3DWindow] Opening 3D window...");
 
             // 3D 환경 생성
@@ -42,11 +41,11 @@ namespace Visualization3D
 
             // 로봇 가져오기
             var robot = environment.GetRobot();
-            
+
             // 카메라 타겟 설정
             var cameraFollow = camera3D.GetComponent<CameraFollow3D>();
             cameraFollow.SetTarget(robot.transform);
-            
+
             // RobotController 로봇 초기화
             robot.Initialize(robotController);
             robotController.OnStatusChanged += UpdateStatus;
@@ -85,14 +84,6 @@ namespace Visualization3D
         private void UpdateStatus(string status)
         {
             statusText.text = status;
-        }
-
-        private void OnDestroy()
-        {
-            if (isOpen)
-            {
-                Close();
-            }
         }
     }
 }

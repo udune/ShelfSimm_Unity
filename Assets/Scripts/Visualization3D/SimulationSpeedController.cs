@@ -48,7 +48,7 @@ namespace Visualization3D
             currentSpeed = Mathf.Clamp(speed, minSpeed, maxSpeed);
             Time.timeScale = currentSpeed;
 
-            speedText.text = $"속도: {currentSpeed:F1}x";
+            speedText.text = $"속도 {currentSpeed:F1}x";
 
             Debug.Log($"Simulation speed set to {currentSpeed}x");
         }

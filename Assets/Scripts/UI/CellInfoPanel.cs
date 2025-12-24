@@ -65,9 +65,16 @@ namespace UI
 
             dimensionsText.text = $"치수: {cell.WidthMm}mm × {cell.HeightMm}mm";
 
-            if (cell.CurrentStock > 0 && !string.IsNullOrEmpty(cell.StoredBookTitle))
+            // 모든 책 정보 표시
+            var allBooks = cell.GetAllBooks();
+            if (allBooks.Count > 0)
             {
-                bookInfoText.text = $"보관 도서: {cell.StoredBookTitle}";
+                StringBuilder sb = new StringBuilder("보관 도서:\n");
+                foreach (var book in allBooks)
+                {
+                    sb.AppendLine($"  • {book.title} ({book.quantity}권)");
+                }
+                bookInfoText.text = sb.ToString().TrimEnd();
             }
             else
             {

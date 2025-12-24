@@ -13,7 +13,6 @@ namespace Visualization3D
 
         [Header("Settings")]
         public float gridScale = 2f;
-        public Transform environmentRoot;
 
         private Dictionary<string, Bookshelf3DVisual> bookshelves = new Dictionary<string, Bookshelf3DVisual>();
         private Robot3DVisual robot;
@@ -31,7 +30,7 @@ namespace Visualization3D
 
         private void CreateFloor()
         {
-            var floor = Instantiate(floorPrefab, Vector3.zero, Quaternion.identity, environmentRoot);
+            var floor = Instantiate(floorPrefab, Vector3.zero, Quaternion.identity, transform);
             floor.layer = LayerMask.NameToLayer("Simulation3D");
             floor.name = "Floor";
         }
@@ -41,7 +40,7 @@ namespace Visualization3D
             foreach (var cell in ConfigManager.Instance.CellsLayout.cells)
             {
                 Vector3 pos = GridToWorld(cell.X, cell.Y);
-                var shelf = Instantiate(bookshelfPrefab, pos, Quaternion.identity, environmentRoot);
+                var shelf = Instantiate(bookshelfPrefab, pos, Quaternion.identity, transform);
                 shelf.layer = LayerMask.NameToLayer("Simulation3D");
                 shelf.name = $"Bookshelf_{cell.code}";
 
@@ -55,9 +54,8 @@ namespace Visualization3D
         {
             var warehouse = ConfigManager.Instance.CellsLayout.warehouse;
             Vector3 pos = GridToWorld(warehouse.x, warehouse.y);
-            pos.y = 0.5f;
 
-            var robotObj = Instantiate(robotPrefab, pos, Quaternion.identity, environmentRoot);
+            var robotObj = Instantiate(robotPrefab, pos, Quaternion.identity, transform);
             robotObj.layer = LayerMask.NameToLayer("Simulation3D");
             robotObj.name = "Robot";
 
@@ -78,7 +76,7 @@ namespace Visualization3D
         {
             Debug.Log("[Simulation3DEnvironment] Cleaning up 3D environment...");
 
-            foreach (Transform child in environmentRoot)
+            foreach (Transform child in transform)
             {
                 Destroy(child.gameObject);
             }

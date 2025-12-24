@@ -10,7 +10,7 @@ namespace Visualization3D
         public void Initialize(string code)
         {
             cellCode = code;
-            material = GetComponent<Renderer>().material;
+            material = GetComponentInChildren<Renderer>().material;
         }
         
         public void UpdateVisual(bool isEmpty, bool isFull)

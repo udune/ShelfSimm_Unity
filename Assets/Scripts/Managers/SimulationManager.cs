@@ -5,6 +5,7 @@ using API;
 using Core;
 using Data;
 using UI;
+using Visualization3D;
 using UnityEngine;
 using Random = UnityEngine.Random;
 
@@ -20,10 +21,11 @@ namespace Managers
 
         #region Fields & Properties
 
-        [Header("API 연동 설정")] [SerializeField] private bool useApiMode = true;
+        [Header("API 연동 설정")] 
+        [SerializeField] private bool useApiMode = true;
 
-        [Header("내부 컴포넌트 참조")] [SerializeField]
-        private RobotController robotController;
+        [Header("내부 컴포넌트 참조")] 
+        [SerializeField] private RobotController robotController;
 
         [SerializeField] private SimpleAStarPathFinder pathFinder;
         [SerializeField] private BookRegistry bookRegistry;
@@ -31,8 +33,13 @@ namespace Managers
         [SerializeField] private GridRenderer gridRenderer;
         [SerializeField] private SimulationUIController simulationUIController;
 
+        [Header("3D 시각화")] 
+        [SerializeField] private bool enable3DVisualization = true;
+        [SerializeField] private Simulation3DWindow simulation3DWindow;
+
         public float ElapsedTime { get; private set; }
         public float AverageTaskTime => summary != null && summary.success > 0 ? ElapsedTime / summary.success : 0;
+        public bool IsPaused => _isPaused;
 
         private Queue<Job> _jobQueue;
         private Summary summary;
@@ -72,13 +79,8 @@ namespace Managers
         private void Start()
         {
             ConfigManager.Instance.SimulationConfig.OnHandleTimeChanged += HandleTimeChanged;
-
             InitializeGrid();
-            
-            if (robotController != null)
-            {
-                robotController.Reset();
-            }
+            robotController.Reset();
 
             if (useApiMode)
             {
@@ -410,7 +412,14 @@ namespace Managers
                 Debug.LogWarning("시작할 작업이 없습니다.");
                 return;
             }
-            
+
+            // 3D 시각화 창 열기
+            if (enable3DVisualization)
+            {
+                simulation3DWindow.Open(robotController);
+                Debug.Log("[StartSimulationWithJobs] 3D 시각화 창을 열었습니다.");
+            }
+
             var sortedJobs = jobs.OrderBy(job => CalculatePathLength(job.CellCode)).ToList();
             Debug.Log("작업 목록을 가까운 순으로 정렬했습니다.");
 
@@ -482,6 +491,14 @@ namespace Managers
         private void OnAllJobsAndReturnFinished()
         {
             Debug.Log("모든 작업 및 복귀 완료. 시뮬레이션을 종료합니다.");
+
+            // 3D 시각화 창 닫기
+            if (enable3DVisualization)
+            {
+                simulation3DWindow.Close();
+                Debug.Log("[OnAllJobsAndReturnFinished] 3D 시각화 창을 닫았습니다.");
+            }
+
             StopSimulation();
         }
 
@@ -512,10 +529,7 @@ namespace Managers
 
             Debug.Log(summary.ToString());
             
-            if (simulationUIController != null)
-            {
-                simulationUIController.ClearJobs();
-            }
+            simulationUIController.ClearJobs();
         }
 
         public void TogglePause()
