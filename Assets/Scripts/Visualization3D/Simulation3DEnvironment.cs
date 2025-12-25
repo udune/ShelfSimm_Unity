@@ -16,16 +16,20 @@ namespace Visualization3D
 
         private Dictionary<string, Bookshelf3DVisual> bookshelves = new Dictionary<string, Bookshelf3DVisual>();
         private Robot3DVisual robot;
+        private Light directionalLight;
+        private Light robotPointLight;
 
         public void Initialize()
         {
             Debug.Log("[Simulation3DEnvironment] Initializing 3D environment...");
 
+            SetupLighting();
             CreateFloor();
             CreateBookshelves();
             CreateRobot();
+            AttachRobotLight();
 
-            Debug.Log($"[Simulation3DEnvironment] Created {bookshelves.Count} bookshelves and 1 robot");
+            Debug.Log($"[Simulation3DEnvironment] Created {bookshelves.Count} bookshelves and 1 robot with lighting");
         }
 
         private void CreateFloor()
@@ -72,6 +76,54 @@ namespace Visualization3D
             return robot;
         }
 
+        private void SetupLighting()
+        {
+            // Main Directional Light (Sun-like)
+            var lightObj = new GameObject("DirectionalLight_3D");
+            lightObj.transform.SetParent(transform);
+            lightObj.layer = LayerMask.NameToLayer("Simulation3D");
+
+            directionalLight = lightObj.AddComponent<Light>();
+            directionalLight.type = LightType.Directional;
+            directionalLight.color = new Color(1f, 0.98f, 0.95f); // Warm white
+            directionalLight.intensity = 1.2f;
+            directionalLight.shadows = LightShadows.Soft;
+            directionalLight.shadowStrength = 0.6f;
+            directionalLight.shadowBias = 0.05f;
+            directionalLight.shadowNormalBias = 0.4f;
+
+            // Light angle: from above and slightly to the side
+            lightObj.transform.rotation = Quaternion.Euler(50f, -30f, 0f);
+
+            // Ambient light settings
+            RenderSettings.ambientMode = UnityEngine.Rendering.AmbientMode.Flat;
+            RenderSettings.ambientLight = new Color(0.3f, 0.32f, 0.35f); // Cool ambient
+            RenderSettings.ambientIntensity = 0.8f;
+
+            Debug.Log("[Simulation3DEnvironment] Lighting setup complete");
+        }
+
+        private void AttachRobotLight()
+        {
+            if (robot == null) return;
+
+            // Point Light attached to robot
+            var lightObj = new GameObject("RobotLight");
+            lightObj.transform.SetParent(robot.transform);
+            lightObj.transform.localPosition = new Vector3(0f, 0.5f, 0f); // Slightly above robot
+            lightObj.layer = LayerMask.NameToLayer("Simulation3D");
+
+            robotPointLight = lightObj.AddComponent<Light>();
+            robotPointLight.type = LightType.Point;
+            robotPointLight.color = new Color(0f, 0.6f, 1f); // Cyan to match robot color
+            robotPointLight.intensity = 2.5f;
+            robotPointLight.range = 6f;
+            robotPointLight.shadows = LightShadows.Soft;
+            robotPointLight.shadowStrength = 0.4f;
+
+            Debug.Log("[Simulation3DEnvironment] Robot light attached");
+        }
+
         public void Cleanup()
         {
             Debug.Log("[Simulation3DEnvironment] Cleaning up 3D environment...");
@@ -83,6 +135,8 @@ namespace Visualization3D
 
             bookshelves.Clear();
             robot = null;
+            directionalLight = null;
+            robotPointLight = null;
         }
     }
 }
