@@ -30,7 +30,7 @@ MonoBehaviour:
       rayOriginBias: -0.001
       collisionMask:
         serializedVersion: 2
-        m_Bits: 4294967291
+        m_Bits: 4294967240
   m_SceneGUIDs:
   - 8c9cfa26abfee488c85f1582747f6a02
   obsoleteScenesToNotBake: []

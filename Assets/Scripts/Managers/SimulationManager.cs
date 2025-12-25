@@ -365,7 +365,6 @@ namespace Managers
 
         private void InitializeSimulation()
         {
-            Time.timeScale = 1f;
             Random.InitState(ConfigManager.Instance.SimulationConfig.randomSeed);
 
             summary = new Summary();
@@ -426,7 +425,6 @@ namespace Managers
             _isRunning = true;
             _isPaused = false;
             ElapsedTime = 0f;
-            Time.timeScale = 1f;
 
             SetTotalTargets(sortedJobs.Count);
             Debug.Log($"[StartSimulationWithJobs] Summary 초기화: total={summary.total}, attempt={summary.attempt}");
@@ -541,7 +539,9 @@ namespace Managers
             }
 
             _isPaused = !_isPaused;
-            Time.timeScale = _isPaused ? 0f : 1f;
+
+            // Pause 시 0, Resume 시 SimulationSpeedController의 현재 속도 사용
+            Time.timeScale = _isPaused ? 0f : SimulationSpeedController.Instance.GetSpeed();
 
             if (robotController != null)
             {
