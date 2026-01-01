@@ -18,8 +18,8 @@ namespace UI
 
         [SerializeField] private CellHighlightManager highlightManager;
 
-        private const int TOTAL_COLUMNS = 50;
-        private const int TOTAL_ROWS = 50;
+        private const int TOTAL_COLUMNS = 15;
+        private const int TOTAL_ROWS = 15;
 
         private void Start()
         {

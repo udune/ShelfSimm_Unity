@@ -15,6 +15,7 @@ namespace Visualization3D
         [Header("3D References")]
         public Camera camera3D;
         public Simulation3DEnvironment environment;
+        public RenderTexture renderTexture;
 
         private bool isOpen = false;
         private RobotController robotController;
@@ -22,6 +23,7 @@ namespace Visualization3D
         void Start()
         {
             windowPanel.SetActive(false);
+            camera3D.enabled = false;
             Debug.Log("[Simulation3DWindow] Initialized");
         }
 
@@ -35,6 +37,11 @@ namespace Visualization3D
 
             robotController = controller;
             Debug.Log("[Simulation3DWindow] Opening 3D window...");
+
+            camera3D.targetTexture = renderTexture;
+            camera3D.enabled = true;
+            viewportImage.texture = renderTexture;
+            Debug.Log("[Simulation3DWindow] Camera and RenderTexture configured for WebGL");
 
             // 3D 환경 생성
             environment.Initialize();
@@ -71,6 +78,9 @@ namespace Visualization3D
 
             // 3D 환경 정리
             environment.Cleanup();
+
+            camera3D.enabled = false;
+            camera3D.targetTexture = null;
 
             // 창 닫기
             windowPanel.SetActive(false);

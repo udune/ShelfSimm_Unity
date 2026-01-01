@@ -19,6 +19,11 @@ namespace Core
         public event Action<Vector2Int> OnPositionChanged;
         public event Action<string> OnStatusChanged;
 
+        // Public Properties
+        public Vector2Int CurrentPosition => currentGridPosition;
+        public RobotState CurrentState => currentState;
+        public string StatusText => currentState.ToString();
+
         private RobotState currentState = RobotState.IDLE;
         private float handleTimer;
         private float moveTimer;

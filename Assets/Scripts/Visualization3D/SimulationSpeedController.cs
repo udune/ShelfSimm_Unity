@@ -15,7 +15,7 @@ namespace Visualization3D
         [Header("Speed Settings")]
         public float minSpeed = 0.1f;
         public float maxSpeed = 5f;
-        public float defaultSpeed = 0.5f;
+        public float defaultSpeed = 1.0f;
 
         private float currentSpeed = 1f;
 
@@ -48,7 +48,7 @@ namespace Visualization3D
             currentSpeed = Mathf.Clamp(speed, minSpeed, maxSpeed);
             Time.timeScale = currentSpeed;
 
-            speedText.text = $"속도 {currentSpeed:F1}x";
+            speedText.text = $"{currentSpeed:F1}x";
 
             Debug.Log($"Simulation speed set to {currentSpeed}x");
         }

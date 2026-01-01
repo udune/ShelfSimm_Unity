@@ -1,14 +1,23 @@
+using System.Collections;
 using System.Collections.Generic;
-using System.Linq;
 using Core;
 using Data;
 using Managers;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
+using API;
 
 namespace UI
 {
+    public enum SimulationState
+    {
+        IDLE,           // 시작 전/완료 후
+        RUNNING,        // 실행 중
+        PAUSED,         // 일시정지
+        RESTARTING      // warehouse 복귀 중
+    }
+
     public class SimulationUIController : MonoBehaviour
     {
         public static SimulationUIController Instance { get; private set; }
@@ -27,9 +36,11 @@ namespace UI
         [SerializeField] private Button clearAllButton;
         [SerializeField] private Button startSimulationButton;
 
-        [Header("Dashboard Buttons")]
-        [SerializeField] private Button pauseResumeButton;
-        [SerializeField] private TextMeshProUGUI pauseResumeButtonText;
+        [Header("Control Buttons - Separate")]
+        [SerializeField] private Button restartButton;
+        [SerializeField] private Button playButton;
+        [SerializeField] private Button pauseButton;
+        [SerializeField] private Button emergencyButton;
 
         [Header("Dashboard UI")]
         [SerializeField] private TextMeshProUGUI completedCountText;
@@ -40,6 +51,8 @@ namespace UI
         [SerializeField] private TextMeshProUGUI statusText;
 
         private List<Job> jobList = new List<Job>();
+        private SimulationState currentState = SimulationState.IDLE;
+        private Coroutine restartCoroutine = null;
 
         private void Awake()
         {
@@ -58,12 +71,193 @@ namespace UI
             addJobButton.onClick.AddListener(OnAddJobClicked);
             clearAllButton.onClick.AddListener(OnClearAllClicked);
             startSimulationButton.onClick.AddListener(OnStartSimulationClicked);
-            pauseResumeButton.onClick.AddListener(TogglePauseResume);
 
-            pauseResumeButtonText.text = "중지";
+            // 새로운 버튼 리스너
+            restartButton.onClick.AddListener(OnRestartClicked);
+            playButton.onClick.AddListener(OnPlayClicked);
+            pauseButton.onClick.AddListener(OnPauseClicked);
+            emergencyButton.onClick.AddListener(OnEmergencyStopClicked);
 
+            // 초기 상태 설정
+            UpdateButtonStates(SimulationState.IDLE);
             UpdateUI();
         }
+
+        // ==================== 버튼 이벤트 핸들러 ====================
+
+        private void OnRestartClicked()
+        {
+            Debug.Log("[UI] Restart 버튼 클릭");
+
+            // 1. 즉시 RESTARTING 상태로 전환 (모든 버튼 비활성화)
+            UpdateButtonStates(SimulationState.RESTARTING);
+
+            // 2. 시뮬레이션 중지
+            SimulationManager.Instance.StopSimulation();
+
+            // 3. API 모드면 Run 상태를 cancelled로 업데이트
+            if (SimulationManager.Instance.UseApiMode &&
+                !string.IsNullOrEmpty(SimulationManager.Instance.CurrentRunId))
+            {
+                var request = new UpdateRunStatusRequest { status = "cancelled" };
+                StartCoroutine(ApiClient.Instance.UpdateRunStatus(
+                    SimulationManager.Instance.CurrentRunId,
+                    request,
+                    onSuccess: () => Debug.Log("[API] Run cancelled successfully"),
+                    onError: (err) => Debug.LogError($"[API] Run cancel failed: {err}")
+                ));
+            }
+
+            // 4. 로봇을 warehouse로 복귀 (코루틴으로 처리)
+            if (restartCoroutine != null)
+            {
+                StopCoroutine(restartCoroutine);
+            }
+            restartCoroutine = StartCoroutine(RestartRobotToWarehouse());
+        }
+
+        private IEnumerator RestartRobotToWarehouse()
+        {
+            RobotController robot = FindObjectOfType<RobotController>();
+            if (robot == null)
+            {
+                Debug.LogError("[UI] RobotController를 찾을 수 없습니다!");
+                UpdateButtonStates(SimulationState.IDLE);
+                yield break;
+            }
+
+            // 현재 위치 확인
+            Vector2Int currentPos = robot.CurrentPosition;
+            Vector2Int warehousePos = ConfigManager.Instance.CellsLayout.warehouse;
+
+            Debug.Log($"[UI] 로봇 복귀 시작: {currentPos} → {warehousePos}");
+            ShowStatus("로봇이 warehouse로 복귀 중입니다...", Color.yellow);
+
+            // 로봇 리셋 (warehouse로 즉시 이동)
+            robot.Reset();
+
+            // warehouse 도착까지 대기 (실제 이동 애니메이션이 있다면)
+            // 현재는 Reset()이 즉시 이동시키므로 짧은 딜레이만
+            yield return new WaitForSeconds(0.5f);
+
+            // warehouse 도착 확인
+            Debug.Log($"[UI] 로봇 warehouse 도착: {robot.CurrentPosition}");
+            ShowStatus("시뮬레이션이 리셋되었습니다.", Color.green);
+
+            // IDLE 상태로 전환
+            UpdateButtonStates(SimulationState.IDLE);
+            restartCoroutine = null;
+        }
+
+        private void OnPlayClicked()
+        {
+            Debug.Log($"[UI] Play 버튼 클릭 (현재 상태: {currentState})");
+
+            if (currentState == SimulationState.IDLE)
+            {
+                // 시뮬레이션 시작
+                OnStartSimulationClicked();
+            }
+            else if (currentState == SimulationState.PAUSED)
+            {
+                // 재개
+                SimulationManager.Instance.TogglePause();
+                UpdateButtonStates(SimulationState.RUNNING);
+                ShowStatus("시뮬레이션이 재개되었습니다.", Color.green);
+            }
+        }
+
+        private void OnPauseClicked()
+        {
+            Debug.Log("[UI] Pause 버튼 클릭");
+
+            if (currentState == SimulationState.RUNNING)
+            {
+                SimulationManager.Instance.TogglePause();
+                UpdateButtonStates(SimulationState.PAUSED);
+                ShowStatus("시뮬레이션이 일시정지되었습니다.", Color.yellow);
+            }
+        }
+
+        private void OnEmergencyStopClicked()
+        {
+            Debug.Log("[UI] Emergency Stop 버튼 클릭");
+
+            if (currentState == SimulationState.RUNNING)
+            {
+                // pause와 동일한 기능
+                SimulationManager.Instance.TogglePause();
+                UpdateButtonStates(SimulationState.PAUSED);
+
+                // DB에 emergency stop 이벤트 기록
+                LogEmergencyStop();
+
+                ShowStatus("⚠️ 긴급 정지되었습니다.", Color.red);
+            }
+        }
+
+        private void LogEmergencyStop()
+        {
+            // API 모드면 emergency stop 이벤트를 DB에 기록
+            if (SimulationManager.Instance.UseApiMode &&
+                !string.IsNullOrEmpty(SimulationManager.Instance.CurrentRunId))
+            {
+                var request = new UpdateRunStatusRequest { status = "emergency_stopped" };
+                StartCoroutine(ApiClient.Instance.UpdateRunStatus(
+                    SimulationManager.Instance.CurrentRunId,
+                    request,
+                    onSuccess: () => Debug.Log("[API] Emergency stop logged to DB"),
+                    onError: (err) => Debug.LogError($"[API] Emergency stop log failed: {err}")
+                ));
+            }
+
+            // 로컬 로그에도 기록
+            Debug.LogWarning($"[EMERGENCY STOP] Time: {System.DateTime.Now}, RunId: {SimulationManager.Instance.CurrentRunId}");
+        }
+
+        // ==================== 버튼 상태 관리 ====================
+
+        private void UpdateButtonStates(SimulationState newState)
+        {
+            currentState = newState;
+
+            switch (newState)
+            {
+                case SimulationState.IDLE:
+                    restartButton.interactable = false;
+                    playButton.interactable = jobList.Count > 0;
+                    pauseButton.interactable = false;
+                    emergencyButton.interactable = false;
+                    Debug.Log("[UI] 상태: IDLE - play만 활성화");
+                    break;
+
+                case SimulationState.RUNNING:
+                    restartButton.interactable = true;
+                    playButton.interactable = false;
+                    pauseButton.interactable = true;
+                    emergencyButton.interactable = true;
+                    Debug.Log("[UI] 상태: RUNNING - restart/pause/emergency 활성화");
+                    break;
+
+                case SimulationState.PAUSED:
+                    restartButton.interactable = true;
+                    playButton.interactable = true;
+                    pauseButton.interactable = false;
+                    emergencyButton.interactable = false;
+                    Debug.Log("[UI] 상태: PAUSED - restart/play 활성화");
+                    break;
+
+                case SimulationState.RESTARTING:
+                    restartButton.interactable = false;
+                    playButton.interactable = false;
+                    pauseButton.interactable = false;
+                    emergencyButton.interactable = false;
+                    Debug.Log("[UI] 상태: RESTARTING - 모든 버튼 비활성화");
+                    break;
+            }
+        }
+
+        // ==================== 기존 메서드들 ====================
 
         private void OnJobAdded(JobInputData jobInput)
         {
@@ -140,6 +334,7 @@ namespace UI
             }
 
             SimulationManager.Instance.PrepareSimulation(new List<Job>(jobList));
+            UpdateButtonStates(SimulationState.RUNNING);
             ShowStatus($"{jobList.Count}개의 작업으로 시뮬레이션을 시작합니다.", Color.green);
         }
 
@@ -154,7 +349,7 @@ namespace UI
             {
                 CreateJobItem(jobList[i], i);
             }
-            
+
             UpdateUI();
         }
 
@@ -190,6 +385,12 @@ namespace UI
         {
             jobCountText.text = $"작업 목록 ({jobList.Count}개)";
             startSimulationButton.interactable = jobList.Count > 0;
+
+            // IDLE 상태에서 작업 개수 변경 시 play 버튼도 업데이트
+            if (currentState == SimulationState.IDLE)
+            {
+                playButton.interactable = jobList.Count > 0;
+            }
         }
 
         public void ShowStatus(string message, Color color)
@@ -222,21 +423,24 @@ namespace UI
             averageTimeText.text = $"평균 처리 시간: {FormatTime(SimulationManager.Instance.AverageTaskTime)}";
         }
 
-        private void TogglePauseResume()
-        {
-            SimulationManager.Instance.TogglePause();
-
-            // Manager의 실제 pause 상태를 확인하여 UI 업데이트
-            pauseResumeButtonText.text = SimulationManager.Instance.IsPaused ? "재개" : "중지";
-
-            Debug.Log($"[SimulationUIController] Pause button clicked. Current state: {(SimulationManager.Instance.IsPaused ? "PAUSED" : "RUNNING")}");
-        }
-
         private string FormatTime(float timeInSeconds)
         {
             int minutes = (int)timeInSeconds / 60;
             int seconds = (int)timeInSeconds % 60;
             return $"{minutes:00}:{seconds:00}";
+        }
+
+        // ==================== Public 메서드 (SimulationManager에서 호출) ====================
+
+        public void OnSimulationCompleted()
+        {
+            Debug.Log("[UI] 시뮬레이션 완료 - IDLE 상태로 전환");
+            UpdateButtonStates(SimulationState.IDLE);
+        }
+
+        public SimulationState GetCurrentState()
+        {
+            return currentState;
         }
     }
 }

@@ -11,10 +11,10 @@ namespace Managers
     private RawImage gridImage;
 
     [SerializeField]
-    private int totalColumns = 50;
+    private int totalColumns = 15;
 
     [SerializeField]
-    private int totalRows = 50;
+    private int totalRows = 15;
 
     private readonly Dictionary<Vector2Int, string> cellStates = new();
     private readonly HashSet<Vector2Int> dirtyPixels = new();
@@ -53,11 +53,11 @@ namespace Managers
 
     private void ClearGrid()
     {
-        var emptyColor = GetColor("empty");
+        var transparent = new Color(0, 0, 0, 0);
         var pixels = new Color[gridTexture.width * gridTexture.height];
         for (var i = 0; i < pixels.Length; i++)
         {
-            pixels[i] = emptyColor;
+            pixels[i] = transparent;
         }
         gridTexture.SetPixels(pixels);
         gridTexture.Apply();
@@ -122,7 +122,7 @@ namespace Managers
     {
         return type switch
         {
-            "empty" => new Color(0.9f, 0.9f, 0.9f),
+            "empty" => new Color(0, 0, 0, 0),
             "partial" => Color.yellow,
             "full" => Color.red,
             "obstacle" => new Color(0.2f, 0.2f, 0.2f),

@@ -40,6 +40,8 @@ namespace Managers
         public float ElapsedTime { get; private set; }
         public float AverageTaskTime => summary != null && summary.success > 0 ? ElapsedTime / summary.success : 0;
         public bool IsPaused => _isPaused;
+        public string CurrentRunId => _currentRunId;
+        public bool UseApiMode => useApiMode;
 
         private Queue<Job> _jobQueue;
         private Summary summary;
@@ -526,8 +528,11 @@ namespace Managers
             }
 
             Debug.Log(summary.ToString());
-            
+
             simulationUIController.ClearJobs();
+
+            // UI에 시뮬레이션 완료 알림
+            SimulationUIController.Instance?.OnSimulationCompleted();
         }
 
         public void TogglePause()
