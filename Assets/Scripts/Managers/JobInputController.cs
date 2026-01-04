@@ -1,6 +1,4 @@
 using System;
-using System.Collections.Generic;
-using System.Linq;
 using Core;
 using Data;
 using TMPro;
@@ -12,16 +10,19 @@ namespace Managers
     public class JobInputController : MonoBehaviour
     {
         [Header("UI")] [SerializeField] private TMP_InputField cellCodesInput;
-        [SerializeField] private TMP_Dropdown actionTypeDropdown;
-        [SerializeField] private TMP_Dropdown bookDropdown;
+        [SerializeField] private Toggle inboundToggle;
+        [SerializeField] private Toggle outboundToggle;
+        [SerializeField] private TMP_InputField materialIdInput;
         [SerializeField] private TMP_InputField quantityInput;
         [SerializeField] private Button executeButton;
 
         [Header("Setting")] [SerializeField] private Color validColor = new(0.2f, 0.2f, 0.25f, 1);
         [SerializeField] private Color invalidColor = Color.red;
+        [SerializeField] private Color validMaterialIdColor = new(0.2f, 0.8f, 0.2f, 0.3f);
+        [SerializeField] private Color invalidMaterialIdColor = new(0.8f, 0.2f, 0.2f, 0.3f);
 
         [Header("References")] [SerializeField]
-        private BookRegistry bookRegistry;
+        private MaterialRegistry materialRegistry;
 
         private JobInputData currentJobInput = new();
         private bool isInitialized;
@@ -35,10 +36,12 @@ namespace Managers
 
         private void Init()
         {
-            actionTypeDropdown.ClearOptions();
-            actionTypeDropdown.AddOptions(new List<string> { "PUT", "PICK" });
-            actionTypeDropdown.value = 0;
-            actionTypeDropdown.onValueChanged.AddListener(OnActionTypeChanged);
+            inboundToggle.isOn = true;
+            outboundToggle.isOn = false;
+            currentJobInput.actionType = JobAction.PUT;
+
+            inboundToggle.onValueChanged.AddListener(OnPutToggleChanged);
+            outboundToggle.onValueChanged.AddListener(OnPickToggleChanged);
 
             quantityInput.text = "1";
             quantityInput.contentType = TMP_InputField.ContentType.IntegerNumber;
@@ -48,31 +51,16 @@ namespace Managers
             cellCodesInput.onValueChanged.AddListener(OnCellCodesChanged);
             cellCodesInput.placeholder.GetComponent<TextMeshProUGUI>().text = "예: D20, A15, B03";
 
-            bookDropdown.onValueChanged.AddListener(OnBookChanged);
+            materialIdInput.contentType = TMP_InputField.ContentType.Standard;
+            materialIdInput.onValueChanged.AddListener(OnMaterialIdChanged);
+            materialIdInput.onEndEdit.AddListener(OnMaterialIdEndEdit);
+            materialIdInput.placeholder.GetComponent<TextMeshProUGUI>().text = "예: MATERIAL_1, MATERIAL_123";
 
             currentJobInput.quantity = 1;
             isInitialized = true;
             UpdateUI();
         }
 
-
-        public void RefreshBookDropdown()
-        {
-            // 기존 옵션 초기화
-            bookDropdown.ClearOptions();
-
-            // 새로운 책 목록 로드
-            var books = bookRegistry.GetAllAvailableBooks();
-            var options = new List<string> { "도서를 선택하세요" };
-
-            if (books != null && books.Length > 0)
-            {
-                options.AddRange(books.Select(book => book.DisplayText));
-            }
-
-            bookDropdown.AddOptions(options);
-            bookDropdown.value = 0;
-        }
 
         private void OnCellCodesChanged(string input)
         {
@@ -99,7 +87,7 @@ namespace Managers
 
                 if (CodeNormalizer.TryNormalizeCode(trimmed, out var normalized))
                 {
-                    if (IsValidBookshelfCell(normalized))
+                    if (IsValidMaterialShelfCell(normalized))
                         currentJobInput.parsedCodes.Add(normalized);
                     else
                         currentJobInput.invalidCodes.Add(trimmed);
@@ -111,38 +99,33 @@ namespace Managers
             }
         }
 
-        private bool IsValidBookshelfCell(string cellCode)
+        private bool IsValidMaterialShelfCell(string cellCode)
         {
             return ConfigManager.Instance.CellsLayout.GetCellByCode(cellCode) != null;
         }
 
-        private void OnActionTypeChanged(int value)
+        private void OnPutToggleChanged(bool isOn)
         {
             if (!isInitialized) return;
 
-            currentJobInput.actionType = (JobAction)value;
-            UpdateUI();
+            if (isOn)
+            {
+                outboundToggle.isOn = false;
+                currentJobInput.actionType = JobAction.PUT;
+                UpdateUI();
+            }
         }
 
-        private void OnBookChanged(int value)
+        private void OnPickToggleChanged(bool isOn)
         {
-            if (!isInitialized)
-            {
-                return;
-            }
+            if (!isInitialized) return;
 
-            if (value > 0 && bookDropdown != null)
+            if (isOn)
             {
-                // dropdown의 첫 번째 옵션은 "도서를 선택하세요"이므로 value - 1
-                var book = bookRegistry.GetBookByIndex(value - 1);
-                currentJobInput.bookId = book != null ? book.Id : "";
+                inboundToggle.isOn = false;
+                currentJobInput.actionType = JobAction.PICK;
+                UpdateUI();
             }
-            else
-            {
-                currentJobInput.bookId = "";
-            }
-
-            UpdateUI();
         }
 
         private void OnQuantityChanged(string input)
@@ -174,6 +157,23 @@ namespace Managers
             UpdateUI();
         }
 
+        private void OnMaterialIdChanged(string input)
+        {
+            if (!isInitialized) return;
+
+            currentJobInput.materialId = input?.Trim() ?? "";
+            UpdateUI();
+        }
+
+        private void OnMaterialIdEndEdit(string input)
+        {
+            if (!isInitialized) return;
+
+            var trimmed = input?.Trim() ?? "";
+            currentJobInput.materialId = trimmed;
+            UpdateUI();
+        }
+
         private void UpdateUI()
         {
             if (!isInitialized) return;
@@ -187,13 +187,27 @@ namespace Managers
             colors.normalColor = isEnable ? Color.green : Color.gray;
             executeButton.colors = colors;
 
-            var image = cellCodesInput.GetComponent<Image>();
-            if (image != null)
+            var cellImage = cellCodesInput.GetComponent<Image>();
+            if (cellImage != null)
             {
                 if (currentJobInput.invalidCodes != null && currentJobInput.invalidCodes.Count > 0)
-                    image.color = invalidColor;
+                    cellImage.color = invalidColor;
                 else
-                    image.color = validColor;
+                    cellImage.color = validColor;
+            }
+
+            var materialImage = materialIdInput.GetComponent<Image>();
+            if (materialImage != null)
+            {
+                if (string.IsNullOrWhiteSpace(currentJobInput.materialId))
+                {
+                    materialImage.color = validColor;
+                }
+                else
+                {
+                    bool isValidMaterial = materialRegistry != null && materialRegistry.GetMaterialById(currentJobInput.materialId) != null;
+                    materialImage.color = isValidMaterial ? validMaterialIdColor : invalidMaterialIdColor;
+                }
             }
         }
 
@@ -204,10 +218,11 @@ namespace Managers
 
         public void ResetInput()
         {
-            currentJobInput = new JobInputData { quantity = 1 };
+            currentJobInput = new JobInputData { quantity = 1, actionType = JobAction.PUT };
             cellCodesInput.text = "";
-            actionTypeDropdown.value = 0;
-            bookDropdown.value = 0;
+            inboundToggle.isOn = true;
+            outboundToggle.isOn = false;
+            materialIdInput.text = "";
             quantityInput.text = "1";
             UpdateUI();
         }

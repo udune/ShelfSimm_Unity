@@ -11,7 +11,7 @@ namespace Core
         [Header("작업 정보")]
         public string cellCodesText = "";
         public JobAction actionType = JobAction.PUT;
-        public string bookId = "";
+        public string materialId = "";
         public int quantity = 1;
 
         [Header("파싱 결과")]
@@ -24,7 +24,7 @@ namespace Core
     {
         public bool IsValid;
         public bool HasCellCodes;
-        public bool HasValidBook;
+        public bool HasValidMaterial;
         public bool HasValidQuantity;
         public int CorrectedQuantity;
         public List<string> ErrorMessages;
@@ -44,7 +44,7 @@ namespace Core
             {
                 IsValid = true,
                 HasCellCodes = true,
-                HasValidBook = true,
+                HasValidMaterial = true,
                 HasValidQuantity = true,
                 CorrectedQuantity = correctedQuantity,
                 ErrorMessages = new List<string>()
@@ -82,7 +82,7 @@ namespace Core
 
             var errors = new List<string>();
             var hasCellCodes = false;
-            var hasValidBook = false;
+            var hasValidMaterial = false;
             var hasValidQuantity = true;
 
             if (string.IsNullOrWhiteSpace(jobInput.cellCodesText))
@@ -103,23 +103,23 @@ namespace Core
                 }
             }
 
-            if (string.IsNullOrWhiteSpace(jobInput.bookId))
+            if (string.IsNullOrWhiteSpace(jobInput.materialId))
             {
-                errors.Add("도서를 선택해주세요.");
+                errors.Add("자재를 선택해주세요.");
             }
             else
             {
-                hasValidBook = true;
+                hasValidMaterial = true;
             }
 
             var correctedQuantity = CorrectQuantity(jobInput.quantity);
-            var isValid = errors.Count == 0 && hasCellCodes && hasValidBook;
+            var isValid = errors.Count == 0 && hasCellCodes && hasValidMaterial;
 
             return new InputValidationResult
             {
                 IsValid = isValid,
                 HasCellCodes = hasCellCodes,
-                HasValidBook = hasValidBook,
+                HasValidMaterial = hasValidMaterial,
                 HasValidQuantity = hasValidQuantity,
                 CorrectedQuantity = correctedQuantity,
                 ErrorMessages = errors

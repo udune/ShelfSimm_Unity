@@ -32,7 +32,7 @@ namespace Core
 
         private Job currentJob;
         private Cell targetCell;
-        private BookData targetBook;
+        private MaterialData targetMaterial;
         private Action<Job, ErrorCode, JobResult> onJobCompleteCallback;
         private Action onReturnCompleteCallback;
         private DateTime jobStartTime;
@@ -158,7 +158,7 @@ namespace Core
             }
         }
 
-        public void StartJob(Job job, Cell cell, BookData book, int calculatedPathLength, Action<Job, ErrorCode, JobResult> onComplete)
+        public void StartJob(Job job, Cell cell, MaterialData material, int calculatedPathLength, Action<Job, ErrorCode, JobResult> onComplete)
         {
             DateTime startTime = DateTime.UtcNow;
 
@@ -171,15 +171,15 @@ namespace Core
 
             currentJob = job;
             targetCell = cell;
-            targetBook = book;
+            targetMaterial = material;
             onJobCompleteCallback = onComplete;
             jobStartTime = startTime;
             pathLength = calculatedPathLength;
 
             ErrorCode errorCode;
-            bool canProceed = (job.Action == JobAction.PUT)
-                ? cell.CanPutBook(book, job.Quantity, out errorCode)
-                : cell.CanPickBook(book, job.Quantity, out errorCode);
+            bool canProceed = (job.Action == JobAction.PUT || job.Action == JobAction.IN)
+                ? cell.CanAdd(material, job.Quantity, out errorCode)
+                : cell.CanRemove(material, job.Quantity, out errorCode);
 
             if (!canProceed)
             {
@@ -200,7 +200,7 @@ namespace Core
             Vector2Int? accessiblePos = pathFinder?.FindAccessibleNeighbor(targetCellPos, currentGridPosition);
             if (!accessiblePos.HasValue)
             {
-                Debug.LogError($"책장에 접근할 수 없습니다: {job.CellCode} (위치: {targetCellPos})");
+                Debug.LogError($"자재 위치에 접근할 수 없습니다: {job.CellCode} (위치: {targetCellPos})");
                 HandleJobCompletion(ErrorCode.ROUTE_BLOCKED);
                 return;
             }
@@ -232,19 +232,19 @@ namespace Core
 
         private void OnHandleComplete()
         {
-            if (currentJob.Action == JobAction.PUT)
+            if (currentJob.Action == JobAction.PUT || currentJob.Action == JobAction.IN)
             {
-                targetCell.PutBook(targetBook, currentJob.Quantity);
-                targetBook.ChangeStock(-currentJob.Quantity);
-                Debug.Log($"책 입고 완료: {targetBook.Title} x{currentJob.Quantity}");
+                targetCell.AddMaterial(targetMaterial, currentJob.Quantity);
+                targetMaterial.ChangeStock(-currentJob.Quantity);
+                Debug.Log($"자재 입고 완료: {targetMaterial.Name} x{currentJob.Quantity}");
             }
             else
             {
-                targetCell.PickBook(targetBook, currentJob.Quantity);
-                targetBook.ChangeStock(currentJob.Quantity);
-                Debug.Log($"책 출고 완료: {targetBook.Title} x{currentJob.Quantity}");
+                targetCell.RemoveMaterial(targetMaterial, currentJob.Quantity);
+                targetMaterial.ChangeStock(currentJob.Quantity);
+                Debug.Log($"자재 출고 완료: {targetMaterial.Name} x{currentJob.Quantity}");
             }
-            
+
             HandleJobCompletion(ErrorCode.NONE);
         }
 
@@ -363,7 +363,7 @@ namespace Core
         {
             currentJob = null;
             targetCell = null;
-            targetBook = null;
+            targetMaterial = null;
             onJobCompleteCallback = null;
             onReturnCompleteCallback = null;
             currentPath = null;

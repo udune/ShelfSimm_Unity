@@ -13,7 +13,7 @@ namespace UI
         [SerializeField] private TextMeshProUGUI accessibilityText;
         [SerializeField] private TextMeshProUGUI dimensionsText;
         [SerializeField] private TextMeshProUGUI capacityText;
-        [SerializeField] private TextMeshProUGUI bookInfoText;
+        [SerializeField] private TextMeshProUGUI materialInfoText;
 
         [Header("Colors")]
         [SerializeField] private Color accessibleColor = Color.green;
@@ -66,19 +66,19 @@ namespace UI
             dimensionsText.text = $"치수: {cell.WidthMm}mm × {cell.HeightMm}mm";
 
             // 모든 책 정보 표시
-            var allBooks = cell.GetAllBooks();
-            if (allBooks.Count > 0)
+            var allMaterials = cell.GetAllMaterials();
+            if (allMaterials.Count > 0)
             {
-                StringBuilder sb = new StringBuilder("보관 도서:\n");
-                foreach (var book in allBooks)
+                StringBuilder sb = new StringBuilder("보관 자재:\n");
+                foreach (var material in allMaterials)
                 {
-                    sb.AppendLine($"  • {book.title} ({book.quantity}권)");
+                    sb.AppendLine($"  • {material.name} ({material.quantity}권)");
                 }
-                bookInfoText.text = sb.ToString().TrimEnd();
+                materialInfoText.text = sb.ToString().TrimEnd();
             }
             else
             {
-                bookInfoText.text = "보관 도서: 없음";
+                materialInfoText.text = "보관 자재: 없음";
             }
 
             capacityText.text = cell.MaxCapacity > 0 ? $"용량: {cell.CurrentStock}/{cell.MaxCapacity}권" : "용량: -";

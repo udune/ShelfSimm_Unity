@@ -28,7 +28,7 @@ namespace Managers
         [SerializeField] private RobotController robotController;
 
         [SerializeField] private SimpleAStarPathFinder pathFinder;
-        [SerializeField] private BookRegistry bookRegistry;
+        [SerializeField] private MaterialRegistry materialRegistry;
         [SerializeField] private JobInputController jobInputController;
         [SerializeField] private GridRenderer gridRenderer;
         [SerializeField] private SimulationUIController simulationUIController;
@@ -116,26 +116,25 @@ namespace Managers
         {
             Debug.Log("API 모드 초기화 중...");
 
-            var booksLoaded = false;
-            List<BookDto> loadedBookDtos = null;
-            yield return ApiClient.Instance.GetAllBooks(
-                bookDtos =>
+            var materialsLoaded = false;
+            List<MaterialDto> loadedMaterialDtos = null;
+            yield return ApiClient.Instance.GetAllMaterials(
+                materialDtos =>
                 {
-                    loadedBookDtos = bookDtos;
-                    booksLoaded = true;
+                    loadedMaterialDtos = materialDtos;
+                    materialsLoaded = true;
                 },
                 error => Debug.LogError($"책 정보 로드 실패: {error}")
             );
-            if (!booksLoaded)
+            if (!materialsLoaded)
             {
                 HandleApiInitializationFailure("API 초기화 실패: 책 정보를 가져올 수 없습니다.");
                 yield break;
             }
 
-            if (loadedBookDtos != null)
+            if (loadedMaterialDtos != null)
             {
-                bookRegistry.LoadBooksFromApi(loadedBookDtos);
-                jobInputController.RefreshBookDropdown();
+                materialRegistry.LoadMaterialsFromApi(loadedMaterialDtos);
             }
 
             yield return StartCoroutine(RestoreInventoryState());
@@ -226,7 +225,7 @@ namespace Managers
             foreach (var job in sortedJobs)
             {
                 Cell cell = FindCellByCode(job.cellCode);
-                BookData book = FindBookByTitle(job.bookTitle);
+                MaterialData material = FindMaterialByName(job.materialName);
 
                 if (cell == null)
                 {
@@ -234,38 +233,38 @@ namespace Managers
                     continue;
                 }
 
-                if (book == null)
+                if (material == null)
                 {
-                    Debug.LogWarning($"Book {job.bookTitle}를 찾을 수 없음 (Job ID: {job.id})");
+                    Debug.LogWarning($"Material {job.materialName}를 찾을 수 없음 (Job ID: {job.id})");
                     continue;
                 }
 
-                if (job.action == "PUT")
+                if (job.action == "PUT" || job.action == "IN")
                 {
-                    if(cell.CanPutBook(book, job.quantity, out var errorCode))
+                    if(cell.CanAdd(material, job.quantity, out var errorCode))
                     {
-                        cell.PutBook(book, job.quantity);
-                        book.ChangeStock(-job.quantity);
+                        cell.AddMaterial(material, job.quantity);
+                        material.ChangeStock(-job.quantity);
                         appliedJobs++;
-                        Debug.Log($"[재고 복원] Job {job.id}: {job.cellCode}에 {job.bookTitle} {job.quantity}권 PUT → 현재 재고: {cell.GetBookQuantity(book.Id)}권");
+                        Debug.Log($"[재고 복원] Job {job.id}: {job.cellCode}에 {job.materialName} {job.quantity}개 입고 → 현재 재고: {cell.GetMaterialQuantity(material.Id)}개");
                     }
                     else
                     {
-                        Debug.LogWarning($"[재고 복원] Job {job.id}: PUT 실패 - {errorCode}");
+                        Debug.LogWarning($"[재고 복원] Job {job.id}: 입고 실패 - {errorCode}");
                     }
                 }
-                else if (job.action == "PICK")
+                else if (job.action == "PICK" || job.action == "OUT")
                 {
-                    if(cell.CanPickBook(book, job.quantity, out var errorCode))
+                    if(cell.CanRemove(material, job.quantity, out var errorCode))
                     {
-                        cell.PickBook(book, job.quantity);
-                        book.ChangeStock(job.quantity);
+                        cell.RemoveMaterial(material, job.quantity);
+                        material.ChangeStock(job.quantity);
                         appliedJobs++;
-                        Debug.Log($"[재고 복원] Job {job.id}: {job.cellCode}에서 {job.bookTitle} {job.quantity}권 PICK → 현재 재고: {cell.GetBookQuantity(book.Id)}권");
+                        Debug.Log($"[재고 복원] Job {job.id}: {job.cellCode}에서 {job.materialName} {job.quantity}개 출고 → 현재 재고: {cell.GetMaterialQuantity(material.Id)}개");
                     }
                     else
                     {
-                        Debug.LogWarning($"[재고 복원] Job {job.id}: PICK 실패 - {errorCode} (현재 {job.cellCode} 재고: {cell.GetBookQuantity(book.Id)}권)");
+                        Debug.LogWarning($"[재고 복원] Job {job.id}: 출고 실패 - {errorCode} (현재 {job.cellCode} 재고: {cell.GetMaterialQuantity(material.Id)}개)");
                     }
                 }
             }
@@ -309,9 +308,9 @@ namespace Managers
 
             var jobDtos = jobs.Select(job => new JobDto
             {
-                action = job.Action.ToString(),
+                action = JobActionConverter.ToApiString(job.Action),
                 cellCode = job.CellCode,
-                bookTitle = job.BookTitle,
+                materialName = job.MaterialName,
                 quantity = job.Quantity
             }).ToArray();
             var createJobsReq = new CreateJobsBatchRequest
@@ -339,13 +338,13 @@ namespace Managers
                 runDetails =>
                 {
                     var serverJobs = runDetails.jobs.ToDictionary(
-                        job => (job.cellCode, job.bookTitle, job.action),
+                        job => (job.cellCode, job.materialName, job.action),
                         job => job.id
                     );
 
                     foreach (var localJob in jobs)
                     {
-                        var key = (localJob.CellCode, localJob.BookTitle, localJob.Action.ToString());
+                        var key = (localJob.CellCode, localJob.MaterialName, JobActionConverter.ToApiString(localJob.Action));
                         if (serverJobs.TryGetValue(key, out var jobId))
                         {
                             localJob.JobId = jobId;
@@ -388,7 +387,7 @@ namespace Managers
             ConfigManager.Instance.CellsLayout.UpdateCellPositionsFromCodes();
             foreach (var cellDef in ConfigManager.Instance.CellsLayout.cells)
             {
-                gridRenderer.UpdateCell(cellDef.X, cellDef.Y, "bookshelf");
+                gridRenderer.UpdateCell(cellDef.X, cellDef.Y, "materialShelf");
                 if (pathFinder != null)
                 {
                     pathFinder.AddObstacle(new Vector2Int(cellDef.X, cellDef.Y));
@@ -434,7 +433,7 @@ namespace Managers
             foreach (var job in sortedJobs)
             {
                 _jobQueue.Enqueue(job);
-                Debug.Log($"[StartSimulationWithJobs] 작업 추가: {job.Action} - {job.CellCode} - {job.BookTitle} x{job.Quantity} (경로 길이: {CalculatePathLength(job.CellCode)})");
+                Debug.Log($"[StartSimulationWithJobs] 작업 추가: {job.Action} - {job.CellCode} - {job.MaterialName} x{job.Quantity} (경로 길이: {CalculatePathLength(job.CellCode)})");
             }
 
             TryProcessNextJob();
@@ -447,19 +446,19 @@ namespace Managers
             if (_jobQueue.Count > 0)
             {
                 var nextJob = _jobQueue.Dequeue();
-                Debug.Log($"[TryProcessNextJob] 다음 작업 처리 시작: {nextJob.Action} - {nextJob.CellCode} - {nextJob.BookTitle} x{nextJob.Quantity}");
+                Debug.Log($"[TryProcessNextJob] 다음 작업 처리 시작: {nextJob.Action} - {nextJob.CellCode} - {nextJob.MaterialName} x{nextJob.Quantity}");
 
                 var targetCell = FindCellByCode(nextJob.CellCode);
-                var targetBook = FindBookByTitle(nextJob.BookTitle);
+                var targetMaterial = FindMaterialByName(nextJob.MaterialName);
 
-                if (targetCell != null && targetBook != null)
+                if (targetCell != null && targetMaterial != null)
                 {
                     var pathLength = CalculatePathLength(nextJob.CellCode);
-                    robotController.StartJob(nextJob, targetCell, targetBook, pathLength, OnJobFinished);
+                    robotController.StartJob(nextJob, targetCell, targetMaterial, pathLength, OnJobFinished);
                 }
                 else
                 {
-                    Debug.LogError($"작업 처리 불가: Cell({nextJob.CellCode}) 또는 Book({nextJob.BookTitle})을 찾을 수 없음");
+                    Debug.LogError($"작업 처리 불가: Cell({nextJob.CellCode}) 또는 Material({nextJob.MaterialName})을 찾을 수 없음");
                     OnJobFinished(nextJob, ErrorCode.INVALID_CODE, null);
                 }
             }
@@ -472,7 +471,7 @@ namespace Managers
 
         private void OnJobFinished(Job job, ErrorCode resultCode, JobResult jobResult)
         {
-            Debug.Log($"[OnJobFinished] 작업 완료: {job.CellCode} - {job.BookTitle}, 결과: {resultCode}");
+            Debug.Log($"[OnJobFinished] 작업 완료: {job.CellCode} - {job.MaterialName}, 결과: {resultCode}");
             if (jobResult != null) _jobResults.Add(jobResult);
 
             if (resultCode == ErrorCode.NONE)
@@ -606,9 +605,9 @@ namespace Managers
             return FindCellByCode(code);
         }
 
-        private BookData FindBookByTitle(string title)
+        private MaterialData FindMaterialByName(string name)
         {
-            return bookRegistry.GetBookByTitle(title);
+            return materialRegistry.GetMaterialByName(name);
         }
 
         private int CalculatePathLength(string cellCode)

@@ -1,36 +1,34 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using Core;
 using UnityEngine;
 
 namespace Data
 {
     public class Cell
     {
-        // 책 재고 정보를 저장하는 내부 클래스
-        private class BookStock
+        // 자재 재고 정보를 저장하는 내부 클래스
+        private class MaterialStock
         {
-            public string Title { get; set; }
+            public string Name { get; set; }
             public int Quantity { get; set; }
-            public int Thickness { get; set; }
         }
 
         public string CellCode { get; private set; }
         public int WidthMm { get; private set; }
         public int HeightMm { get; private set; }
 
-        // 여러 종류의 책을 저장 (bookId -> BookStock)
-        private Dictionary<string, BookStock> books = new Dictionary<string, BookStock>();
+        // 여러 종류의 자재를 저장 (materialId -> MaterialStock)
+        private Dictionary<string, MaterialStock> materials = new Dictionary<string, MaterialStock>();
 
-        // 하위 호환성을 위한 속성들 (첫 번째 책 정보 반환)
-        public string StoredBookId => books.Keys.FirstOrDefault();
-        public string StoredBookTitle => books.Values.FirstOrDefault()?.Title;
-        public int CurrentStock => books.Values.Sum(b => b.Quantity);
-        public int MaxCapacity => Mathf.FloorToInt((float)WidthMm / GetMinThickness());
+        // 하위 호환성을 위한 속성들 (첫 번째 자재 정보 반환)
+        public string StoredMaterialId => materials.Keys.FirstOrDefault();
+        public string StoredMaterialName => materials.Values.FirstOrDefault()?.Name;
+        public int CurrentStock => materials.Values.Sum(m => m.Quantity);
+        public int MaxCapacity => 100; // Simplified: fixed capacity per cell
 
-        public bool IsEmpty => books.Count == 0;
-        public bool IsFull => GetUsedWidth() >= WidthMm;
+        public bool IsEmpty => materials.Count == 0;
+        public bool IsFull => CurrentStock >= MaxCapacity;
 
         public Cell(string cellCode, int widthMm, int heightMm)
         {
@@ -39,32 +37,7 @@ namespace Data
             HeightMm = heightMm;
         }
 
-        // 사용 중인 너비 계산
-        private int GetUsedWidth()
-        {
-            return books.Values.Sum(b => b.Thickness * b.Quantity);
-        }
-
-        // 최소 두께 반환 (MaxCapacity 계산용)
-        private int GetMinThickness()
-        {
-            if (books.Count > 0)
-            {
-                return books.Values.Min(b => b.Thickness);
-            }
-            
-            // 책이 없을 경우, 기본 책의 두께를 기준으로 계산
-            var defaultBook = BookRegistry.Instance.GetDefaultBook();
-            return defaultBook != null ? defaultBook.Thickness : 30; // 기본 책도 없으면 임의의 값(30mm) 사용
-        }
-
-        // 남은 너비 계산
-        private int GetRemainingWidth()
-        {
-            return WidthMm - GetUsedWidth();
-        }
-
-        public bool CanPutBook(BookData book, int quantity, out ErrorCode errorCode)
+        public bool CanAdd(MaterialData material, int quantity, out ErrorCode errorCode)
         {
             errorCode = ErrorCode.NONE;
 
@@ -74,27 +47,8 @@ namespace Data
                 return false;
             }
 
-            if (book.Height > HeightMm)
-            {
-                errorCode = ErrorCode.HEIGHT_LIMIT;
-                return false;
-            }
-
-            // 현재 저장된 책이 있는 경우, 추가로 필요한 너비 계산
-            int requiredWidth;
-            if (books.ContainsKey(book.Id))
-            {
-                // 이미 저장된 책이면 추가 수량만큼의 너비만 필요
-                requiredWidth = book.Thickness * quantity;
-            }
-            else
-            {
-                // 새로운 책이면 전체 수량만큼의 너비 필요
-                requiredWidth = book.Thickness * quantity;
-            }
-
-            int remainingWidth = GetRemainingWidth();
-            if (requiredWidth > remainingWidth)
+            // Simplified capacity check: total quantity limit
+            if (CurrentStock + quantity > MaxCapacity)
             {
                 errorCode = ErrorCode.CAPACITY_FULL;
                 return false;
@@ -103,26 +57,25 @@ namespace Data
             return true;
         }
 
-        public void PutBook(BookData book, int quantity)
+        public void AddMaterial(MaterialData material, int quantity)
         {
-            if (books.ContainsKey(book.Id))
+            if (materials.ContainsKey(material.Id))
             {
-                // 이미 저장된 책이면 수량만 증가
-                books[book.Id].Quantity += quantity;
+                // 이미 저장된 자재면 수량만 증가
+                materials[material.Id].Quantity += quantity;
             }
             else
             {
-                // 새로운 책이면 추가
-                books[book.Id] = new BookStock
+                // 새로운 자재면 추가
+                materials[material.Id] = new MaterialStock
                 {
-                    Title = book.Title,
-                    Quantity = quantity,
-                    Thickness = book.Thickness
+                    Name = material.Name,
+                    Quantity = quantity
                 };
             }
         }
 
-        public bool CanPickBook(BookData book, int quantity, out ErrorCode errorCode)
+        public bool CanRemove(MaterialData material, int quantity, out ErrorCode errorCode)
         {
             errorCode = ErrorCode.NONE;
 
@@ -132,13 +85,13 @@ namespace Data
                 return false;
             }
 
-            if (!books.ContainsKey(book.Id))
+            if (!materials.ContainsKey(material.Id))
             {
-                errorCode = ErrorCode.BOOK_MISMATCH;
+                errorCode = ErrorCode.MATERIAL_MISMATCH;
                 return false;
             }
 
-            if (books[book.Id].Quantity < quantity)
+            if (materials[material.Id].Quantity < quantity)
             {
                 errorCode = ErrorCode.INSUFFICIENT_STOCK;
                 return false;
@@ -147,33 +100,33 @@ namespace Data
             return true;
         }
 
-        public void PickBook(BookData book, int quantity)
+        public void RemoveMaterial(MaterialData material, int quantity)
         {
-            if (!books.ContainsKey(book.Id))
+            if (!materials.ContainsKey(material.Id))
             {
-                Debug.LogWarning($"Cell {CellCode}에 책 {book.Title}이 없습니다.");
+                Debug.LogWarning($"Cell {CellCode}에 자재 {material.Name}이 없습니다.");
                 return;
             }
 
-            books[book.Id].Quantity -= quantity;
+            materials[material.Id].Quantity -= quantity;
 
             // 재고가 0이 되면 제거
-            if (books[book.Id].Quantity <= 0)
+            if (materials[material.Id].Quantity <= 0)
             {
-                books.Remove(book.Id);
+                materials.Remove(material.Id);
             }
         }
 
-        // Cell에 저장된 모든 책 정보 반환 (디버깅/UI용)
-        public List<(string bookId, string title, int quantity)> GetAllBooks()
+        // Cell에 저장된 모든 자재 정보 반환 (디버깅/UI용)
+        public List<(string materialId, string name, int quantity)> GetAllMaterials()
         {
-            return books.Select(kvp => (kvp.Key, kvp.Value.Title, kvp.Value.Quantity)).ToList();
+            return materials.Select(kvp => (kvp.Key, kvp.Value.Name, kvp.Value.Quantity)).ToList();
         }
 
-        // 특정 책의 재고 조회
-        public int GetBookQuantity(string bookId)
+        // 특정 자재의 재고 조회
+        public int GetMaterialQuantity(string materialId)
         {
-            return books.ContainsKey(bookId) ? books[bookId].Quantity : 0;
+            return materials.ContainsKey(materialId) ? materials[materialId].Quantity : 0;
         }
     }
 }

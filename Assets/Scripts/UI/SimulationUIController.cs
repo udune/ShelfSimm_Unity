@@ -24,7 +24,7 @@ namespace UI
 
         [Header("References")]
         [SerializeField] private JobInputController jobInputController;
-        [SerializeField] private BookRegistry bookRegistry;
+        [SerializeField] private MaterialRegistry materialRegistry;
 
         [Header("Job List UI")]
         [SerializeField] private Transform jobListContainer;
@@ -261,21 +261,21 @@ namespace UI
 
         private void OnJobAdded(JobInputData jobInput)
         {
-            var bookData = bookRegistry != null ? bookRegistry.GetBookById(jobInput.bookId) : null;
-            string bookTitle = bookData != null ? bookData.title : "Unknown Book";
+            var materialData = materialRegistry != null ? materialRegistry.GetMaterialById(jobInput.materialId) : null;
+            string MaterialTitle = materialData != null ? materialData.name : "Unknown Material";
 
             var invalidCells = new List<string>();
             int addedCount = 0;
 
             foreach (var cellCode in jobInput.parsedCodes)
             {
-                if (!IsValidBookshelfCell(cellCode))
+                if (!IsValidMaterialshelfCell(cellCode))
                 {
                     invalidCells.Add(cellCode);
                     continue;
                 }
 
-                var job = new Job(jobInput.actionType, cellCode, bookTitle, jobInput.quantity);
+                var job = new Job(jobInput.actionType, cellCode, MaterialTitle, jobInput.quantity);
                 jobList.Add(job);
                 addedCount++;
             }
@@ -298,7 +298,7 @@ namespace UI
             }
         }
 
-        private bool IsValidBookshelfCell(string cellCode)
+        private bool IsValidMaterialshelfCell(string cellCode)
         {
             return ConfigManager.Instance.CellsLayout.GetCellByCode(cellCode) != null;
         }
@@ -360,7 +360,7 @@ namespace UI
 
             if (texts.Length >= 1)
             {
-                texts[0].text = $"{index + 1}. {job.Action} - {job.CellCode} - {job.BookTitle} x{job.Quantity}";
+                texts[0].text = $"{index + 1}. {job.Action} - {job.CellCode} - {job.MaterialName} x{job.Quantity}";
             }
 
             var deleteButton = item.GetComponentInChildren<Button>();

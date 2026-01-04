@@ -17,7 +17,7 @@ namespace API
         public float robotSpeedCellsPerSec;
         public int topN;
     }
-    
+
     [Serializable]
     public class RunResponse
     {
@@ -46,16 +46,16 @@ namespace API
         public RunResponse[] items => data;
         public int totalCount => meta?.totalCount ?? 0;
     }
-    
+
     [Serializable]
     public class JobDto
     {
         public string action;
         public string cellCode;
-        public string bookTitle;
+        public string materialName;
         public int quantity;
     }
-    
+
     [Serializable]
     public class CreateJobsBatchRequest
     {
@@ -63,16 +63,16 @@ namespace API
         public JobDto[] jobs;
         public string layoutId;
     }
-    
+
     [Serializable]
     public class JobsBatchResponse
     {
         public int accepted;
         public string runId;
         // TODO: 서버 API가 Job ID 목록을 반환하도록 수정되면 아래 필드 활성화
-        // public string[] jobIds; 
+        // public string[] jobIds;
     }
-    
+
     [Serializable]
     public class UpdateJobResultRequest
     {
@@ -85,6 +85,10 @@ namespace API
         public string result;
         public string failReason;
         public string robotName;
+        public string workerId;
+        public float snapshotTemp;
+        public float snapshotHumid;
+        public bool snapshotLightLeak;
     }
 
     [Serializable]
@@ -94,16 +98,16 @@ namespace API
     }
 
     [Serializable]
-    public class BookDto
+    public class MaterialDto
     {
-        public int id;
-        public string title;
-        public string author;
-        public int thicknessMn;
-        public int heightMm;
-        public string sku;
+        public string id;
+        public string name;
+        public string vendor;
+        public string lotId;
+        public int stockQty;
+        public string type;
+        public string expiryDate;
         public string createdAt;
-        public int stockQuantity;
     }
 
     [Serializable]
@@ -112,7 +116,7 @@ namespace API
         public string id;
         public string action;
         public string cellCode;
-        public string bookTitle;
+        public string materialName;
         public int quantity;
         public string result; // 작업 결과 (Success/Fail)
     }
@@ -126,9 +130,9 @@ namespace API
     }
 
     [Serializable]
-    public class BookListDto
+    public class MaterialListDto
     {
-        public BookDto[] items;
+        public MaterialDto[] items;
     }
 
     [Serializable]
@@ -177,7 +181,7 @@ namespace API
                 onError?.Invoke($"{www.error}\n{www.downloadHandler.text}");
             }
         }
-    
+
         public IEnumerator CreateJobsBatch(CreateJobsBatchRequest request, Action<JobsBatchResponse> onSuccess, Action<string> onError = null)
         {
             string url = $"{baseUrl}/Jobs/batch";
@@ -198,7 +202,7 @@ namespace API
                 onError?.Invoke($"{www.error}\n{www.downloadHandler.text}");
             }
         }
-    
+
         public IEnumerator UpdateJobResult(string jobId, UpdateJobResultRequest request, Action onSuccess = null, Action<string> onError = null)
         {
             string url = $"{baseUrl}/Jobs/{jobId}/result";
@@ -273,9 +277,9 @@ namespace API
             }
         }
 
-        public IEnumerator GetAllBooks(Action<List<BookDto>> onSuccess, Action<string> onError = null)
+        public IEnumerator GetAllMaterials(Action<List<MaterialDto>> onSuccess, Action<string> onError = null)
         {
-            string url = $"{baseUrl}/Books";
+            string url = $"{baseUrl}/Materials";
             if (logRequests) Debug.Log($"[API] GET {url}");
 
             using UnityWebRequest www = UnityWebRequest.Get(url);
@@ -286,18 +290,18 @@ namespace API
                 string jsonResponse = www.downloadHandler.text;
                 if (logRequests)
                 {
-                    Debug.Log($"[API] Books response: {jsonResponse}");
+                    Debug.Log($"[API] Materials response: {jsonResponse}");
                 }
 
                 string dtoJson = $"{{\"items\":{jsonResponse}}}";
-                BookListDto dto = JsonUtility.FromJson<BookListDto>(dtoJson);
-                List<BookDto> bookList = new List<BookDto>(dto.items);
+                MaterialListDto dto = JsonUtility.FromJson<MaterialListDto>(dtoJson);
+                List<MaterialDto> materialList = new List<MaterialDto>(dto.items);
 
                 if (logRequests)
                 {
-                    Debug.Log($"[API] Loaded {bookList.Count} books");
+                    Debug.Log($"[API] Loaded {materialList.Count} materials");
                 }
-                onSuccess?.Invoke(bookList);
+                onSuccess?.Invoke(materialList);
             }
             else
             {
@@ -377,7 +381,7 @@ namespace API
                 {
                     json = $"{{\"items\":{json}}}";
                 }
-                    
+
                 var dto = JsonUtility.FromJson<JobListDto>(json);
                 var jobList = new List<JobDetailsDto>(dto.items);
                 onSuccess?.Invoke(jobList);

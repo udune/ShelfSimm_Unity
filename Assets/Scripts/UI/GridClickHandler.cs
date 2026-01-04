@@ -103,7 +103,7 @@ namespace UI
 
         private bool IsCellAccessible(int x, int y, string cellType)
         {
-            if (cellType == "obstacle" || cellType == "bookshelf")
+            if (cellType == "obstacle" || cellType == "materialshelf")
             {
                 return false;
             }

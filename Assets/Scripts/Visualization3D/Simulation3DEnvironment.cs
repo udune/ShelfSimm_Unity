@@ -7,14 +7,14 @@ namespace Visualization3D
     public class Simulation3DEnvironment : MonoBehaviour
     {
         [Header("Prefabs")]
-        public GameObject bookshelfPrefab;
+        public GameObject materialshelfPrefab;
         public GameObject robotPrefab;
         public GameObject floorPrefab;
 
         [Header("Settings")]
         public float gridScale = 2f;
 
-        private Dictionary<string, Bookshelf3DVisual> bookshelves = new Dictionary<string, Bookshelf3DVisual>();
+        private Dictionary<string, Materialshelf3DVisual> materialshelves = new Dictionary<string, Materialshelf3DVisual>();
         private Robot3DVisual robot;
         private Light directionalLight;
         private Light robotPointLight;
@@ -25,11 +25,11 @@ namespace Visualization3D
 
             SetupLighting();
             CreateFloor();
-            CreateBookshelves();
+            CreateMaterialshelves();
             CreateRobot();
             AttachRobotLight();
 
-            Debug.Log($"[Simulation3DEnvironment] Created {bookshelves.Count} bookshelves and 1 robot with lighting");
+            Debug.Log($"[Simulation3DEnvironment] Created {materialshelves.Count} materialshelves and 1 robot with lighting");
         }
 
         private void CreateFloor()
@@ -39,18 +39,18 @@ namespace Visualization3D
             floor.name = "Floor";
         }
 
-        private void CreateBookshelves()
+        private void CreateMaterialshelves()
         {
             foreach (var cell in ConfigManager.Instance.CellsLayout.cells)
             {
                 Vector3 pos = GridToWorld(cell.X, cell.Y);
-                var shelf = Instantiate(bookshelfPrefab, pos, Quaternion.identity, transform);
+                var shelf = Instantiate(materialshelfPrefab, pos, Quaternion.identity, transform);
                 shelf.layer = LayerMask.NameToLayer("Simulation3D");
-                shelf.name = $"Bookshelf_{cell.code}";
+                shelf.name = $"Materialshelf_{cell.code}";
 
-                var visual = shelf.GetComponent<Bookshelf3DVisual>();
+                var visual = shelf.GetComponent<Materialshelf3DVisual>();
                 visual.Initialize(cell.code);
-                bookshelves[cell.code] = visual;
+                materialshelves[cell.code] = visual;
             }
         }
 
@@ -133,7 +133,7 @@ namespace Visualization3D
                 Destroy(child.gameObject);
             }
 
-            bookshelves.Clear();
+            materialshelves.Clear();
             robot = null;
             directionalLight = null;
             robotPointLight = null;

@@ -126,7 +126,7 @@ namespace Managers
             "partial" => Color.yellow,
             "full" => Color.red,
             "obstacle" => new Color(0.2f, 0.2f, 0.2f),
-            "bookshelf" => new Color(0.55f, 0.43f, 0.39f),
+            "materialshelf" => new Color(0.55f, 0.43f, 0.39f),
             "robot" => Color.blue,
             _ => Color.white
         };
