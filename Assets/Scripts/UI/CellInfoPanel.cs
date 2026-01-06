@@ -1,8 +1,8 @@
 using TMPro;
 using UnityEngine;
+using UnityEngine.UI;
 using Data;
-using Core;
-using System.Text;
+using Utils;
 
 namespace UI
 {
@@ -13,11 +13,25 @@ namespace UI
         [SerializeField] private TextMeshProUGUI accessibilityText;
         [SerializeField] private TextMeshProUGUI dimensionsText;
         [SerializeField] private TextMeshProUGUI capacityText;
-        [SerializeField] private TextMeshProUGUI materialInfoText;
+        [SerializeField] private Slider capacitySlider;
+
+        [Header("Material List")]
+        [SerializeField] private MaterialItemUI materialItemPrefab;
+        [SerializeField] private Transform materialListContent;
 
         [Header("Colors")]
         [SerializeField] private Color accessibleColor = Color.green;
         [SerializeField] private Color blockedColor = Color.red;
+
+        private ObjectPool<MaterialItemUI> materialItemPool;
+
+        private void Awake()
+        {
+            if (materialItemPrefab != null && materialListContent != null)
+            {
+                materialItemPool = new ObjectPool<MaterialItemUI>(materialItemPrefab, materialListContent, 5);
+            }
+        }
 
         private void Start()
         {
@@ -27,7 +41,7 @@ namespace UI
         public void UpdateCellInfo(string cellCode, bool isAccessible)
         {
             gameObject.SetActive(true);
-            cellCodeText.text = $"셀: {cellCode}";
+            cellCodeText.text = $"{cellCode}";
 
             if (isAccessible)
             {
@@ -43,14 +57,7 @@ namespace UI
 
         public void UpdateCellInfoDetailed(Cell cell, bool isAccessible)
         {
-            if (cell == null)
-            {
-                Hide();
-                return;
-            }
-
-            gameObject.SetActive(true);
-            cellCodeText.text = $"셀: {cell.CellCode}";
+            cellCodeText.text = $"{cell.CellCode}";
 
             if (isAccessible)
             {
@@ -63,30 +70,39 @@ namespace UI
                 accessibilityText.color = blockedColor;
             }
 
-            dimensionsText.text = $"치수: {cell.WidthMm}mm × {cell.HeightMm}mm";
+            dimensionsText.text = $"{cell.WidthMm}mm × {cell.HeightMm}mm";
 
-            // 모든 책 정보 표시
-            var allMaterials = cell.GetAllMaterials();
-            if (allMaterials.Count > 0)
+            // Object Pool을 사용한 자재 리스트 표시
+            if (materialItemPool != null)
             {
-                StringBuilder sb = new StringBuilder("보관 자재:\n");
+                materialItemPool.ReturnAll();
+
+                var allMaterials = cell.GetAllMaterials();
                 foreach (var material in allMaterials)
                 {
-                    sb.AppendLine($"  • {material.name} ({material.quantity}권)");
+                    MaterialItemUI item = materialItemPool.Get();
+                    item.SetData(material.name, material.quantity);
                 }
-                materialInfoText.text = sb.ToString().TrimEnd();
             }
-            else
+
+            // 용량 정보 업데이트 (항상 "현재/최대권" 형태로 표시)
+            int currentStock = cell.CurrentStock;
+            int maxCapacity = cell.MaxCapacity;
+
+            capacityText.text = maxCapacity > 0 ? $"{currentStock}/{maxCapacity}권" : $"{currentStock} / -";
+
+            // Slider 업데이트
+            if (capacitySlider != null)
             {
-                materialInfoText.text = "보관 자재: 없음";
+                if (maxCapacity > 0)
+                {
+                    capacitySlider.value = (float)currentStock / maxCapacity;
+                }
+                else
+                {
+                    capacitySlider.value = 0f;
+                }
             }
-
-            capacityText.text = cell.MaxCapacity > 0 ? $"용량: {cell.CurrentStock}/{cell.MaxCapacity}권" : "용량: -";
-        }
-
-        public void Hide()
-        {
-            gameObject.SetActive(false);
         }
     }
 }

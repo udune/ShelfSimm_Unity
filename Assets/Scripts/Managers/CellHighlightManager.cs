@@ -1,5 +1,4 @@
 using System.Collections;
-using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -11,13 +10,6 @@ namespace Managers
         [SerializeField] private Image highlightBorder;
         [SerializeField] private float blinkDuration = 0.3f;
         [SerializeField] private Color highlightColor = Color.yellow;
-
-        [Header("Accessibility Badge")]
-        [SerializeField] private GameObject accessibilityBadge;
-        [SerializeField] private TextMeshProUGUI badgeText;
-        [SerializeField] private Image badgeBackground;
-        [SerializeField] private Color accessibleColor = Color.green;
-        [SerializeField] private Color blockedColor = Color.red;
 
         private Coroutine blinkCoroutine;
         private GameObject currentSelectedCell;
@@ -36,8 +28,6 @@ namespace Managers
                 currentSelectedCell = cell;
                 ShowHighlight(cell);
             }
-
-            ShowAccessibilityBadge(isAccessible);
         }
 
         private void ShowHighlight(GameObject cell)
@@ -57,21 +47,6 @@ namespace Managers
             }
         }
 
-        private void ShowAccessibilityBadge(bool isAccessible)
-        {
-            accessibilityBadge.SetActive(true);
-            if (isAccessible)
-            {
-                badgeText.text = "접근 가능";
-                badgeBackground.color = accessibleColor;
-            }
-            else
-            {
-                badgeText.text = "접근 불가";
-                badgeBackground.color = blockedColor;
-            }
-        }
-
         public void ClearHighlight()
         {
             if (blinkCoroutine != null)
@@ -81,7 +56,6 @@ namespace Managers
             }
 
             highlightBorder.gameObject.SetActive(false);
-            accessibilityBadge.SetActive(false);
             currentSelectedCell = null;
         }
 

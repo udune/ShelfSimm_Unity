@@ -209,6 +209,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 4436029}
+  - component: {fileID: 4436030}
   m_Layer: 0
   m_Name: info_layout
   m_TagString: Untagged
@@ -245,6 +246,27 @@ RectTransform:
   m_AnchoredPosition: {x: 1.9967041, y: 0}
   m_SizeDelta: {x: -54.4395, y: 156.0654}
   m_Pivot: {x: 0.5, y: 1}
+--- !u!114 &4436030
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4436028}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9d8215eb8ca3f894baa4d8e2bd04f130, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::UI.CellInfoPanel
+  cellCodeText: {fileID: 616210897}
+  accessibilityText: {fileID: 205522540}
+  dimensionsText: {fileID: 1739298003}
+  capacityText: {fileID: 298340065}
+  capacitySlider: {fileID: 1059778283}
+  materialItemPrefab: {fileID: 5991722192569538139, guid: 8f68efae5e08b2e46943c1609260721c, type: 3}
+  materialListContent: {fileID: 1838107644}
+  accessibleColor: {r: 0, g: 1, b: 0, a: 1}
+  blockedColor: {r: 1, g: 0, b: 0, a: 1}
 --- !u!1 &16323333
 GameObject:
   m_ObjectHideFlags: 0
@@ -1333,7 +1355,7 @@ GameObject:
   - component: {fileID: 184963760}
   - component: {fileID: 184963759}
   m_Layer: 0
-  m_Name: book quantity
+  m_Name: material quantity
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1457,108 +1479,6 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 184963757}
   m_CullTransparentMesh: 1
---- !u!1001 &188310552
-PrefabInstance:
-  m_ObjectHideFlags: 0
-  serializedVersion: 2
-  m_Modification:
-    serializedVersion: 3
-    m_TransformParent: {fileID: 1838107644}
-    m_Modifications:
-    - target: {fileID: 2570915111281259180, guid: 8f68efae5e08b2e46943c1609260721c, type: 3}
-      propertyPath: m_Pivot.x
-      value: 0.5
-      objectReference: {fileID: 0}
-    - target: {fileID: 2570915111281259180, guid: 8f68efae5e08b2e46943c1609260721c, type: 3}
-      propertyPath: m_Pivot.y
-      value: 0.5
-      objectReference: {fileID: 0}
-    - target: {fileID: 2570915111281259180, guid: 8f68efae5e08b2e46943c1609260721c, type: 3}
-      propertyPath: m_AnchorMax.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 2570915111281259180, guid: 8f68efae5e08b2e46943c1609260721c, type: 3}
-      propertyPath: m_AnchorMax.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 2570915111281259180, guid: 8f68efae5e08b2e46943c1609260721c, type: 3}
-      propertyPath: m_AnchorMin.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 2570915111281259180, guid: 8f68efae5e08b2e46943c1609260721c, type: 3}
-      propertyPath: m_AnchorMin.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 2570915111281259180, guid: 8f68efae5e08b2e46943c1609260721c, type: 3}
-      propertyPath: m_SizeDelta.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 2570915111281259180, guid: 8f68efae5e08b2e46943c1609260721c, type: 3}
-      propertyPath: m_SizeDelta.y
-      value: 37.8622
-      objectReference: {fileID: 0}
-    - target: {fileID: 2570915111281259180, guid: 8f68efae5e08b2e46943c1609260721c, type: 3}
-      propertyPath: m_LocalPosition.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 2570915111281259180, guid: 8f68efae5e08b2e46943c1609260721c, type: 3}
-      propertyPath: m_LocalPosition.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 2570915111281259180, guid: 8f68efae5e08b2e46943c1609260721c, type: 3}
-      propertyPath: m_LocalPosition.z
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 2570915111281259180, guid: 8f68efae5e08b2e46943c1609260721c, type: 3}
-      propertyPath: m_LocalRotation.w
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 2570915111281259180, guid: 8f68efae5e08b2e46943c1609260721c, type: 3}
-      propertyPath: m_LocalRotation.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 2570915111281259180, guid: 8f68efae5e08b2e46943c1609260721c, type: 3}
-      propertyPath: m_LocalRotation.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 2570915111281259180, guid: 8f68efae5e08b2e46943c1609260721c, type: 3}
-      propertyPath: m_LocalRotation.z
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 2570915111281259180, guid: 8f68efae5e08b2e46943c1609260721c, type: 3}
-      propertyPath: m_AnchoredPosition.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 2570915111281259180, guid: 8f68efae5e08b2e46943c1609260721c, type: 3}
-      propertyPath: m_AnchoredPosition.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 2570915111281259180, guid: 8f68efae5e08b2e46943c1609260721c, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 2570915111281259180, guid: 8f68efae5e08b2e46943c1609260721c, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 2570915111281259180, guid: 8f68efae5e08b2e46943c1609260721c, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.z
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 3908858179510370538, guid: 8f68efae5e08b2e46943c1609260721c, type: 3}
-      propertyPath: m_Name
-      value: BookItemPrefab
-      objectReference: {fileID: 0}
-    m_RemovedComponents: []
-    m_RemovedGameObjects: []
-    m_AddedGameObjects: []
-    m_AddedComponents: []
-  m_SourcePrefab: {fileID: 100100000, guid: 8f68efae5e08b2e46943c1609260721c, type: 3}
---- !u!224 &188310553 stripped
-RectTransform:
-  m_CorrespondingSourceObject: {fileID: 2570915111281259180, guid: 8f68efae5e08b2e46943c1609260721c, type: 3}
-  m_PrefabInstance: {fileID: 188310552}
-  m_PrefabAsset: {fileID: 0}
 --- !u!1 &189962840
 GameObject:
   m_ObjectHideFlags: 0
@@ -2621,7 +2541,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::UI.SimulationUIController
   jobInputController: {fileID: 269941942}
-  materialRegistry: {fileID: 0}
+  materialRegistry: {fileID: 2005697073}
   jobListContainer: {fileID: 2004836022}
   jobItemPrefab: {fileID: 7990486322252513746, guid: 101273c3b933c4b4788dfce354901758, type: 3}
   jobCountText: {fileID: 1445209274}
@@ -2651,14 +2571,14 @@ MonoBehaviour:
   cellCodesInput: {fileID: 397130603}
   inboundToggle: {fileID: 1559069372}
   outboundToggle: {fileID: 2059980580}
-  materialIdInput: {fileID: 0}
+  materialIdInput: {fileID: 863206907}
   quantityInput: {fileID: 300255881}
   executeButton: {fileID: 765799601}
   validColor: {r: 0.2, g: 0.2, b: 0.25, a: 1}
   invalidColor: {r: 1, g: 0, b: 0, a: 1}
   validMaterialIdColor: {r: 0.2, g: 0.8, b: 0.2, a: 0.3}
   invalidMaterialIdColor: {r: 0.8, g: 0.2, b: 0.2, a: 0.3}
-  materialRegistry: {fileID: 0}
+  materialRegistry: {fileID: 2005697073}
 --- !u!1 &271005443
 GameObject:
   m_ObjectHideFlags: 0
@@ -3396,7 +3316,7 @@ GameObject:
   - component: {fileID: 300255881}
   - component: {fileID: 300255880}
   m_Layer: 0
-  m_Name: book quantity input
+  m_Name: material quantity input
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -6263,11 +6183,6 @@ MonoBehaviour:
   highlightBorder: {fileID: 847758524}
   blinkDuration: 0.3
   highlightColor: {r: 1, g: 0.92156863, b: 0.015686275, a: 1}
-  accessibilityBadge: {fileID: 0}
-  badgeText: {fileID: 0}
-  badgeBackground: {fileID: 0}
-  accessibleColor: {r: 0, g: 1, b: 0, a: 1}
-  blockedColor: {r: 1, g: 0, b: 0, a: 1}
 --- !u!1 &616210895
 GameObject:
   m_ObjectHideFlags: 0
@@ -7054,9 +6969,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a0d51d1649fec874785ced6dd8fe89b3, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::UI.GridClickHandler
-  highlightBorder: {fileID: 0}
-  infoPanel: {fileID: 0}
-  highlightManager: {fileID: 0}
+  highlightBorder: {fileID: 847758523}
+  infoPanel: {fileID: 4436030}
+  highlightManager: {fileID: 612471969}
 --- !u!114 &723205158
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -7071,6 +6986,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Managers.GridRenderer
   totalColumns: 15
   totalRows: 15
+  materialShelfSprite: {fileID: 3286163911610860551, guid: 4059faa250b6ca2478c2ee0388c7df5a, type: 3}
+  robotSprite: {fileID: 3286163911610860551, guid: 5ae44b868c0276c4497cd6d01cf6ce1c, type: 3}
 --- !u!114 &723205159
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -8236,7 +8153,7 @@ RectTransform:
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 0, y: 0}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 60, y: 60}
+  m_SizeDelta: {x: 50, y: 50}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &830275822
 MonoBehaviour:
@@ -8250,7 +8167,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b04ed412198ee2a45b667890a3445247, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::UI.RobotVisual
-  robotImage: {fileID: 0}
+  robotImage: {fileID: 830275823}
   robotColor: {r: 0, g: 0.5019608, b: 1, a: 1}
 --- !u!114 &830275823
 MonoBehaviour:
@@ -8649,7 +8566,7 @@ GameObject:
   - component: {fileID: 863206907}
   - component: {fileID: 863206906}
   m_Layer: 0
-  m_Name: book id input
+  m_Name: material id input
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -16419,8 +16336,8 @@ MonoBehaviour:
   useApiMode: 1
   robotController: {fileID: 1243948842}
   pathFinder: {fileID: 770401732}
-  materialRegistry: {fileID: 0}
-  jobInputController: {fileID: 0}
+  materialRegistry: {fileID: 2005697073}
+  jobInputController: {fileID: 269941942}
   gridRenderer: {fileID: 0}
   simulationUIController: {fileID: 269941941}
   enable3DVisualization: 1
@@ -16731,7 +16648,7 @@ GameObject:
   - component: {fileID: 1669165151}
   - component: {fileID: 1669165150}
   m_Layer: 0
-  m_Name: book id
+  m_Name: material id
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -18087,8 +18004,7 @@ RectTransform:
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
-  m_Children:
-  - {fileID: 188310553}
+  m_Children: []
   m_Father: {fileID: 1659648203}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
@@ -19477,7 +19393,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 2005697071}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 4b18a09b8b813874686ac3b76f7c8625, type: 3}
+  m_Script: {fileID: 11500000, guid: d795d3b4923f0484aa5504ed4dd5c6a1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Core::Core.MaterialRegistry
 --- !u!1 &2012186631

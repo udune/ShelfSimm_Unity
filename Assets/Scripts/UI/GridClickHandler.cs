@@ -55,10 +55,6 @@ namespace UI
                     infoPanel.UpdateCellInfo(cellDef.code, isAccessible);
                 }
             }
-            else
-            {
-                infoPanel.Hide();
-            }
         }
 
         private Vector2Int GetGridPosition(PointerEventData eventData)

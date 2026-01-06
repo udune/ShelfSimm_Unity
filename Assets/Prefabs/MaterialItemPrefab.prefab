@@ -169,6 +169,7 @@ GameObject:
   - component: {fileID: 7891787002159137021}
   - component: {fileID: 293632137006693859}
   - component: {fileID: 3692212769297369857}
+  - component: {fileID: 5991722192569538139}
   m_Layer: 0
   m_Name: MaterialItemPrefab
   m_TagString: Untagged
@@ -249,3 +250,16 @@ MonoBehaviour:
   m_EffectColor: {r: 0.3, g: 0.3, b: 0.4, a: 0.3}
   m_EffectDistance: {x: 1, y: -1}
   m_UseGraphicAlpha: 1
+--- !u!114 &5991722192569538139
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3908858179510370538}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a6086a170be3f7947949bc4689abe3f4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::UI.MaterialItemUI
+  titleText: {fileID: 1918667031514068584}
