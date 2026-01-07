@@ -33,11 +33,6 @@ namespace UI
             }
         }
 
-        private void Start()
-        {
-            gameObject.SetActive(false);
-        }
-
         public void UpdateCellInfo(string cellCode, bool isAccessible)
         {
             gameObject.SetActive(true);
@@ -85,11 +80,11 @@ namespace UI
                 }
             }
 
-            // 용량 정보 업데이트 (항상 "현재/최대권" 형태로 표시)
+            // 용량 정보 업데이트 (항상 "현재/최대" 형태로 표시)
             int currentStock = cell.CurrentStock;
             int maxCapacity = cell.MaxCapacity;
 
-            capacityText.text = maxCapacity > 0 ? $"{currentStock}/{maxCapacity}권" : $"{currentStock} / -";
+            capacityText.text = maxCapacity > 0 ? $"{currentStock}/{maxCapacity}" : $"{currentStock} / -";
 
             // Slider 업데이트
             if (capacitySlider != null)

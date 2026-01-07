@@ -49,12 +49,10 @@ namespace Managers
             quantityInput.onEndEdit.AddListener(OnQuantityEndEdit);
 
             cellCodesInput.onValueChanged.AddListener(OnCellCodesChanged);
-            cellCodesInput.placeholder.GetComponent<TextMeshProUGUI>().text = "예: D20, A15, B03";
 
             materialIdInput.contentType = TMP_InputField.ContentType.Standard;
             materialIdInput.onValueChanged.AddListener(OnMaterialIdChanged);
             materialIdInput.onEndEdit.AddListener(OnMaterialIdEndEdit);
-            materialIdInput.placeholder.GetComponent<TextMeshProUGUI>().text = "예: MATERIAL_1, MATERIAL_123";
 
             currentJobInput.quantity = 1;
             isInitialized = true;

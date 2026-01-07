@@ -1672,7 +1672,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: "\uC811\uADFC\uBD88\uAC00"
+  m_text: 
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 110ce30496d2b1843aa9fc04521e53b9, type: 2}
   m_sharedMaterial: {fileID: 3249717732731881229, guid: 110ce30496d2b1843aa9fc04521e53b9, type: 2}
@@ -2415,7 +2415,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: dc39e01e01b3d1c438036634ec8fce4e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Visualization3D.Simulation3DEnvironment
-  materialshelfPrefab: {fileID: 0}
+  materialshelfPrefab: {fileID: 9047512698503662172, guid: 66fe2bcc67494224387dcf28bfce1388, type: 3}
   robotPrefab: {fileID: 7222017022215729621, guid: 042ef2762572775448478417f6fc6efe, type: 3}
   floorPrefab: {fileID: 9097809888273581052, guid: 72c5340615d6ba64a9797a77bef6b59c, type: 3}
   gridScale: 2
@@ -3223,7 +3223,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: 1 / 8
+  m_text: 0 / 8
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 110ce30496d2b1843aa9fc04521e53b9, type: 2}
   m_sharedMaterial: {fileID: 3249717732731881229, guid: 110ce30496d2b1843aa9fc04521e53b9, type: 2}
@@ -6240,7 +6240,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: B10
+  m_text: 
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 110ce30496d2b1843aa9fc04521e53b9, type: 2}
   m_sharedMaterial: {fileID: 3249717732731881229, guid: 110ce30496d2b1843aa9fc04521e53b9, type: 2}
@@ -6986,8 +6986,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Managers.GridRenderer
   totalColumns: 15
   totalRows: 15
-  materialShelfSprite: {fileID: 3286163911610860551, guid: 4059faa250b6ca2478c2ee0388c7df5a, type: 3}
-  robotSprite: {fileID: 3286163911610860551, guid: 5ae44b868c0276c4497cd6d01cf6ce1c, type: 3}
+  materialShelfSprite: {fileID: 21300000, guid: 5e0c874cf3141d442bdc6cfeeaad1cc2, type: 3}
+  robotSprite: {fileID: 21300000, guid: 572fc30a429cf1745966d1b552203001, type: 3}
 --- !u!114 &723205159
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -8153,7 +8153,7 @@ RectTransform:
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 0, y: 0}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 50, y: 50}
+  m_SizeDelta: {x: 30, y: 30}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &830275822
 MonoBehaviour:
@@ -11414,6 +11414,7 @@ MonoBehaviour:
   camera3D: {fileID: 163319631}
   environment: {fileID: 267397057}
   renderTexture: {fileID: 8400000, guid: 1827c2cc9990d024aab316eede8e608f, type: 2}
+  robotController: {fileID: 1243948842}
 --- !u!1 &1091177585
 GameObject:
   m_ObjectHideFlags: 0
@@ -12974,7 +12975,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Core::Core.RobotController
   pathFinder: {fileID: 770401732}
-  gridRenderer: {fileID: 0}
+  gridRenderer: {fileID: 723205158}
   robotRectTransform: {fileID: 830275821}
 --- !u!1 &1245189327
 GameObject:
@@ -16338,7 +16339,7 @@ MonoBehaviour:
   pathFinder: {fileID: 770401732}
   materialRegistry: {fileID: 2005697073}
   jobInputController: {fileID: 269941942}
-  gridRenderer: {fileID: 0}
+  gridRenderer: {fileID: 723205158}
   simulationUIController: {fileID: 269941941}
   enable3DVisualization: 1
   simulation3DWindow: {fileID: 1088032460}
@@ -17332,7 +17333,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: 300 x 200
+  m_text: 
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 110ce30496d2b1843aa9fc04521e53b9, type: 2}
   m_sharedMaterial: {fileID: 3249717732731881229, guid: 110ce30496d2b1843aa9fc04521e53b9, type: 2}

@@ -387,7 +387,7 @@ namespace Managers
             ConfigManager.Instance.CellsLayout.UpdateCellPositionsFromCodes();
             foreach (var cellDef in ConfigManager.Instance.CellsLayout.cells)
             {
-                gridRenderer.UpdateCell(cellDef.X, cellDef.Y, "materialShelf");
+                gridRenderer.UpdateCell(cellDef.X, cellDef.Y, "materialshelf");
                 if (pathFinder != null)
                 {
                     pathFinder.AddObstacle(new Vector2Int(cellDef.X, cellDef.Y));
@@ -411,13 +411,6 @@ namespace Managers
             {
                 Debug.LogWarning("시작할 작업이 없습니다.");
                 return;
-            }
-
-            // 3D 시각화 창 열기
-            if (enable3DVisualization)
-            {
-                simulation3DWindow.Open(robotController);
-                Debug.Log("[StartSimulationWithJobs] 3D 시각화 창을 열었습니다.");
             }
 
             var sortedJobs = jobs.OrderBy(job => CalculatePathLength(job.CellCode)).ToList();

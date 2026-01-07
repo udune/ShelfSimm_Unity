@@ -1,3 +1,4 @@
+using System;
 using Core;
 using TMPro;
 using UnityEngine;
@@ -16,15 +17,16 @@ namespace Visualization3D
         public Camera camera3D;
         public Simulation3DEnvironment environment;
         public RenderTexture renderTexture;
+        
+        [Header("내부 컴포넌트 참조")] 
+        [SerializeField] private RobotController robotController;
 
         private bool isOpen = false;
-        private RobotController robotController;
 
-        void Start()
+        private void Start()
         {
-            windowPanel.SetActive(false);
-            camera3D.enabled = false;
-            Debug.Log("[Simulation3DWindow] Initialized");
+            Open(robotController);
+            Debug.Log("[StartSimulationWithJobs] 3D 시각화 창을 열었습니다.");
         }
 
         public void Open(RobotController controller)
