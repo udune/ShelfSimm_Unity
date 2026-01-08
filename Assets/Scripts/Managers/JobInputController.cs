@@ -203,7 +203,7 @@ namespace Managers
                 }
                 else
                 {
-                    bool isValidMaterial = materialRegistry != null && materialRegistry.GetMaterialById(currentJobInput.materialId) != null;
+                    bool isValidMaterial = materialRegistry != null && materialRegistry.GetMaterialByLotId(currentJobInput.materialId) != null;
                     materialImage.color = isValidMaterial ? validMaterialIdColor : invalidMaterialIdColor;
                 }
             }

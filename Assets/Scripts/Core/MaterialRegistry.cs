@@ -36,6 +36,16 @@ namespace Core
             return material;
         }
 
+        public MaterialData GetMaterialByLotId(string lotId)
+        {
+            if (string.IsNullOrEmpty(lotId))
+            {
+                return null;
+            }
+
+            return availableMaterials.Find(x => x.LotId == lotId);
+        }
+
         public MaterialData[] GetAllAvailableMaterials()
         {
             return availableMaterials?.ToArray();

@@ -261,10 +261,32 @@ namespace UI
 
         private void OnJobAdded(JobInputData jobInput)
         {
-            var materialData = materialRegistry != null ? materialRegistry.GetMaterialById(jobInput.materialId) : null;
-            string MaterialTitle = materialData != null ? materialData.name : "Unknown Material";
+            // 1순위: Material ID (LotId) 검증
+            var materialData = materialRegistry != null ? materialRegistry.GetMaterialByLotId(jobInput.materialId) : null;
+            if (materialData == null)
+            {
+                ShowStatus($"존재하지 않는 자재 ID입니다: {jobInput.materialId}", Color.red);
+                return;
+            }
 
+            string MaterialTitle = materialData.name;
+
+            // 2순위: 유효기간 검증
+            if (!string.IsNullOrEmpty(materialData.ExpiryDate))
+            {
+                if (System.DateTime.TryParse(materialData.ExpiryDate, out System.DateTime expiryDate))
+                {
+                    if (expiryDate < System.DateTime.Today)
+                    {
+                        ShowStatus($"유효기간이 지난 자재입니다: {materialData.Name} (유효기간: {materialData.ExpiryDate})", Color.red);
+                        return;
+                    }
+                }
+            }
+
+            // 3순위: Cell code 검증
             var invalidCells = new List<string>();
+            var insufficientStockCells = new List<string>();
             int addedCount = 0;
 
             foreach (var cellCode in jobInput.parsedCodes)
@@ -275,6 +297,21 @@ namespace UI
                     continue;
                 }
 
+                // 4순위: PICK 작업 시 재고 검증
+                if (jobInput.actionType == JobAction.PICK)
+                {
+                    var cell = SimulationManager.Instance.GetCellByCode(cellCode);
+                    if (cell != null)
+                    {
+                        int currentStock = cell.GetMaterialQuantity(materialData.Id);
+                        if (currentStock < jobInput.quantity)
+                        {
+                            insufficientStockCells.Add($"{cellCode}(재고:{currentStock})");
+                            continue;
+                        }
+                    }
+                }
+
                 var job = new Job(jobInput.actionType, cellCode, MaterialTitle, jobInput.quantity);
                 jobList.Add(job);
                 addedCount++;
@@ -283,9 +320,15 @@ namespace UI
             UpdateJobList();
             jobInputController.ResetInput();
 
+            // 우선순위 순서대로 에러 메시지 표시
             if (invalidCells.Count > 0)
             {
                 string message = $"{addedCount}개 추가됨. 책장에 등록되지 않은 셀: {string.Join(", ", invalidCells)}";
+                ShowStatus(message, Color.red);
+            }
+            else if (insufficientStockCells.Count > 0)
+            {
+                string message = $"{addedCount}개 추가됨. 재고 부족: {string.Join(", ", insufficientStockCells)}";
                 ShowStatus(message, Color.red);
             }
             else if (addedCount > 0)

@@ -24,11 +24,19 @@ namespace UI
         /// </summary>
         /// <param name="materialName">자재 이름</param>
         /// <param name="quantity">수량</param>
-        public void SetData(string materialName, int quantity)
+        /// <param name="materialType">자재 타입 (선택)</param>
+        public void SetData(string materialName, int quantity, string materialType = "")
         {
             if (titleText != null)
             {
-                titleText.text = $"{materialName} ({quantity}권)";
+                if (string.IsNullOrEmpty(materialType))
+                {
+                    titleText.text = $"{materialName} ({quantity})";
+                }
+                else
+                {
+                    titleText.text = $"{materialName} [{materialType}] ({quantity})";
+                }
             }
         }
     }

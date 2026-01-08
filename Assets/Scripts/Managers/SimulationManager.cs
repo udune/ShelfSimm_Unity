@@ -139,7 +139,7 @@ namespace Managers
 
             yield return StartCoroutine(RestoreInventoryState());
 
-            Debug.Log("API 초기화 완료. 책 정보 및 재고 상태 복원 완료.");
+            Debug.Log("API 초기화 완료. 자재 정보 및 재고 상태 복원 완료.");
         }
 
         private IEnumerator RestoreInventoryState()

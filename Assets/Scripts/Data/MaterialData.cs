@@ -41,6 +41,10 @@ namespace Data
 
         public string Id => id;
         public string Name => name;
+        public string LotId => lotId;
+        public int StockQty => stockQty;
+        public string ExpiryDate => expiryDate;
+        public string Type => type;
 
         public string DisplayText => $"{name} - {vendor}";
 

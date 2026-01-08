@@ -3,6 +3,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using Data;
 using Utils;
+using Core;
 
 namespace UI
 {
@@ -76,7 +77,19 @@ namespace UI
                 foreach (var material in allMaterials)
                 {
                     MaterialItemUI item = materialItemPool.Get();
-                    item.SetData(material.name, material.quantity);
+
+                    // MaterialRegistry에서 type 정보 가져오기
+                    string materialType = "";
+                    if (MaterialRegistry.Instance != null)
+                    {
+                        var materialData = MaterialRegistry.Instance.GetMaterialById(material.materialId);
+                        if (materialData != null)
+                        {
+                            materialType = materialData.Type;
+                        }
+                    }
+
+                    item.SetData(material.name, material.quantity, materialType);
                 }
             }
 
