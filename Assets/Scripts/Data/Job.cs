@@ -49,8 +49,9 @@ namespace Data
         public string MaterialName { get; }
         public int Quantity { get; }
 
-        public Job(JobAction action, string cellCode, string materialName, int quantity, string jobId = null)
+        public Job(string materialId, JobAction action, string cellCode, string materialName, int quantity, string jobId = null)
         {
+            MaterialId = materialId;
             Action = action;
             CellCode = cellCode;
             MaterialName = materialName;

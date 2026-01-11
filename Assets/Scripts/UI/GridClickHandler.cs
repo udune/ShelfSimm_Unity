@@ -43,7 +43,27 @@ namespace UI
             highlightManager.SelectCell(gridImage.gameObject, isAccessible);
             PositionHighlight(gridPos);
 
-            if (cellDef != null)
+            if (cellType != "obstacle" && cellType != "materialshelf")
+            {
+                if (cellDef != null)
+                {
+                    Cell cell = GetCellData(cellDef.code);
+                    if (cell != null)
+                    {
+                        infoPanel.UpdateCellInfoDetailed(cell, isAccessible);
+                    }
+                    else
+                    {
+                        infoPanel.UpdateCellInfo(cellDef.code, isAccessible);
+                    }
+                }
+                else
+                {
+                    string generatedCode = GenerateCellCode(gridPos.x, gridPos.y);
+                    infoPanel.UpdateCellInfo(generatedCode, isAccessible);
+                }
+            }
+            else if (cellDef != null)
             {
                 Cell cell = GetCellData(cellDef.code);
                 if (cell != null)
@@ -130,6 +150,13 @@ namespace UI
 
             RectTransform highlightRect = highlightBorder.GetComponent<RectTransform>();
             highlightRect.sizeDelta = new Vector2(cellWidth, cellHeight);
+        }
+
+        private string GenerateCellCode(int x, int y)
+        {
+            char letter = (char)('A' + x);
+            int number = y + 1;
+            return $"{letter}{number:D2}";
         }
     }
 }

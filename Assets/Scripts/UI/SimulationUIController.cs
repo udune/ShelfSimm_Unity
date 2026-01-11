@@ -312,7 +312,7 @@ namespace UI
                     }
                 }
 
-                var job = new Job(jobInput.actionType, cellCode, MaterialTitle, jobInput.quantity);
+                var job = new Job(jobInput.materialId, jobInput.actionType, cellCode, MaterialTitle, jobInput.quantity);
                 jobList.Add(job);
                 addedCount++;
             }
@@ -403,7 +403,11 @@ namespace UI
 
             if (texts.Length >= 1)
             {
-                texts[0].text = $"{index + 1}. {job.Action} - {job.CellCode} - {job.MaterialName} x{job.Quantity}";
+                texts[0].text = $"{job.MaterialId}";
+                texts[1].text = job.Action == JobAction.PUT ? "입고" : "출고";
+                texts[2].text = $"{job.MaterialName}";
+                texts[3].text = $"{job.CellCode}";
+                texts[4].text = $"{job.Quantity}";
             }
 
             var deleteButton = item.GetComponentInChildren<Button>();
