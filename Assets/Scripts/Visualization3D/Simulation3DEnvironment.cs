@@ -87,7 +87,7 @@ namespace Visualization3D
             directionalLight.type = LightType.Directional;
             directionalLight.color = new Color(1f, 0.98f, 0.95f); // Warm white
             directionalLight.intensity = 1.2f;
-            directionalLight.shadows = LightShadows.Soft;
+            directionalLight.shadows = LightShadows.None;
             directionalLight.shadowStrength = 0.6f;
             directionalLight.shadowBias = 0.05f;
             directionalLight.shadowNormalBias = 0.4f;
@@ -118,7 +118,7 @@ namespace Visualization3D
             robotPointLight.color = new Color(0f, 0.6f, 1f); // Cyan to match robot color
             robotPointLight.intensity = 2.5f;
             robotPointLight.range = 6f;
-            robotPointLight.shadows = LightShadows.Soft;
+            robotPointLight.shadows = LightShadows.None;
             robotPointLight.shadowStrength = 0.4f;
 
             Debug.Log("[Simulation3DEnvironment] Robot light attached");
