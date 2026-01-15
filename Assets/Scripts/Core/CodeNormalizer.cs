@@ -1,5 +1,4 @@
 using System;
-using System.Text.RegularExpressions;
 
 namespace Core
 {
@@ -14,53 +13,63 @@ namespace Core
 
     public static class CodeNormalizer
     {
-        private static readonly Regex CodePattern = new Regex(@"^([A-Z])(\d+)$", RegexOptions.Compiled);
+        public static bool TryNormalizeCode(string rawCode, out string normalizedCode)
+        {
+            normalizedCode = null;
+
+            if (string.IsNullOrEmpty(rawCode))
+                return false;
+
+            // Clean the input
+            var cleaned = rawCode.Trim().ToUpperInvariant();
+
+            // Remove separators
+            var sb = new System.Text.StringBuilder(cleaned.Length);
+            foreach (var c in cleaned)
+            {
+                if (c != ' ' && c != '-' && c != '_')
+                    sb.Append(c);
+            }
+            cleaned = sb.ToString();
+
+            if (cleaned.Length < 2)
+                return false;
+
+            // Find where letters end and digits begin
+            int letterEndIndex = 0;
+            while (letterEndIndex < cleaned.Length && char.IsLetter(cleaned[letterEndIndex]))
+                letterEndIndex++;
+
+            // Must have at least one letter and one digit
+            if (letterEndIndex == 0 || letterEndIndex >= cleaned.Length)
+                return false;
+
+            string alphabetPart = cleaned.Substring(0, letterEndIndex);
+            string numberPart = cleaned.Substring(letterEndIndex);
+
+            // Verify all remaining characters are digits
+            foreach (var c in numberPart)
+            {
+                if (!char.IsDigit(c))
+                    return false;
+            }
+
+            // Number part should be 1-2 digits
+            if (numberPart.Length == 0 || numberPart.Length > 2)
+                return false;
+
+            // Pad number to 2 digits
+            string paddedNumber = numberPart.PadLeft(2, '0');
+            normalizedCode = alphabetPart + paddedNumber;
+            return true;
+        }
 
         public static string NormalizeCode(string rawCode)
         {
-            if (string.IsNullOrEmpty(rawCode))
-            {
-                throw new ArgumentException("코드가 비어있습니다", nameof(rawCode));
-            }
+            if (TryNormalizeCode(rawCode, out var normalized))
+                return normalized;
 
-            string cleaned = rawCode
-                .Trim()
-                .ToUpper()
-                .Replace(" ", "")
-                .Replace("-", "")
-                .Replace("_", "");
-
-            var match = CodePattern.Match(cleaned);
-            if (!match.Success)
-            {
-                throw new ArgumentException($"잘못된 코드 형식입니다: {rawCode}", nameof(rawCode));
-            }
-
-            string alphabetPart = match.Groups[1].Value;
-            string numberPart = match.Groups[2].Value;
-
-            if (numberPart.Length > 2)
-            {
-                throw new ArgumentException($"숫자 부분이 2자리를 초과합니다: {rawCode}", nameof(rawCode));
-            }
-
-            string paddedNumber = numberPart.PadLeft(2, '0');
-
-            return alphabetPart + paddedNumber;
-        }
-
-        public static bool TryNormalizeCode(string rawCode, out string normalizedCode)
-        {
-            try
-            {
-                normalizedCode = NormalizeCode(rawCode);
-                return true;
-            }
-            catch
-            {
-                normalizedCode = null;
-                return false;
-            }
+            throw new ArgumentException($"잘못된 코드 형식입니다: {rawCode}", nameof(rawCode));
         }
     }
 }

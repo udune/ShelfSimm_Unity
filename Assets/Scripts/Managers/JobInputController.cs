@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using Core;
 using Data;
 using TMPro;
@@ -99,6 +100,7 @@ namespace Managers
 
         private bool IsValidMaterialShelfCell(string cellCode)
         {
+            if (ConfigManager.Instance == null || ConfigManager.Instance.CellsLayout == null) return false;
             return ConfigManager.Instance.CellsLayout.GetCellByCode(cellCode) != null;
         }
 

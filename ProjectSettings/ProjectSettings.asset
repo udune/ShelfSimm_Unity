@@ -670,9 +670,9 @@ PlayerSettings:
   webGLLinkerTarget: 1
   webGLThreadsSupport: 0
   webGLDecompressionFallback: 1
-  webGLInitialMemorySize: 512
-  webGLMaximumMemorySize: 2048
-  webGLMemoryGrowthMode: 2
+  webGLInitialMemorySize: 256
+  webGLMaximumMemorySize: 512
+  webGLMemoryGrowthMode: 1
   webGLMemoryLinearGrowthStep: 16
   webGLMemoryGeometricGrowthStep: 0.2
   webGLMemoryGeometricGrowthCap: 96
@@ -780,7 +780,7 @@ PlayerSettings:
   qnxGraphicConfPath: 
   apiCompatibilityLevel: 6
   captureStartupLogs: {}
-  activeInputHandler: 1
+  activeInputHandler: 2
   windowsGamepadBackendHint: 0
   cloudProjectId: 40825564-d93c-4b01-a70e-b2e0e515ace5
   framebufferDepthMemorylessMode: 0
