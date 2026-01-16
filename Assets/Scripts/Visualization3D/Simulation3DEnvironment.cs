@@ -23,6 +23,9 @@ namespace Visualization3D
         {
             Debug.Log("[Simulation3DEnvironment] Initializing 3D environment...");
 
+            // WebGL에서 실행 순서 문제로 셀 위치가 초기화 안 될 수 있음 - 먼저 초기화
+            ConfigManager.Instance.CellsLayout.UpdateCellPositionsFromCodes();
+
             SetupLighting();
             CreateFloor();
             CreateMaterialshelves();

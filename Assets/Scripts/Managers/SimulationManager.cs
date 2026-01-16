@@ -484,13 +484,7 @@ namespace Managers
         {
             Debug.Log("모든 작업 및 복귀 완료. 시뮬레이션을 종료합니다.");
 
-            // 3D 시각화 창 닫기
-            if (enable3DVisualization)
-            {
-                simulation3DWindow.Close();
-                Debug.Log("[OnAllJobsAndReturnFinished] 3D 시각화 창을 닫았습니다.");
-            }
-
+            // 3D 시각화 창은 시뮬레이션 종료 후에도 유지
             StopSimulation();
         }
 
