@@ -66,21 +66,32 @@ namespace Managers
             }
 
             Instance = this;
-            
-            // Cell 상태를 앱 세션 동안 유지하기 위해 Awake에서 한 번만 초기화
             _cellStates = new Dictionary<string, Cell>();
-            if (ConfigManager.Instance.CellsLayout != null && ConfigManager.Instance.CellsLayout.cells != null)
-            {
-                foreach (var cellDef in ConfigManager.Instance.CellsLayout.cells)
-                {
-                    _cellStates[cellDef.code] = new Cell(cellDef.code, cellDef.width, cellDef.height);
-                }
-            }
         }
 
         private void Start()
         {
             ConfigManager.Instance.SimulationConfig.OnHandleTimeChanged += HandleTimeChanged;
+
+            // ConfigManager가 API에서 로드 중이면 완료를 기다림
+            if (ConfigManager.Instance.LoadFromApiOnStart && !ConfigManager.Instance.IsInitialized)
+            {
+                ConfigManager.Instance.OnInitialized += OnConfigManagerInitialized;
+            }
+            else
+            {
+                OnConfigManagerInitialized();
+            }
+        }
+
+        private void OnConfigManagerInitialized()
+        {
+            ConfigManager.Instance.OnInitialized -= OnConfigManagerInitialized;
+
+            // Cell 상태 초기화
+            InitializeCellStates();
+
+            // 그리드 초기화
             InitializeGrid();
             robotController.Reset();
 
@@ -91,6 +102,19 @@ namespace Managers
             else
             {
                 Debug.Log("시뮬레이션 준비 완료. UI에서 작업을 입력하고 실행하세요.");
+            }
+        }
+
+        private void InitializeCellStates()
+        {
+            _cellStates.Clear();
+            if (ConfigManager.Instance.CellsLayout != null && ConfigManager.Instance.CellsLayout.cells != null)
+            {
+                foreach (var cellDef in ConfigManager.Instance.CellsLayout.cells)
+                {
+                    _cellStates[cellDef.code] = new Cell(cellDef.code, cellDef.width, cellDef.height);
+                }
+                Debug.Log($"[SimulationManager] Cell states initialized: {_cellStates.Count} cells");
             }
         }
 
@@ -317,7 +341,7 @@ namespace Managers
             {
                 runId = _currentRunId,
                 jobs = jobDtos,
-                layoutId = ConfigManager.Instance.CellsLayout.layout_hash
+                layoutId = ConfigManager.Instance.CellsLayout.LayoutHash
             };
 
             var jobsBatched = false;

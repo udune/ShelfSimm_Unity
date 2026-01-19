@@ -12,8 +12,7 @@ namespace Data
         [Header("칸 목록")]
         public List<CellDef> cells = new List<CellDef>();
 
-        [Header("캐시 무효화")]
-        public string layout_hash;
+        public string LayoutHash { get; set; }
 
         public void UpdateCellPositionsFromCodes()
         {

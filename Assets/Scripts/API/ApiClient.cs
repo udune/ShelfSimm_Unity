@@ -143,6 +143,141 @@ namespace API
 
     #endregion
 
+    #region Configuration API DTOs
+
+    [Serializable]
+    public class ConfigDto
+    {
+        public string id;
+        public string name;
+        public float handleTime;
+        public float robotSpeed;
+        public float moveTimeoutSec;
+        public int topN;
+        public int randomSeed;
+        public int warehousePosX;
+        public int warehousePosY;
+        public bool isDefault;
+        public string createdAt;
+        public string updatedAt;
+    }
+
+    [Serializable]
+    public class ConfigListResponse
+    {
+        public ConfigDto[] data;
+        public int totalCount;
+    }
+
+    [Serializable]
+    public class CreateConfigRequest
+    {
+        public string name;
+        public float handleTime = 2.0f;
+        public float robotSpeed = 3.0f;
+        public float moveTimeoutSec = 30.0f;
+        public int topN = 3;
+        public int randomSeed = 42;
+        public int warehousePosX = 0;
+        public int warehousePosY = 0;
+    }
+
+    [Serializable]
+    public class UpdateConfigRequest
+    {
+        public string name;
+        public float handleTime;
+        public float robotSpeed;
+        public float moveTimeoutSec;
+        public int topN;
+        public int randomSeed;
+        public int warehousePosX;
+        public int warehousePosY;
+    }
+
+    #endregion
+
+    #region CellsLayout API DTOs
+
+    [Serializable]
+    public class LayoutListItemDto
+    {
+        public string id;
+        public string name;
+        public int warehouseX;
+        public int warehouseY;
+        public int cellCount;
+        public bool isDefault;
+        public string createdAt;
+        public string updatedAt;
+    }
+
+    [Serializable]
+    public class LayoutListResponse
+    {
+        public LayoutListItemDto[] data;
+        public int totalCount;
+    }
+
+    [Serializable]
+    public class CellDefDto
+    {
+        public string id;
+        public string code;
+        public int width;
+        public int height;
+        public string orientation;
+    }
+
+    [Serializable]
+    public class LayoutDetailDto
+    {
+        public string id;
+        public string name;
+        public int warehouseX;
+        public int warehouseY;
+        public string layoutHash;
+        public bool isDefault;
+        public string createdAt;
+        public string updatedAt;
+        public CellDefDto[] cells;
+    }
+
+    [Serializable]
+    public class CreateCellDefRequest
+    {
+        public string code;
+        public int width = 90;
+        public int height = 200;
+        public string orientation = "N";
+    }
+
+    [Serializable]
+    public class CreateLayoutRequest
+    {
+        public string name;
+        public int warehouseX = 0;
+        public int warehouseY = 0;
+        public CreateCellDefRequest[] cells;
+    }
+
+    [Serializable]
+    public class UpdateLayoutRequest
+    {
+        public string name;
+        public int warehouseX;
+        public int warehouseY;
+        public CreateCellDefRequest[] cells;
+    }
+
+    [Serializable]
+    public class BatchCellsRequest
+    {
+        public CreateCellDefRequest[] cells;
+    }
+
+    #endregion
+
     public class ApiClient : MonoBehaviour
     {
         public static ApiClient Instance { get; private set; }
@@ -392,5 +527,320 @@ namespace API
                 onError?.Invoke($"{www.error}\n{www.downloadHandler.text}");
             }
         }
+
+        #region Configuration API
+
+        public IEnumerator GetConfigs(Action<ConfigListResponse> onSuccess, Action<string> onError = null)
+        {
+            string url = $"{baseUrl}/Configs";
+            if (logRequests) Debug.Log($"[API] GET {url}");
+
+            using UnityWebRequest www = UnityWebRequest.Get(url);
+            yield return www.SendWebRequest();
+
+            if (www.result == UnityWebRequest.Result.Success)
+            {
+                var response = JsonUtility.FromJson<ConfigListResponse>(www.downloadHandler.text);
+                onSuccess?.Invoke(response);
+            }
+            else
+            {
+                Debug.LogError($"[API] Error: {www.error}");
+                onError?.Invoke($"{www.error}\n{www.downloadHandler.text}");
+            }
+        }
+
+        public IEnumerator GetConfigById(string configId, Action<ConfigDto> onSuccess, Action<string> onError = null)
+        {
+            string url = $"{baseUrl}/Configs/{configId}";
+            if (logRequests) Debug.Log($"[API] GET {url}");
+
+            using UnityWebRequest www = UnityWebRequest.Get(url);
+            yield return www.SendWebRequest();
+
+            if (www.result == UnityWebRequest.Result.Success)
+            {
+                var response = JsonUtility.FromJson<ConfigDto>(www.downloadHandler.text);
+                onSuccess?.Invoke(response);
+            }
+            else
+            {
+                Debug.LogError($"[API] Error: {www.error}");
+                onError?.Invoke($"{www.error}\n{www.downloadHandler.text}");
+            }
+        }
+
+        public IEnumerator GetDefaultConfig(Action<ConfigDto> onSuccess, Action<string> onError = null)
+        {
+            string url = $"{baseUrl}/Configs/default";
+            if (logRequests) Debug.Log($"[API] GET {url}");
+
+            using UnityWebRequest www = UnityWebRequest.Get(url);
+            yield return www.SendWebRequest();
+
+            if (www.result == UnityWebRequest.Result.Success)
+            {
+                var response = JsonUtility.FromJson<ConfigDto>(www.downloadHandler.text);
+                onSuccess?.Invoke(response);
+            }
+            else
+            {
+                Debug.LogError($"[API] Error: {www.error}");
+                onError?.Invoke($"{www.error}\n{www.downloadHandler.text}");
+            }
+        }
+
+        public IEnumerator CreateConfig(CreateConfigRequest request, Action<ConfigDto> onSuccess, Action<string> onError = null)
+        {
+            string url = $"{baseUrl}/Configs";
+            string json = JsonUtility.ToJson(request);
+            if (logRequests) Debug.Log($"[API] POST {url}");
+
+            using UnityWebRequest www = UnityWebRequest.Post(url, json, "application/json");
+            yield return www.SendWebRequest();
+
+            if (www.result == UnityWebRequest.Result.Success)
+            {
+                var response = JsonUtility.FromJson<ConfigDto>(www.downloadHandler.text);
+                onSuccess?.Invoke(response);
+            }
+            else
+            {
+                Debug.LogError($"[API] Error: {www.error}");
+                onError?.Invoke($"{www.error}\n{www.downloadHandler.text}");
+            }
+        }
+
+        public IEnumerator UpdateConfig(string configId, UpdateConfigRequest request, Action<ConfigDto> onSuccess, Action<string> onError = null)
+        {
+            string url = $"{baseUrl}/Configs/{configId}";
+            string json = JsonUtility.ToJson(request);
+            if (logRequests) Debug.Log($"[API] PUT {url}");
+
+            using UnityWebRequest www = UnityWebRequest.Put(url, json);
+            www.SetRequestHeader("Content-Type", "application/json");
+            yield return www.SendWebRequest();
+
+            if (www.result == UnityWebRequest.Result.Success)
+            {
+                var response = JsonUtility.FromJson<ConfigDto>(www.downloadHandler.text);
+                onSuccess?.Invoke(response);
+            }
+            else
+            {
+                Debug.LogError($"[API] Error: {www.error}");
+                onError?.Invoke($"{www.error}\n{www.downloadHandler.text}");
+            }
+        }
+
+        public IEnumerator DeleteConfig(string configId, Action onSuccess, Action<string> onError = null)
+        {
+            string url = $"{baseUrl}/Configs/{configId}";
+            if (logRequests) Debug.Log($"[API] DELETE {url}");
+
+            using UnityWebRequest www = UnityWebRequest.Delete(url);
+            www.downloadHandler = new DownloadHandlerBuffer();
+            yield return www.SendWebRequest();
+
+            if (www.result == UnityWebRequest.Result.Success)
+            {
+                onSuccess?.Invoke();
+            }
+            else
+            {
+                Debug.LogError($"[API] Error: {www.error}");
+                onError?.Invoke($"{www.error}\n{www.downloadHandler.text}");
+            }
+        }
+
+        public IEnumerator SetDefaultConfig(string configId, Action<ConfigDto> onSuccess, Action<string> onError = null)
+        {
+            string url = $"{baseUrl}/Configs/{configId}/set-default";
+            if (logRequests) Debug.Log($"[API] POST {url}");
+
+            using UnityWebRequest www = UnityWebRequest.Post(url, "", "application/json");
+            yield return www.SendWebRequest();
+
+            if (www.result == UnityWebRequest.Result.Success)
+            {
+                var response = JsonUtility.FromJson<ConfigDto>(www.downloadHandler.text);
+                onSuccess?.Invoke(response);
+            }
+            else
+            {
+                Debug.LogError($"[API] Error: {www.error}");
+                onError?.Invoke($"{www.error}\n{www.downloadHandler.text}");
+            }
+        }
+
+        #endregion
+
+        #region CellsLayout API
+
+        public IEnumerator GetLayouts(Action<LayoutListResponse> onSuccess, Action<string> onError = null)
+        {
+            string url = $"{baseUrl}/CellsLayouts";
+            if (logRequests) Debug.Log($"[API] GET {url}");
+
+            using UnityWebRequest www = UnityWebRequest.Get(url);
+            yield return www.SendWebRequest();
+
+            if (www.result == UnityWebRequest.Result.Success)
+            {
+                var response = JsonUtility.FromJson<LayoutListResponse>(www.downloadHandler.text);
+                onSuccess?.Invoke(response);
+            }
+            else
+            {
+                Debug.LogError($"[API] Error: {www.error}");
+                onError?.Invoke($"{www.error}\n{www.downloadHandler.text}");
+            }
+        }
+
+        public IEnumerator GetLayoutById(string layoutId, Action<LayoutDetailDto> onSuccess, Action<string> onError = null)
+        {
+            string url = $"{baseUrl}/CellsLayouts/{layoutId}";
+            if (logRequests) Debug.Log($"[API] GET {url}");
+
+            using UnityWebRequest www = UnityWebRequest.Get(url);
+            yield return www.SendWebRequest();
+
+            if (www.result == UnityWebRequest.Result.Success)
+            {
+                var response = JsonUtility.FromJson<LayoutDetailDto>(www.downloadHandler.text);
+                onSuccess?.Invoke(response);
+            }
+            else
+            {
+                Debug.LogError($"[API] Error: {www.error}");
+                onError?.Invoke($"{www.error}\n{www.downloadHandler.text}");
+            }
+        }
+
+        public IEnumerator GetDefaultLayout(Action<LayoutDetailDto> onSuccess, Action<string> onError = null)
+        {
+            string url = $"{baseUrl}/CellsLayouts/default";
+            if (logRequests) Debug.Log($"[API] GET {url}");
+
+            using UnityWebRequest www = UnityWebRequest.Get(url);
+            yield return www.SendWebRequest();
+
+            if (www.result == UnityWebRequest.Result.Success)
+            {
+                var response = JsonUtility.FromJson<LayoutDetailDto>(www.downloadHandler.text);
+                onSuccess?.Invoke(response);
+            }
+            else
+            {
+                Debug.LogError($"[API] Error: {www.error}");
+                onError?.Invoke($"{www.error}\n{www.downloadHandler.text}");
+            }
+        }
+
+        public IEnumerator CreateLayout(CreateLayoutRequest request, Action<LayoutDetailDto> onSuccess, Action<string> onError = null)
+        {
+            string url = $"{baseUrl}/CellsLayouts";
+            string json = JsonUtility.ToJson(request);
+            if (logRequests) Debug.Log($"[API] POST {url}");
+
+            using UnityWebRequest www = UnityWebRequest.Post(url, json, "application/json");
+            yield return www.SendWebRequest();
+
+            if (www.result == UnityWebRequest.Result.Success)
+            {
+                var response = JsonUtility.FromJson<LayoutDetailDto>(www.downloadHandler.text);
+                onSuccess?.Invoke(response);
+            }
+            else
+            {
+                Debug.LogError($"[API] Error: {www.error}");
+                onError?.Invoke($"{www.error}\n{www.downloadHandler.text}");
+            }
+        }
+
+        public IEnumerator UpdateLayout(string layoutId, UpdateLayoutRequest request, Action<LayoutDetailDto> onSuccess, Action<string> onError = null)
+        {
+            string url = $"{baseUrl}/CellsLayouts/{layoutId}";
+            string json = JsonUtility.ToJson(request);
+            if (logRequests) Debug.Log($"[API] PUT {url}");
+
+            using UnityWebRequest www = UnityWebRequest.Put(url, json);
+            www.SetRequestHeader("Content-Type", "application/json");
+            yield return www.SendWebRequest();
+
+            if (www.result == UnityWebRequest.Result.Success)
+            {
+                var response = JsonUtility.FromJson<LayoutDetailDto>(www.downloadHandler.text);
+                onSuccess?.Invoke(response);
+            }
+            else
+            {
+                Debug.LogError($"[API] Error: {www.error}");
+                onError?.Invoke($"{www.error}\n{www.downloadHandler.text}");
+            }
+        }
+
+        public IEnumerator DeleteLayout(string layoutId, Action onSuccess, Action<string> onError = null)
+        {
+            string url = $"{baseUrl}/CellsLayouts/{layoutId}";
+            if (logRequests) Debug.Log($"[API] DELETE {url}");
+
+            using UnityWebRequest www = UnityWebRequest.Delete(url);
+            www.downloadHandler = new DownloadHandlerBuffer();
+            yield return www.SendWebRequest();
+
+            if (www.result == UnityWebRequest.Result.Success)
+            {
+                onSuccess?.Invoke();
+            }
+            else
+            {
+                Debug.LogError($"[API] Error: {www.error}");
+                onError?.Invoke($"{www.error}\n{www.downloadHandler.text}");
+            }
+        }
+
+        public IEnumerator SetDefaultLayout(string layoutId, Action<LayoutDetailDto> onSuccess, Action<string> onError = null)
+        {
+            string url = $"{baseUrl}/CellsLayouts/{layoutId}/set-default";
+            if (logRequests) Debug.Log($"[API] POST {url}");
+
+            using UnityWebRequest www = UnityWebRequest.Post(url, "", "application/json");
+            yield return www.SendWebRequest();
+
+            if (www.result == UnityWebRequest.Result.Success)
+            {
+                var response = JsonUtility.FromJson<LayoutDetailDto>(www.downloadHandler.text);
+                onSuccess?.Invoke(response);
+            }
+            else
+            {
+                Debug.LogError($"[API] Error: {www.error}");
+                onError?.Invoke($"{www.error}\n{www.downloadHandler.text}");
+            }
+        }
+
+        public IEnumerator AddCellsBatch(string layoutId, BatchCellsRequest request, Action<LayoutDetailDto> onSuccess, Action<string> onError = null)
+        {
+            string url = $"{baseUrl}/CellsLayouts/{layoutId}/cells/batch";
+            string json = JsonUtility.ToJson(request);
+            if (logRequests) Debug.Log($"[API] POST {url}");
+
+            using UnityWebRequest www = UnityWebRequest.Post(url, json, "application/json");
+            yield return www.SendWebRequest();
+
+            if (www.result == UnityWebRequest.Result.Success)
+            {
+                var response = JsonUtility.FromJson<LayoutDetailDto>(www.downloadHandler.text);
+                onSuccess?.Invoke(response);
+            }
+            else
+            {
+                Debug.LogError($"[API] Error: {www.error}");
+                onError?.Invoke($"{www.error}\n{www.downloadHandler.text}");
+            }
+        }
+
+        #endregion
     }
 }
