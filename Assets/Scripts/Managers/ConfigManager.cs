@@ -28,16 +28,11 @@ namespace Managers
         #region State
         private string currentConfigId;
         private string currentLayoutId;
-        private bool isLoadingConfig;
-        private bool isLoadingLayout;
         private bool isInitialized;
         #endregion
 
         #region Events
-        public event Action OnConfigLoaded;
-        public event Action OnLayoutLoaded;
         public event Action OnInitialized;
-        public event Action<string> OnLoadError;
         #endregion
 
         #region Public Properties
@@ -45,7 +40,6 @@ namespace Managers
         public CellsLayoutSO CellsLayout => cellsLayout;
         public string CurrentConfigId => currentConfigId;
         public string CurrentLayoutId => currentLayoutId;
-        public bool IsLoading => isLoadingConfig || isLoadingLayout;
         public bool IsInitialized => isInitialized;
         public bool LoadFromApiOnStart => loadFromApiOnStart;
         #endregion
@@ -112,7 +106,6 @@ namespace Managers
                         currentConfigId = config.id;
                         configLoaded = true;
                         Debug.Log($"[ConfigManager] Config loaded: {config.name}");
-                        OnConfigLoaded?.Invoke();
                     }
                     configRequestDone = true;
                 },
@@ -139,7 +132,6 @@ namespace Managers
                         currentLayoutId = layout.id;
                         layoutLoaded = true;
                         Debug.Log($"[ConfigManager] Layout loaded: {layout.name} ({layout.cells?.Length ?? 0} cells)");
-                        OnLayoutLoaded?.Invoke();
                     }
                     layoutRequestDone = true;
                 },
@@ -177,170 +169,8 @@ namespace Managers
                 }
             }
 
-            if (!configFromApi || !layoutFromApi)
-            {
-                OnLoadError?.Invoke("Some configurations failed to load from API");
-            }
-
             OnInitialized?.Invoke();
         }
-        #endregion
-
-        #region API Loading Methods
-
-        public void LoadDefaultConfigFromApi(Action onSuccess = null, Action<string> onError = null)
-        {
-            if (ApiClient.Instance == null)
-            {
-                onError?.Invoke("ApiClient not available");
-                return;
-            }
-
-            StartCoroutine(LoadDefaultConfigCoroutine(onSuccess, onError));
-        }
-
-        private IEnumerator LoadDefaultConfigCoroutine(Action onSuccess, Action<string> onError)
-        {
-            isLoadingConfig = true;
-
-            yield return ApiClient.Instance.GetDefaultConfig(
-                config =>
-                {
-                    ApplyConfig(config);
-                    currentConfigId = config.id;
-                    isLoadingConfig = false;
-                    Debug.Log($"[ConfigManager] Config loaded from API: {config.name}");
-                    onSuccess?.Invoke();
-                },
-                error =>
-                {
-                    isLoadingConfig = false;
-                    Debug.LogError($"[ConfigManager] Failed to load config: {error}");
-                    onError?.Invoke(error);
-                }
-            );
-        }
-
-        public void LoadConfigById(string configId, Action onSuccess = null, Action<string> onError = null)
-        {
-            if (ApiClient.Instance == null)
-            {
-                onError?.Invoke("ApiClient not available");
-                return;
-            }
-
-            StartCoroutine(LoadConfigByIdCoroutine(configId, onSuccess, onError));
-        }
-
-        private IEnumerator LoadConfigByIdCoroutine(string configId, Action onSuccess, Action<string> onError)
-        {
-            isLoadingConfig = true;
-
-            yield return ApiClient.Instance.GetConfigById(configId,
-                config =>
-                {
-                    ApplyConfig(config);
-                    currentConfigId = config.id;
-                    isLoadingConfig = false;
-                    Debug.Log($"[ConfigManager] Config loaded: {config.name}");
-                    onSuccess?.Invoke();
-                },
-                error =>
-                {
-                    isLoadingConfig = false;
-                    Debug.LogError($"[ConfigManager] Failed to load config: {error}");
-                    onError?.Invoke(error);
-                }
-            );
-        }
-
-        public void LoadDefaultLayoutFromApi(Action onSuccess = null, Action<string> onError = null)
-        {
-            if (ApiClient.Instance == null)
-            {
-                onError?.Invoke("ApiClient not available");
-                return;
-            }
-
-            StartCoroutine(LoadDefaultLayoutCoroutine(onSuccess, onError));
-        }
-
-        private IEnumerator LoadDefaultLayoutCoroutine(Action onSuccess, Action<string> onError)
-        {
-            isLoadingLayout = true;
-
-            yield return ApiClient.Instance.GetDefaultLayout(
-                layout =>
-                {
-                    ApplyLayout(layout);
-                    currentLayoutId = layout.id;
-                    isLoadingLayout = false;
-                    Debug.Log($"[ConfigManager] Layout loaded from API: {layout.name} ({layout.cells?.Length ?? 0} cells)");
-                    onSuccess?.Invoke();
-                },
-                error =>
-                {
-                    isLoadingLayout = false;
-                    Debug.LogError($"[ConfigManager] Failed to load layout: {error}");
-                    onError?.Invoke(error);
-                }
-            );
-        }
-
-        public void LoadLayoutById(string layoutId, Action onSuccess = null, Action<string> onError = null)
-        {
-            if (ApiClient.Instance == null)
-            {
-                onError?.Invoke("ApiClient not available");
-                return;
-            }
-
-            StartCoroutine(LoadLayoutByIdCoroutine(layoutId, onSuccess, onError));
-        }
-
-        private IEnumerator LoadLayoutByIdCoroutine(string layoutId, Action onSuccess, Action<string> onError)
-        {
-            isLoadingLayout = true;
-
-            yield return ApiClient.Instance.GetLayoutById(layoutId,
-                layout =>
-                {
-                    ApplyLayout(layout);
-                    currentLayoutId = layout.id;
-                    isLoadingLayout = false;
-                    Debug.Log($"[ConfigManager] Layout loaded: {layout.name} ({layout.cells?.Length ?? 0} cells)");
-                    onSuccess?.Invoke();
-                },
-                error =>
-                {
-                    isLoadingLayout = false;
-                    Debug.LogError($"[ConfigManager] Failed to load layout: {error}");
-                    onError?.Invoke(error);
-                }
-            );
-        }
-
-        public void LoadDefaultsFromApi(Action onSuccess = null, Action<string> onError = null)
-        {
-            int pendingLoads = 2;
-            string firstError = null;
-
-            void CheckCompletion()
-            {
-                pendingLoads--;
-                if (pendingLoads == 0)
-                {
-                    if (firstError != null)
-                        onError?.Invoke(firstError);
-                    else
-                        onSuccess?.Invoke();
-                }
-            }
-
-            LoadDefaultConfigFromApi(CheckCompletion, err => { firstError ??= err; CheckCompletion(); });
-            LoadDefaultLayoutFromApi(CheckCompletion, err => { firstError ??= err; CheckCompletion(); });
-        }
-
         #endregion
 
         #region Apply Methods
