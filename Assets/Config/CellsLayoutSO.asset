@@ -26,4 +26,7 @@ MonoBehaviour:
     width: 300
     height: 300
     orientation: W
-  layout_hash: 
+  - code: D05
+    width: 150
+    height: 150
+    orientation: E
