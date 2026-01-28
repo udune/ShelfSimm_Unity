@@ -200,7 +200,6 @@ namespace Managers
             }
 
             cellsLayout.warehouse = new Vector2Int(layout.warehouseX, layout.warehouseY);
-            cellsLayout.LayoutHash = layout.layoutHash;
             cellsLayout.cells.Clear();
 
             if (layout.cells != null)

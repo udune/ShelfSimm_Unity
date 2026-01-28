@@ -50,6 +50,17 @@ namespace UI
         [Header("Status")]
         [SerializeField] private TextMeshProUGUI statusText;
 
+        [Header("Material Inventory")]
+        [SerializeField] private MaterialInventoryPanel materialInventoryPanel;
+
+        [Header("Navigation Buttons (LeftArea > header > layout)")]
+        [SerializeField] private Button homeButton;
+        [SerializeField] private Button warehouseButton;
+
+        [Header("Navigation Button Images")]
+        [SerializeField] private GameObject homeImage;
+        [SerializeField] private GameObject warehouseImage;
+
         private List<Job> jobList = new List<Job>();
         private SimulationState currentState = SimulationState.IDLE;
         private Coroutine restartCoroutine = null;
@@ -81,6 +92,58 @@ namespace UI
             // 초기 상태 설정
             UpdateButtonStates(SimulationState.IDLE);
             UpdateUI();
+
+            // Material Inventory 네비게이션 초기화
+            InitializeMaterialInventory();
+        }
+
+        // ==================== Material Inventory 네비게이션 ====================
+
+        private void InitializeMaterialInventory()
+        {
+            if (homeButton != null)
+            {
+                homeButton.onClick.AddListener(OnHomeButtonClicked);
+            }
+            if (warehouseButton != null)
+            {
+                warehouseButton.onClick.AddListener(OnWarehouseButtonClicked);
+            }
+
+            // 초기 상태: 메인 대시보드 표시 (자재 인벤토리 숨김)
+            SetInventoryVisible(false);
+        }
+
+        private void OnHomeButtonClicked()
+        {
+            SetInventoryVisible(false);
+            Debug.Log("[UI] Home clicked - Material Inventory Hidden");
+        }
+
+        private void OnWarehouseButtonClicked()
+        {
+            SetInventoryVisible(true);
+            Debug.Log("[UI] Warehouse clicked - Material Inventory Shown");
+        }
+
+        private void SetInventoryVisible(bool visible)
+        {
+            // 패널 표시/숨김
+            if (materialInventoryPanel != null)
+            {
+                if (visible)
+                    materialInventoryPanel.Show();
+                else
+                    materialInventoryPanel.Hide();
+            }
+
+            // 버튼 이미지 상태 전환
+            // visible=false (메인 대시보드): home 활성화, warehouse 비활성화
+            // visible=true (자재 인벤토리): home 비활성화, warehouse 활성화
+            if (homeImage != null)
+                homeImage.SetActive(!visible);
+            if (warehouseImage != null)
+                warehouseImage.SetActive(visible);
         }
 
         // ==================== 버튼 이벤트 핸들러 ====================

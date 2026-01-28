@@ -12,7 +12,6 @@ namespace Data
         [Header("칸 목록")]
         public List<CellDef> cells = new List<CellDef>();
 
-        public string LayoutHash { get; set; }
 
         public void UpdateCellPositionsFromCodes()
         {

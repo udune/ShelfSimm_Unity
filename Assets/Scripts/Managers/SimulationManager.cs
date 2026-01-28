@@ -340,8 +340,7 @@ namespace Managers
             var createJobsReq = new CreateJobsBatchRequest
             {
                 runId = _currentRunId,
-                jobs = jobDtos,
-                layoutId = ConfigManager.Instance.CellsLayout.LayoutHash
+                jobs = jobDtos
             };
 
             var jobsBatched = false;
