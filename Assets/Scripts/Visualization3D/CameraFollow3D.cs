@@ -7,7 +7,7 @@ namespace Visualization3D
         public Transform target;
 
         [Header("Camera Settings")]
-        public Vector3 offset = new Vector3(0, 0.85f, -2);
+        public Vector3 offset = new Vector3(-1, 2f, -1);
         public float smoothSpeed = 5f;
         public float rotationSpeed = 5f;
 
