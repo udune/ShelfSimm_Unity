@@ -1,3 +1,5 @@
+<img width="400" height="267" alt="SmartWMS" src="https://github.com/user-attachments/assets/f47036e1-83c5-4f7f-a256-c6167fbefd3d" />
+
 # ShelfSim - 서가 시뮬레이션 프로젝트
 
 도서관/서점의 서가 로봇 작업 흐름을 시뮬레이션하는 Unity 기반 프로젝트입니다.
